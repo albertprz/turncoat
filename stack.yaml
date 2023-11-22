@@ -1,0 +1,7 @@
+packages:
+- .
+resolver:
+  url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/20.yaml
+
+extra-deps:
+- bookhound-0.2.2

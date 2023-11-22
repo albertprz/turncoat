@@ -1,0 +1,129 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.36.0.
+--
+-- see: https://github.com/sol/hpack
+
+name:           stafford
+version:        0.1.1.0
+synopsis:       Haskell to Purescript & Scala 3 transpiler
+description:    Please see the README on GitHub at <https://github.com/albertprz/stafford#readme>
+category:       Compiler
+homepage:       https://github.com/albertprz/stafford#readme
+bug-reports:    https://github.com/albertprz/stafford/issues
+author:         Alberto Perez Lopez
+maintainer:     albertoperez1994@gmail.com
+copyright:      2022 Alberto Perez Lopez
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/albertprz/stafford
+
+library
+  exposed-modules:
+      Board
+  other-modules:
+      Paths_stafford
+  hs-source-dirs:
+      src
+  default-extensions:
+      NoImplicitPrelude
+      LambdaCase
+      MultiWayIf
+      TupleSections
+      PostfixOperators
+      BlockArguments
+      RankNTypes
+      ExplicitForAll
+      ScopedTypeVariables
+      TypeOperators
+      TypeApplications
+      LiberalTypeSynonyms
+      InstanceSigs
+      FunctionalDependencies
+      DuplicateRecordFields
+      NoFieldSelectors
+      NamedFieldPuns
+      RecordWildCards
+      OverloadedRecordDot
+      ConstrainedClassMethods
+      MultiParamTypeClasses
+      FlexibleContexts
+      FlexibleInstances
+      ApplicativeDo
+      OverloadedStrings
+      ViewPatterns
+      GADTs
+      TypeFamilies
+      TypeFamilyDependencies
+      DataKinds
+      PolyKinds
+      DeriveFunctor
+      DeriveFoldable
+      DeriveTraversable
+      DeriveGeneric
+      GeneralizedNewtypeDeriving
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+  build-depends:
+      base ==4.*
+    , classy-prelude
+    , extra
+    , mtl
+  default-language: Haskell2010
+
+executable stafford
+  main-is: Main.hs
+  other-modules:
+      Paths_stafford
+  hs-source-dirs:
+      app
+  default-extensions:
+      NoImplicitPrelude
+      LambdaCase
+      MultiWayIf
+      TupleSections
+      PostfixOperators
+      BlockArguments
+      RankNTypes
+      ExplicitForAll
+      ScopedTypeVariables
+      TypeOperators
+      TypeApplications
+      LiberalTypeSynonyms
+      InstanceSigs
+      FunctionalDependencies
+      DuplicateRecordFields
+      NoFieldSelectors
+      NamedFieldPuns
+      RecordWildCards
+      OverloadedRecordDot
+      ConstrainedClassMethods
+      MultiParamTypeClasses
+      FlexibleContexts
+      FlexibleInstances
+      ApplicativeDo
+      OverloadedStrings
+      ViewPatterns
+      GADTs
+      TypeFamilies
+      TypeFamilyDependencies
+      DataKinds
+      PolyKinds
+      DeriveFunctor
+      DeriveFoldable
+      DeriveTraversable
+      DeriveGeneric
+      GeneralizedNewtypeDeriving
+  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base ==4.*
+    , classy-prelude
+    , extra
+    , mtl
+    , stafford
+  default-language: Haskell2010

@@ -1,0 +1,101 @@
+name:                stafford
+version:             0.1.1.0
+github:              "albertprz/stafford"
+license:             BSD3
+author:              "Alberto Perez Lopez"
+maintainer:          "albertoperez1994@gmail.com"
+copyright:           "2022 Alberto Perez Lopez"
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+synopsis:            Haskell to Purescript & Scala 3 transpiler
+category:            Compiler
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/albertprz/stafford#readme>
+
+dependencies:
+- base >= 4 && < 5
+- classy-prelude
+- mtl
+- extra
+
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wredundant-constraints
+
+default-extensions:
+# Prelude
+- NoImplicitPrelude
+
+# Syntax
+- LambdaCase
+- MultiWayIf
+- TupleSections
+- PostfixOperators
+- BlockArguments
+
+# Types
+- RankNTypes
+- ExplicitForAll
+- ScopedTypeVariables
+- TypeOperators
+- TypeApplications
+- LiberalTypeSynonyms
+- InstanceSigs
+- FunctionalDependencies
+
+# Records
+- DuplicateRecordFields
+- NoFieldSelectors
+- NamedFieldPuns
+- RecordWildCards
+- OverloadedRecordDot
+
+# Type Classes
+- ConstrainedClassMethods
+- MultiParamTypeClasses
+- FlexibleContexts
+- FlexibleInstances
+
+# Convenience
+- ApplicativeDo
+- OverloadedStrings
+- ViewPatterns
+
+# Type Level Programming
+- GADTs
+- TypeFamilies
+- TypeFamilyDependencies
+- DataKinds
+- PolyKinds
+
+# Deriving
+- DeriveFunctor
+- DeriveFoldable
+- DeriveTraversable
+- DeriveGeneric
+- GeneralizedNewtypeDeriving
+
+
+library:
+  source-dirs: src
+
+executables:
+  stafford:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - stafford

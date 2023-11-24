@@ -6,14 +6,14 @@ cabal-version: 1.12
 
 name:           stafford
 version:        0.1.1.0
-synopsis:       Haskell to Purescript & Scala 3 transpiler
+synopsis:       Elegant chess engine in Haskell
 description:    Please see the README on GitHub at <https://github.com/albertprz/stafford#readme>
-category:       Compiler
+category:       Chess Engine
 homepage:       https://github.com/albertprz/stafford#readme
 bug-reports:    https://github.com/albertprz/stafford/issues
 author:         Alberto Perez Lopez
 maintainer:     albertoperez1994@gmail.com
-copyright:      2022 Alberto Perez Lopez
+copyright:      2023 Alberto Perez Lopez
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -26,35 +26,26 @@ source-repository head
 
 library
   exposed-modules:
-      Board
+      Models.Board
+      Models.GameState
+      Models.Piece
   other-modules:
       Paths_stafford
   hs-source-dirs:
       src
   default-extensions:
       NoImplicitPrelude
+      StrictData
       LambdaCase
       MultiWayIf
-      TupleSections
-      PostfixOperators
       BlockArguments
-      RankNTypes
-      ExplicitForAll
-      ScopedTypeVariables
-      TypeOperators
-      TypeApplications
+      PostfixOperators
       LiberalTypeSynonyms
-      InstanceSigs
       FunctionalDependencies
       DuplicateRecordFields
       NoFieldSelectors
-      NamedFieldPuns
       RecordWildCards
       OverloadedRecordDot
-      ConstrainedClassMethods
-      MultiParamTypeClasses
-      FlexibleContexts
-      FlexibleInstances
       ApplicativeDo
       OverloadedStrings
       ViewPatterns
@@ -62,19 +53,13 @@ library
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
-      PolyKinds
-      DeriveFunctor
-      DeriveFoldable
-      DeriveTraversable
-      DeriveGeneric
-      GeneralizedNewtypeDeriving
   ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base ==4.*
     , classy-prelude
     , extra
     , mtl
-  default-language: Haskell2010
+  default-language: GHC2021
 
 executable stafford
   main-is: Main.hs
@@ -84,28 +69,17 @@ executable stafford
       app
   default-extensions:
       NoImplicitPrelude
+      StrictData
       LambdaCase
       MultiWayIf
-      TupleSections
-      PostfixOperators
       BlockArguments
-      RankNTypes
-      ExplicitForAll
-      ScopedTypeVariables
-      TypeOperators
-      TypeApplications
+      PostfixOperators
       LiberalTypeSynonyms
-      InstanceSigs
       FunctionalDependencies
       DuplicateRecordFields
       NoFieldSelectors
-      NamedFieldPuns
       RecordWildCards
       OverloadedRecordDot
-      ConstrainedClassMethods
-      MultiParamTypeClasses
-      FlexibleContexts
-      FlexibleInstances
       ApplicativeDo
       OverloadedStrings
       ViewPatterns
@@ -113,12 +87,6 @@ executable stafford
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
-      PolyKinds
-      DeriveFunctor
-      DeriveFoldable
-      DeriveTraversable
-      DeriveGeneric
-      GeneralizedNewtypeDeriving
   ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*
@@ -126,4 +94,4 @@ executable stafford
     , extra
     , mtl
     , stafford
-  default-language: Haskell2010
+  default-language: GHC2021

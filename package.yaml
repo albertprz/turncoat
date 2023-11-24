@@ -4,14 +4,14 @@ github:              "albertprz/stafford"
 license:             BSD3
 author:              "Alberto Perez Lopez"
 maintainer:          "albertoperez1994@gmail.com"
-copyright:           "2022 Alberto Perez Lopez"
+copyright:           "2023 Alberto Perez Lopez"
 
 extra-source-files:
 - README.md
 
 # Metadata used when publishing your package
-synopsis:            Haskell to Purescript & Scala 3 transpiler
-category:            Compiler
+synopsis:            Elegant chess engine in Haskell
+category:            Chess Engine
 
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
@@ -24,47 +24,30 @@ dependencies:
 - mtl
 - extra
 
-
-ghc-options:
-- -Wall
-- -Wcompat
-- -Wincomplete-record-updates
-- -Wincomplete-uni-patterns
-- -Wredundant-constraints
+language: GHC2021
 
 default-extensions:
 # Prelude
 - NoImplicitPrelude
 
+# Evaluation
+- StrictData
+
 # Syntax
 - LambdaCase
 - MultiWayIf
-- TupleSections
-- PostfixOperators
 - BlockArguments
+- PostfixOperators
 
 # Types
-- RankNTypes
-- ExplicitForAll
-- ScopedTypeVariables
-- TypeOperators
-- TypeApplications
 - LiberalTypeSynonyms
-- InstanceSigs
 - FunctionalDependencies
 
 # Records
 - DuplicateRecordFields
 - NoFieldSelectors
-- NamedFieldPuns
 - RecordWildCards
 - OverloadedRecordDot
-
-# Type Classes
-- ConstrainedClassMethods
-- MultiParamTypeClasses
-- FlexibleContexts
-- FlexibleInstances
 
 # Convenience
 - ApplicativeDo
@@ -76,15 +59,13 @@ default-extensions:
 - TypeFamilies
 - TypeFamilyDependencies
 - DataKinds
-- PolyKinds
 
-# Deriving
-- DeriveFunctor
-- DeriveFoldable
-- DeriveTraversable
-- DeriveGeneric
-- GeneralizedNewtypeDeriving
-
+ghc-options:
+- -Wall
+- -Wcompat
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wredundant-constraints
 
 library:
   source-dirs: src

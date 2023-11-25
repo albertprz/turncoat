@@ -18,11 +18,36 @@ data Position = Position {
 
 type Board = Word64
 type Square = Int
+type Rank = Int
+type File = Int
+type Diag = Int
+type AntiDiag = Int
 type Shift = forall a. Bits a => a -> Int -> a
+
+
+infixl 9 <<
+(<<) :: Shift
+(<<) = unsafeShiftL
+
+infixl 9 >>
+(>>) :: Shift
+(>>) = unsafeShiftR
+
+infixl 7 /
+(/) :: Square -> Square -> Square
+(/) = div
+
+infixl 7 %
+(%) :: Square -> Square -> Square
+(%) = rem
 
 infixl 8 &
 (&) :: Board -> Board -> Board
 (&) = (.&.)
+
+infixl 8 .\
+(.\) :: Board -> Board -> Board
+(.\) x y = x & (!) y
 
 infixl 7 .|
 (.|) :: Board -> Board -> Board
@@ -32,16 +57,8 @@ infixl 7 ^
 (^) :: Board -> Board -> Board
 (^) = xor
 
-(~) :: Board -> Board
-(~) = complement
-
-infixl 9 <<
-(<<) :: Shift
-(<<) = unsafeShiftL
-
-infixl 9 >>
-(>>) :: Shift
-(>>)  = unsafeShiftR
+(!) :: Board -> Board
+(!) = complement
 
 ones :: Board -> Int
 ones = popCount

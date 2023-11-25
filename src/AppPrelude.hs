@@ -1,3 +1,3 @@
 module AppPrelude (module ClassyPrelude) where
 
-import           ClassyPrelude hiding ((<<), (>>))
+import           ClassyPrelude hiding (mask, (%), (/), (<<), (>>))

@@ -33,7 +33,7 @@ default-extensions:
 - NoImplicitPrelude
 
 # Evaluation
-- StrictData
+- Strict
 
 # Syntax
 - LambdaCase

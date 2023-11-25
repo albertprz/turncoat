@@ -39,7 +39,7 @@ library
       src
   default-extensions:
       NoImplicitPrelude
-      StrictData
+      Strict
       LambdaCase
       MultiWayIf
       BlockArguments
@@ -75,7 +75,7 @@ executable stafford
       app
   default-extensions:
       NoImplicitPrelude
-      StrictData
+      Strict
       LambdaCase
       MultiWayIf
       BlockArguments

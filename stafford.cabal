@@ -26,9 +26,13 @@ source-repository head
 
 library
   exposed-modules:
+      AppPrelude
       Models.Board
       Models.GameState
       Models.Piece
+      MoveGen.PieceBoards
+      MoveGen.PieceMoves
+      Utils.Ord
   other-modules:
       Paths_stafford
   hs-source-dirs:
@@ -56,9 +60,11 @@ library
   ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base ==4.*
+    , bits
     , classy-prelude
     , extra
     , mtl
+    , text
   default-language: GHC2021
 
 executable stafford
@@ -90,8 +96,10 @@ executable stafford
   ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*
+    , bits
     , classy-prelude
     , extra
     , mtl
     , stafford
+    , text
   default-language: GHC2021

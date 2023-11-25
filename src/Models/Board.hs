@@ -1,7 +1,8 @@
 module Models.Board where
 
-import           ClassyPrelude
+import           AppPrelude
 import           Data.Bits
+import           Data.List  (iterate)
 
 
 data Position = Position {
@@ -16,24 +17,31 @@ data Position = Position {
 }
 
 type Board = Word64
+type Square = Int
+type Shift = forall a. Bits a => a -> Int -> a
 
+infixl 8 &
 (&) :: Board -> Board -> Board
 (&) = (.&.)
 
-(#) :: Board -> Board -> Board
-(#) = (.|.)
+infixl 7 .|
+(.|) :: Board -> Board -> Board
+(.|) = (.|.)
 
+infixl 7 ^
 (^) :: Board -> Board -> Board
 (^) = xor
 
 (~) :: Board -> Board
 (~) = complement
 
-(<<) :: Board -> Int -> Board
+infixl 9 <<
+(<<) :: Shift
 (<<) = unsafeShiftL
 
-(>>) :: Board -> Int -> Board
-(>>) = unsafeShiftR
+infixl 9 >>
+(>>) :: Shift
+(>>)  = unsafeShiftR
 
 ones :: Board -> Int
 ones = popCount
@@ -43,3 +51,12 @@ trailZeros = countTrailingZeros
 
 leadZeros :: Board -> Int
 leadZeros = countLeadingZeros
+
+showBoard :: Word64 -> Text
+showBoard b = pack $ unlines $ map showBin
+                   $ reverse $ take 8
+                   $ iterate (>> 8) b
+  where
+    showBin w = intersperse ' ' [sb (testBit w i) | i <- [0 .. 7]]
+    sb False = '0'
+    sb True  = '1'

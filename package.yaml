@@ -22,7 +22,9 @@ dependencies:
 - base >= 4 && < 5
 - classy-prelude
 - mtl
+- text
 - extra
+- bits
 
 language: GHC2021
 

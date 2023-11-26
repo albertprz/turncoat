@@ -82,6 +82,21 @@ leadZeros = countLeadingZeros
 position :: Int -> Board
 position n = 1 << n
 
+foldMapBoard ::  (Board -> Board -> Board) -> (Square -> Board) -> Board -> Board
+foldMapBoard x y z = go 0 z x y z
+  where
+    go i acc foldFn mapFn board =
+      if zerosLen == 64 then
+        board
+      else
+        go newI (foldFn acc (mapFn newI)) foldFn mapFn newBoard
+      where
+        zerosLen = trailZeros board
+        newI = i + zerosLen
+        newBoard = board >> zerosLen
+
+
+
 showBoard :: Word64 -> Text
 showBoard b = pack $ unlines $ map showBin
                    $ reverse $ take 8

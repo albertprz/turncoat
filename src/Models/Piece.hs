@@ -9,6 +9,10 @@ data Piece = Pawn | Knight | Bishop | Rook | Queen | King
 data Color = White | Black
   deriving (Eq, Ord, Enum, Bounded, Show)
 
+reverseColor :: Color -> Color
+reverseColor = \case
+  White -> Black
+  Black -> White
 
 pieceVal :: Piece -> Int
 pieceVal = \case

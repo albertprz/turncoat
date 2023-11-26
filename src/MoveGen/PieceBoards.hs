@@ -14,30 +14,30 @@ knightMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    move1 = (pos .\ (file_B .| file_A .| rank_8)) << 10
-    move2 = (pos .\ (file_B .| file_A .| rank_1)) >> 6
-    move3 = (pos .\ (file_A .| rank_7 .| rank_8)) << 17
-    move4 = (pos .\ (file_H .| rank_7 .| rank_8)) << 15
-    move5 = (pos .\ (file_G .| file_H .| rank_8)) << 6
-    move6 = (pos .\ (file_G .| file_H .| rank_1)) >> 10
-    move7 = (pos .\ (file_H .| rank_2 .| rank_1)) >> 17
-    move8 = (pos .\ (file_A .| rank_2 .| rank_1)) >> 15
-    pos = 1 << n
+    move1 = (board .\ (file_B .| file_A .| rank_8)) << 10
+    move2 = (board .\ (file_B .| file_A .| rank_1)) >> 6
+    move3 = (board .\ (file_A .| rank_7 .| rank_8)) << 17
+    move4 = (board .\ (file_H .| rank_7 .| rank_8)) << 15
+    move5 = (board .\ (file_G .| file_H .| rank_8)) << 6
+    move6 = (board .\ (file_G .| file_H .| rank_1)) >> 10
+    move7 = (board .\ (file_H .| rank_2 .| rank_1)) >> 17
+    move8 = (board .\ (file_A .| rank_2 .| rank_1)) >> 15
+    board = 1 << n
 
 kingMove :: Square -> Board
 kingMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    move1 = (pos .\ file_A) << 1
-    move2 = (pos .\ (file_A .| rank_8)) << 9
-    move3 = (pos .\ file_H) >> 1
-    move4 = (pos .\ (file_H .| rank_1)) >> 9
-    move5 = (pos .\ rank_8) << 8
-    move6 = (pos .\ (file_H .| rank_8)) << 7
-    move7 = (pos .\ rank_1) >> 8
-    move8 = (pos .\ (file_A .| rank_1)) >> 7
-    pos = 1 << n
+    move1 = (board .\ file_A) << 1
+    move2 = (board .\ (file_A .| rank_8)) << 9
+    move3 = (board .\ file_H) >> 1
+    move4 = (board .\ (file_H .| rank_1)) >> 9
+    move5 = (board .\ rank_8) << 8
+    move6 = (board .\ (file_H .| rank_8)) << 7
+    move7 = (board .\ rank_1) >> 8
+    move8 = (board .\ (file_A .| rank_1)) >> 7
+    board = 1 << n
 
 
 fileMove :: Square -> Board
@@ -74,8 +74,8 @@ diagHelper f n = foldl1 (.|) xs
   xs = Vector.fromList do
     x <- Vector.toList sideSquares
     let y = f (n - x) `rem` 8
-    guard $ inRange 0 7 (n - x)
-    pure $ 1 << (y + 8 * x)
+    guard $! inRange 0 7 (n - x)
+    pure $! 1 << (y + 8 * x)
 
 
 -- Move Functions

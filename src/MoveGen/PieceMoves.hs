@@ -8,22 +8,42 @@ import           Models.Piece
 import           MoveGen.PieceBoards
 
 
-pawnAdvances :: Board -> Color -> Square -> Board
-pawnAdvances allPieces color n = case color of
-  White -> pos << 8 .| ((rank_2 & pos << 8) .\ allPieces) << 8
-  Black -> pos >> 8 .| ((rank_7 & pos >> 8) .\ allPieces) << 8
-  where
-    pos = position n
+allPlayerAttacks :: Color -> Position -> Board
+allPlayerAttacks color pos =
+  allAttacks pos.player pos.enemy color pos
 
-pawnAttacks :: Color -> Square -> Board
-pawnAttacks color n = case color of
-  White -> (pos .\ file_A) << 9 .| (pos .\ file_H) << 7
-  Black -> (pos .\ file_A) >> 7 .| (pos .\ file_H) >> 9
+allEnemyAttacks :: Color -> Position -> Board
+allEnemyAttacks color pos =
+  allAttacks pos.enemy pos.player (reverseColor color) pos
+
+allAttacks :: Board -> Board -> Color -> Position -> Board
+allAttacks player enemy color
+  (Position {pawns, knights, bishops, rooks, queens, kings}) =
+  pawnAttacks color (player & pawns)
+  .| foldMapBoard (.|) knightAttacks (player & knights)
+  .| foldMapBoard (.|) (bishopAttacks allPieces) (player & bishops)
+  .| foldMapBoard (.|) (rookAttacks allPieces) (player & rooks)
+  .| foldMapBoard (.|) (queenAttacks allPieces) (player & queens)
+  .| foldMapBoard (.|) kingAttacks (player & kings)
   where
-    pos = position n
+    allPieces = player .| enemy
+
+
+pawnAdvances :: Board -> Color -> Board -> Board
+pawnAdvances allPieces color board = case color of
+  White -> board << 8 .| ((rank_2 & board << 8) .\ allPieces) << 8
+  Black -> board >> 8 .| ((rank_7 & board >> 8) .\ allPieces) << 8
+
+pawnAttacks :: Color -> Board -> Board
+pawnAttacks color board = case color of
+  White -> (board .\ file_A) << 9 .| (board .\ file_H) << 7
+  Black -> (board .\ file_A) >> 7 .| (board .\ file_H) >> 9
 
 knightAttacks :: Square -> Board
 knightAttacks n = knightMoves !! n
+
+kingAttacks :: Square -> Board
+kingAttacks n = kingMoves !! n
 
 bishopAttacks :: Board -> Square -> Board
 bishopAttacks allPieces n =
@@ -43,9 +63,6 @@ queenAttacks :: Board -> Square -> Board
 queenAttacks allPieces n =
   rookAttacks allPieces n
   .| bishopAttacks allPieces n
-
-kingAttacks :: Square -> Board
-kingAttacks n = kingMoves !! n
 
 
 sliding ::  (Board -> Square) -> (Square -> Board) -> Board -> Square -> Board

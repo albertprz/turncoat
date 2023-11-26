@@ -1,20 +1,19 @@
-{- HLINT ignore "" -}
+{- HLINT ignore "Use camelCase" -}
 
 module MoveGen.PieceBoards (knightMoves, kingMoves, fileMoves, rankMoves, diagMoves, antiDiagMoves, westMoves, northMoves, southMoves, eastMoves, northWestMoves, northEastMoves, southEastMoves, southWestMoves, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
 
-import           AppPrelude
+import           AppPrelude          hiding (map, (<$>))
 
-import           Data.List    (foldl1, (!!))
+import           Data.Vector.Unboxed as Vector
 import           Models.Board
-import           Utils.Ord    (inRange)
+import           Utils.Ord           (inRange)
 
 
-knightMove :: Int -> Board
+knightMove :: Square -> Board
 knightMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    pos = 1 << n
     move1 = (pos .\ (file_B .| file_A .| rank_8)) << 10
     move2 = (pos .\ (file_B .| file_A .| rank_1)) >> 6
     move3 = (pos .\ (file_A .| rank_7 .| rank_8)) << 17
@@ -23,13 +22,13 @@ knightMove n =
     move6 = (pos .\ (file_G .| file_H .| rank_1)) >> 10
     move7 = (pos .\ (file_H .| rank_2 .| rank_1)) >> 17
     move8 = (pos .\ (file_A .| rank_2 .| rank_1)) >> 15
+    pos = 1 << n
 
-kingMove :: Int -> Board
+kingMove :: Square -> Board
 kingMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    pos = 1 << n
     move1 = (pos .\ file_A) << 1
     move2 = (pos .\ (file_A .| rank_8)) << 9
     move3 = (pos .\ file_H) >> 1
@@ -38,6 +37,7 @@ kingMove n =
     move6 = (pos .\ (file_H .| rank_8)) << 7
     move7 = (pos .\ rank_1) >> 8
     move8 = (pos .\ (file_A .| rank_1)) >> 7
+    pos = 1 << n
 
 
 fileMove :: Square -> Board
@@ -46,10 +46,10 @@ fileMove n = files !! (n % 8)
 rankMove :: Square -> Board
 rankMove n = ranks !! (n / 8)
 
-diagMove :: Int -> Board
+diagMove :: Square -> Board
 diagMove n = diags !! (n % 8 + n / 8 )
 
-antiDiagMove :: Int -> Board
+antiDiagMove :: Square -> Board
 antiDiagMove n = antiDiags !! (7 - n % 8 + n / 8 )
 
 getRank :: Rank -> Board
@@ -62,7 +62,7 @@ getFile n = foldl1 (.|) (map f sideSquares)
   where
     f = (1 << n <<) . (<< 3)
 
-getDiag :: Int -> Board
+getDiag :: Diag -> Board
 getDiag = diagHelper (7 -)
 
 getAntiDiag :: Int -> Board
@@ -71,8 +71,8 @@ getAntiDiag = diagHelper id
 diagHelper :: (Int -> Int) -> Int -> Board
 diagHelper f n = foldl1 (.|) xs
   where
-  xs = do
-    x <- sideSquares
+  xs = Vector.fromList do
+    x <- Vector.toList sideSquares
     let y = f (n - x) `rem` 8
     guard $ inRange 0 7 (n - x)
     pure $ 1 << (y + 8 * x)
@@ -109,78 +109,78 @@ aboveMask :: Square -> Board
 aboveMask n = ((1 << 63) - (1 << n)) << 1
 
 belowMask :: Square -> Board
-belowMask n = ((1 << n) - 1)
+belowMask n = (1 << n) - 1
 
 
 -- Directions
-ranks :: [Board]
+ranks :: Vector Board
 ranks = getRank <$> sideSquares
 
-files :: [Board]
+files :: Vector Board
 files = getFile <$> sideSquares
 
-diags :: [Board]
+diags :: Vector Board
 diags = getDiag <$> diagonals
 
-antiDiags :: [Board]
+antiDiags :: Vector Board
 antiDiags = getAntiDiag <$> diagonals
 
 
 -- Cached Piece moves
-knightMoves :: [Board]
+knightMoves :: Vector Board
 knightMoves = knightMove <$> squares
 
-kingMoves :: [Board]
+kingMoves :: Vector Board
 kingMoves = kingMove <$> squares
 
 
 -- Sliding moves
-fileMoves :: [Board]
+fileMoves :: Vector Board
 fileMoves = fileMove <$> squares
 
-rankMoves :: [Board]
+rankMoves :: Vector Board
 rankMoves = rankMove <$> squares
 
-diagMoves :: [Board]
+diagMoves :: Vector Board
 diagMoves = diagMove <$> squares
 
-antiDiagMoves :: [Board]
+antiDiagMoves :: Vector Board
 antiDiagMoves = antiDiagMove <$> squares
 
-westMoves :: [Board]
+westMoves :: Vector Board
 westMoves = westMove <$> squares
 
-northMoves :: [Board]
+northMoves :: Vector Board
 northMoves = northMove <$> squares
 
-eastMoves :: [Board]
+eastMoves :: Vector Board
 eastMoves = eastMove <$> squares
 
-southMoves :: [Board]
+southMoves :: Vector Board
 southMoves = southMove <$> squares
 
-northWestMoves :: [Board]
+northWestMoves :: Vector Board
 northWestMoves = northWestMove <$> squares
 
-northEastMoves :: [Board]
+northEastMoves :: Vector Board
 northEastMoves = northEastMove <$> squares
 
-southEastMoves :: [Board]
+southEastMoves :: Vector Board
 southEastMoves = southEastMove <$> squares
 
-southWestMoves :: [Board]
+southWestMoves :: Vector Board
 southWestMoves = southWestMove <$> squares
 
 
 -- Ranges
-squares :: [Int]
-squares = [0 .. 63]
+squares :: Vector Square
+squares = Vector.fromList [0 .. 63]
 
-sideSquares :: [Int]
-sideSquares = [0 .. 7]
+sideSquares :: Vector SideSquare
+sideSquares = Vector.fromList [0 .. 7]
 
-diagonals :: [Int]
-diagonals = [0 .. 14]
+diagonals :: Vector Diagonal
+diagonals = Vector.fromList [0 .. 14]
 
 
 -- Ranks
@@ -233,3 +233,6 @@ file_G = getFile 6
 
 file_H :: Board
 file_H = getFile 7
+
+(<$>) :: (Int -> Board) -> Vector Int -> Vector Board
+(<$>) = map

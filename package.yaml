@@ -23,8 +23,9 @@ dependencies:
 - classy-prelude
 - mtl
 - text
-- extra
 - bits
+- vector
+- extra
 
 language: GHC2021
 

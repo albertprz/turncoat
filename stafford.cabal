@@ -65,6 +65,7 @@ library
     , extra
     , mtl
     , text
+    , vector
   default-language: GHC2021
 
 executable stafford
@@ -102,4 +103,5 @@ executable stafford
     , mtl
     , stafford
     , text
+    , vector
   default-language: GHC2021

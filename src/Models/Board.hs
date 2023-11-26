@@ -18,6 +18,8 @@ data Position = Position {
 
 type Board = Word64
 type Square = Int
+type SideSquare = Int
+type Diagonal = Int
 type Rank = Int
 type File = Int
 type Diag = Int

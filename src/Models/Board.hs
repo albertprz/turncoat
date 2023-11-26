@@ -33,6 +33,14 @@ infixl 9 >>
 (>>) :: Shift
 (>>) = unsafeShiftR
 
+infixl 9 <<|
+(<<|) :: Shift
+(<<|) = shiftL
+
+infixl 9 |>>
+(|>>) :: Shift
+(|>>) = shiftR
+
 infixl 7 /
 (/) :: Square -> Square -> Square
 (/) = div
@@ -68,6 +76,9 @@ trailZeros = countTrailingZeros
 
 leadZeros :: Board -> Int
 leadZeros = countLeadingZeros
+
+position :: Int -> Board
+position n = 1 << n
 
 showBoard :: Word64 -> Text
 showBoard b = pack $ unlines $ map showBin

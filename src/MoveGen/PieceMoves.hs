@@ -8,6 +8,7 @@ import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceBoards
 
+type Move = (Color, Int, Board)
 
 kingInCheck :: Position -> Bool
 kingInCheck pos@Position {..} =
@@ -24,14 +25,42 @@ allEnemyAttacks pos@Position {..} =
 allAttacks :: Board -> Board -> Color -> Position -> Board
 allAttacks player enemy color
   (Position {pawns, knights, bishops, rooks, queens, kings}) =
-  pawnAttacks color (player&pawns)
-  .| foldMapBoard (.|) knightAttacks (player&knights)
-  .| foldMapBoard (.|) (bishopAttacks allPieces) (player&bishops)
-  .| foldMapBoard (.|) (rookAttacks allPieces) (player&rooks)
-  .| foldMapBoard (.|) (queenAttacks allPieces) (player&queens)
-  .| foldMapBoard (.|) kingAttacks (player&kings)
+     pawnAttacks  color                     (player&pawns)
+  .| foldMapBoard knightAttacks             (player&knights)
+  .| foldMapBoard (bishopAttacks allPieces) (player&bishops)
+  .| foldMapBoard (rookAttacks allPieces)   (player&rooks)
+  .| foldMapBoard (queenAttacks allPieces)  (player&queens)
+  .| kingAttacks                       (lsb (player&kings))
   where
     allPieces = player .| enemy
+
+-- allMoves :: Board -> Board -> Color -> Position -> [Move]
+
+pawnMoves :: Board -> Board -> Color -> Board -> Board
+pawnMoves allPieces player color board =
+  (pawnAdvances allPieces color board
+  .| pawnAttacks color board)
+  .\ player
+
+knightMoves :: Board -> Square -> Board
+knightMoves player n =
+  knightAttacks n .\ player
+
+kingMoves :: Board -> Square -> Board
+kingMoves player n =
+  kingAttacks n .\ player
+
+bishopMoves :: Board -> Board -> Square -> Board
+bishopMoves allPieces player n =
+  bishopAttacks allPieces n .\ player
+
+rookMoves :: Board -> Board -> Square -> Board
+rookMoves allPieces player n =
+  rookAttacks allPieces n .\ player
+
+queenMoves :: Board -> Board -> Square -> Board
+queenMoves allPieces player n =
+  queenAttacks allPieces n .\ player
 
 
 pawnAdvances :: Board -> Color -> Board -> Board
@@ -45,28 +74,28 @@ pawnAttacks color board = case color of
   Black -> (board .\ file_A) >> 9 .| (board .\ file_H) >> 7
 
 knightAttacks :: Square -> Board
-knightAttacks n = knightMoves !! n
+knightAttacks n = knightMovesVec !! n
 
 kingAttacks :: Square -> Board
-kingAttacks n = kingMoves !! n
+kingAttacks n = kingMovesVec !! n
 
 bishopAttacks :: Board -> Square -> Board
 bishopAttacks allPieces n =
-  sliding lsb (northEastMoves !!) allPieces n
-  .| sliding lsb (northWestMoves !!) allPieces n
-  .| sliding msb (southWestMoves !!) allPieces n
-  .| sliding msb (southEastMoves !!) allPieces n
+     sliding lsb (northEastMovesVec !!) allPieces n
+  .| sliding lsb (northWestMovesVec !!) allPieces n
+  .| sliding msb (southWestMovesVec !!) allPieces n
+  .| sliding msb (southEastMovesVec !!) allPieces n
 
 rookAttacks :: Board -> Square -> Board
 rookAttacks allPieces n =
-   sliding lsb (northMoves !!) allPieces n
-  .| sliding lsb (eastMoves !!) allPieces n
-  .| sliding msb (westMoves !!) allPieces n
-  .| sliding msb (southMoves !!) allPieces n
+     sliding lsb (northMovesVec !!) allPieces n
+  .| sliding lsb (eastMovesVec !!) allPieces n
+  .| sliding msb (westMovesVec !!) allPieces n
+  .| sliding msb (southMovesVec !!) allPieces n
 
 queenAttacks :: Board -> Square -> Board
 queenAttacks allPieces n =
-  rookAttacks allPieces n
+     rookAttacks allPieces n
   .| bishopAttacks allPieces n
 
 

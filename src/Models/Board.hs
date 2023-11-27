@@ -2,7 +2,8 @@ module Models.Board where
 
 import           AppPrelude
 import           Data.Bits
-import           Data.List  (iterate)
+import           Data.Bits.Extras (Ranked (lsb))
+import           Data.List        (iterate)
 
 type Board = Word64
 type Square = Int
@@ -62,18 +63,16 @@ leadZeros = countLeadingZeros
 toBoard :: Int -> Board
 toBoard n = 1 << n
 
-foldMapBoard ::  (Board -> Board -> Board) -> (Square -> Board) -> Board -> Board
+foldMapBoard ::  (Square -> Board) -> Board -> Board
 foldMapBoard = go 0 0
   where
-    go i acc foldFn mapFn board
-      | board == 0 = acc
-      | otherwise =
-        let
-          acc' = foldFn acc $ mapFn (i' - 1)
-          i' = i + zerosLen
-          board' = board >> zerosLen
-          zerosLen = trailZeros board + 1
-        in go i' acc' foldFn mapFn board'
+    go _ acc _ board | board == 0 = acc
+    go i acc mapFn board         = go i' acc' mapFn board'
+      where
+        acc' = acc .| mapFn (i' - 1)
+        i' = i + next
+        board' = board >> next
+        next = lsb board
 
 
 showBoard :: Word64 -> Text

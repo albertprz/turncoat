@@ -1,6 +1,6 @@
 {- HLINT ignore "Use camelCase" -}
 
-module MoveGen.PieceBoards (knightMoves, kingMoves, fileMoves, rankMoves, diagMoves, antiDiagMoves, westMoves, northMoves, southMoves, eastMoves, northWestMoves, northEastMoves, southEastMoves, southWestMoves, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
+module MoveGen.PieceBoards (knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, westMovesVec, northMovesVec, southMovesVec, eastMovesVec, northWestMovesVec, northEastMovesVec, southEastMovesVec, southWestMovesVec, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
 
 import           AppPrelude          hiding (fmap, map, (<$>))
 
@@ -80,28 +80,28 @@ diagHelper f n = foldl1 (.|) xs
 
 -- Move Functions
 northMove :: Square -> Board
-northMove n = aboveMask n & rankMoves !! n
+northMove n = aboveMask n & rankMovesVec !! n
 
 eastMove :: Square -> Board
-eastMove n = aboveMask n & fileMoves !! n
+eastMove n = aboveMask n & fileMovesVec !! n
 
 westMove :: Square -> Board
-westMove n = belowMask n & fileMoves !! n
+westMove n = belowMask n & fileMovesVec !! n
 
 southMove :: Square -> Board
-southMove n = belowMask n & rankMoves !! n
+southMove n = belowMask n & rankMovesVec !! n
 
 northWestMove :: Square -> Board
-northWestMove n = aboveMask n & diagMoves !! n
+northWestMove n = aboveMask n & diagMovesVec !! n
 
 northEastMove :: Square -> Board
-northEastMove n = aboveMask n & antiDiagMoves !! n
+northEastMove n = aboveMask n & antiDiagMovesVec !! n
 
 southEastMove :: Square -> Board
-southEastMove n = belowMask n & diagMoves !! n
+southEastMove n = belowMask n & diagMovesVec !! n
 
 southWestMove :: Square -> Board
-southWestMove n = belowMask n & antiDiagMoves !! n
+southWestMove n = belowMask n & antiDiagMovesVec !! n
 
 
 -- Masks
@@ -127,49 +127,49 @@ antiDiags = getAntiDiag <$> diagonals
 
 
 -- Cached Piece moves
-knightMoves :: Vector Board
-knightMoves = knightMove <$> squares
+knightMovesVec :: Vector Board
+knightMovesVec = knightMove <$> squares
 
-kingMoves :: Vector Board
-kingMoves = kingMove <$> squares
+kingMovesVec :: Vector Board
+kingMovesVec = kingMove <$> squares
 
 
 -- Sliding moves
-fileMoves :: Vector Board
-fileMoves = fileMove <$> squares
+fileMovesVec :: Vector Board
+fileMovesVec = fileMove <$> squares
 
-rankMoves :: Vector Board
-rankMoves = rankMove <$> squares
+rankMovesVec :: Vector Board
+rankMovesVec = rankMove <$> squares
 
-diagMoves :: Vector Board
-diagMoves = diagMove <$> squares
+diagMovesVec :: Vector Board
+diagMovesVec = diagMove <$> squares
 
-antiDiagMoves :: Vector Board
-antiDiagMoves = antiDiagMove <$> squares
+antiDiagMovesVec :: Vector Board
+antiDiagMovesVec = antiDiagMove <$> squares
 
-westMoves :: Vector Board
-westMoves = westMove <$> squares
+westMovesVec :: Vector Board
+westMovesVec = westMove <$> squares
 
-northMoves :: Vector Board
-northMoves = northMove <$> squares
+northMovesVec :: Vector Board
+northMovesVec = northMove <$> squares
 
-eastMoves :: Vector Board
-eastMoves = eastMove <$> squares
+eastMovesVec :: Vector Board
+eastMovesVec = eastMove <$> squares
 
-southMoves :: Vector Board
-southMoves = southMove <$> squares
+southMovesVec :: Vector Board
+southMovesVec = southMove <$> squares
 
-northWestMoves :: Vector Board
-northWestMoves = northWestMove <$> squares
+northWestMovesVec :: Vector Board
+northWestMovesVec = northWestMove <$> squares
 
-northEastMoves :: Vector Board
-northEastMoves = northEastMove <$> squares
+northEastMovesVec :: Vector Board
+northEastMovesVec = northEastMove <$> squares
 
-southEastMoves :: Vector Board
-southEastMoves = southEastMove <$> squares
+southEastMovesVec :: Vector Board
+southEastMovesVec = southEastMove <$> squares
 
-southWestMoves :: Vector Board
-southWestMoves = southWestMove <$> squares
+southWestMovesVec :: Vector Board
+southWestMovesVec = southWestMove <$> squares
 
 
 -- Ranges

@@ -2,7 +2,7 @@
 
 module MoveGen.PieceBoards (knightMoves, kingMoves, fileMoves, rankMoves, diagMoves, antiDiagMoves, westMoves, northMoves, southMoves, eastMoves, northWestMoves, northEastMoves, southEastMoves, southWestMoves, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
 
-import           AppPrelude          hiding (map, (<$>))
+import           AppPrelude          hiding (fmap, map, (<$>))
 
 import           Data.Vector.Unboxed as Vector
 import           Models.Board
@@ -14,53 +14,53 @@ knightMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    move1 = (board .\ (file_B .| file_A .| rank_8)) << 10
-    move2 = (board .\ (file_B .| file_A .| rank_1)) >> 6
-    move3 = (board .\ (file_A .| rank_7 .| rank_8)) << 17
-    move4 = (board .\ (file_H .| rank_7 .| rank_8)) << 15
-    move5 = (board .\ (file_G .| file_H .| rank_8)) << 6
-    move6 = (board .\ (file_G .| file_H .| rank_1)) >> 10
-    move7 = (board .\ (file_H .| rank_2 .| rank_1)) >> 17
-    move8 = (board .\ (file_A .| rank_2 .| rank_1)) >> 15
-    board = 1 << n
+    move1 = (board .\ (file_G .| file_A .| rank_8)) << 10
+    move3 = (board .\ (file_H .| rank_7 .| rank_8)) << 17
+    move4 = (board .\ (file_A .| rank_7 .| rank_8)) << 15
+    move5 = (board .\ (file_B .| file_H .| rank_8)) << 6
+    move6 = (board .\ (file_B .| file_H .| rank_1)) >> 10
+    move7 = (board .\ (file_A .| rank_2 .| rank_1)) >> 17
+    move8 = (board .\ (file_H .| rank_2 .| rank_1)) >> 15
+    move2 = (board .\ (file_G .| file_A .| rank_1)) >> 6
+    board = toBoard n
 
 kingMove :: Square -> Board
 kingMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    move1 = (board .\ file_A) << 1
-    move2 = (board .\ (file_A .| rank_8)) << 9
-    move3 = (board .\ file_H) >> 1
-    move4 = (board .\ (file_H .| rank_1)) >> 9
+    move1 = (board .\ file_H) << 1
+    move2 = (board .\ (file_H .| rank_8)) << 9
+    move3 = (board .\ file_A) >> 1
+    move4 = (board .\ (file_A .| rank_1)) >> 9
     move5 = (board .\ rank_8) << 8
-    move6 = (board .\ (file_H .| rank_8)) << 7
+    move6 = (board .\ (file_A .| rank_8)) << 7
     move7 = (board .\ rank_1) >> 8
-    move8 = (board .\ (file_A .| rank_1)) >> 7
-    board = 1 << n
+    move8 = (board .\ (file_H .| rank_1)) >> 7
+    board = toBoard n
 
 
 fileMove :: Square -> Board
-fileMove n = files !! (n % 8)
+fileMove n = ranks !! (n / 8)
 
 rankMove :: Square -> Board
-rankMove n = ranks !! (n / 8)
+rankMove n = files !! (n % 8)
 
 diagMove :: Square -> Board
-diagMove n = diags !! (n % 8 + n / 8 )
+diagMove n = antiDiags !! (n % 8 + n / 8)
 
 antiDiagMove :: Square -> Board
-antiDiagMove n = antiDiags !! (7 - n % 8 + n / 8 )
+antiDiagMove n = diags !! (7 - n % 8 + n / 8 )
 
 getRank :: Rank -> Board
 getRank n = foldl1 (.|) (map f sideSquares)
   where
-    f = (1 << n << 3 <<)
+    f = (1 << (8 * n) <<)
 
 getFile :: File -> Board
 getFile n = foldl1 (.|) (map f sideSquares)
   where
-    f = (1 << n <<) . (<< 3)
+    f = (1 << n <<) . (* 8)
 
 getDiag :: Diag -> Board
 getDiag = diagHelper (7 -)
@@ -75,41 +75,41 @@ diagHelper f n = foldl1 (.|) xs
     x <- Vector.toList sideSquares
     let y = f (n - x) `rem` 8
     guard $! inRange 0 7 (n - x)
-    pure $! 1 << (y + 8 * x)
+    pure $! toBoard (y + 8 * x)
 
 
 -- Move Functions
-westMove :: Square -> Board
-westMove n = aboveMask n & fileMoves !! n
-
 northMove :: Square -> Board
 northMove n = aboveMask n & rankMoves !! n
 
 eastMove :: Square -> Board
-eastMove n = belowMask n & fileMoves !! n
+eastMove n = aboveMask n & fileMoves !! n
+
+westMove :: Square -> Board
+westMove n = belowMask n & fileMoves !! n
 
 southMove :: Square -> Board
 southMove n = belowMask n & rankMoves !! n
 
 northWestMove :: Square -> Board
-northWestMove n = aboveMask n & antiDiagMoves !! n
+northWestMove n = aboveMask n & diagMoves !! n
 
 northEastMove :: Square -> Board
-northEastMove n = aboveMask n & diagMoves !! n
+northEastMove n = aboveMask n & antiDiagMoves !! n
 
 southEastMove :: Square -> Board
-southEastMove n = belowMask n & antiDiagMoves !! n
+southEastMove n = belowMask n & diagMoves !! n
 
 southWestMove :: Square -> Board
-southWestMove n = belowMask n & diagMoves !! n
+southWestMove n = belowMask n & antiDiagMoves !! n
 
 
 -- Masks
 aboveMask :: Square -> Board
-aboveMask n = ((1 << 63) - (1 << n)) << 1
+aboveMask n = (toBoard 63 - toBoard n) << 1
 
 belowMask :: Square -> Board
-belowMask n = (1 << n) - 1
+belowMask n = toBoard n - 1
 
 
 -- Directions

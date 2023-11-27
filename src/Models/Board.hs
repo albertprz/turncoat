@@ -4,18 +4,6 @@ import           AppPrelude
 import           Data.Bits
 import           Data.List  (iterate)
 
-
-data Position = Position {
-  player  :: Board,
-  enemy   :: Board,
-  pawns   :: Board,
-  knights :: Board,
-  bishops :: Board,
-  rooks   :: Board,
-  queens  :: Board,
-  kings   :: Board
-}
-
 type Board = Word64
 type Square = Int
 type SideSquare = Int
@@ -34,14 +22,6 @@ infixl 9 <<
 infixl 9 >>
 (>>) :: Shift
 (>>) = unsafeShiftR
-
-infixl 9 <<|
-(<<|) :: Shift
-(<<|) = shiftL
-
-infixl 9 |>>
-(|>>) :: Shift
-(|>>) = shiftR
 
 infixl 7 /
 (/) :: Square -> Square -> Square
@@ -79,22 +59,21 @@ trailZeros = countTrailingZeros
 leadZeros :: Board -> Int
 leadZeros = countLeadingZeros
 
-position :: Int -> Board
-position n = 1 << n
+toBoard :: Int -> Board
+toBoard n = 1 << n
 
 foldMapBoard ::  (Board -> Board -> Board) -> (Square -> Board) -> Board -> Board
-foldMapBoard x y z = go 0 z x y z
+foldMapBoard = go 0 0
   where
-    go i acc foldFn mapFn board =
-      if zerosLen == 64 then
-        board
-      else
-        go newI (foldFn acc (mapFn newI)) foldFn mapFn newBoard
-      where
-        zerosLen = trailZeros board
-        newI = i + zerosLen
-        newBoard = board >> zerosLen
-
+    go i acc foldFn mapFn board
+      | board == 0 = acc
+      | otherwise =
+        let
+          acc' = foldFn acc $ mapFn (i' - 1)
+          i' = i + zerosLen
+          board' = board >> zerosLen
+          zerosLen = trailZeros board + 1
+        in go i' acc' foldFn mapFn board'
 
 
 showBoard :: Word64 -> Text

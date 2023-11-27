@@ -5,26 +5,31 @@ import           AppPrelude
 import           Data.Bits.Extras    (Ranked (lsb), msb)
 import           Models.Board
 import           Models.Piece
+import           Models.Position
 import           MoveGen.PieceBoards
 
 
-allPlayerAttacks :: Color -> Position -> Board
-allPlayerAttacks color pos =
-  allAttacks pos.player pos.enemy color pos
+kingInCheck :: Position -> Bool
+kingInCheck pos@Position {..} =
+  player&kings & allEnemyAttacks pos /= 0
 
-allEnemyAttacks :: Color -> Position -> Board
-allEnemyAttacks color pos =
-  allAttacks pos.enemy pos.player (reverseColor color) pos
+allPlayerAttacks :: Position -> Board
+allPlayerAttacks pos@Position {..} =
+  allAttacks player enemy color pos
+
+allEnemyAttacks :: Position -> Board
+allEnemyAttacks pos@Position {..} =
+  allAttacks enemy player (reverseColor color) pos
 
 allAttacks :: Board -> Board -> Color -> Position -> Board
 allAttacks player enemy color
   (Position {pawns, knights, bishops, rooks, queens, kings}) =
-  pawnAttacks color (player & pawns)
-  .| foldMapBoard (.|) knightAttacks (player & knights)
-  .| foldMapBoard (.|) (bishopAttacks allPieces) (player & bishops)
-  .| foldMapBoard (.|) (rookAttacks allPieces) (player & rooks)
-  .| foldMapBoard (.|) (queenAttacks allPieces) (player & queens)
-  .| foldMapBoard (.|) kingAttacks (player & kings)
+  pawnAttacks color (player&pawns)
+  .| foldMapBoard (.|) knightAttacks (player&knights)
+  .| foldMapBoard (.|) (bishopAttacks allPieces) (player&bishops)
+  .| foldMapBoard (.|) (rookAttacks allPieces) (player&rooks)
+  .| foldMapBoard (.|) (queenAttacks allPieces) (player&queens)
+  .| foldMapBoard (.|) kingAttacks (player&kings)
   where
     allPieces = player .| enemy
 
@@ -36,8 +41,8 @@ pawnAdvances allPieces color board = case color of
 
 pawnAttacks :: Color -> Board -> Board
 pawnAttacks color board = case color of
-  White -> (board .\ file_A) << 9 .| (board .\ file_H) << 7
-  Black -> (board .\ file_A) >> 7 .| (board .\ file_H) >> 9
+  White -> (board .\ file_A) << 7 .| (board .\ file_H) << 9
+  Black -> (board .\ file_A) >> 9 .| (board .\ file_H) >> 7
 
 knightAttacks :: Square -> Board
 knightAttacks n = knightMoves !! n
@@ -54,9 +59,9 @@ bishopAttacks allPieces n =
 
 rookAttacks :: Board -> Square -> Board
 rookAttacks allPieces n =
-  sliding lsb (westMoves !!) allPieces n
-  .| sliding lsb (northMoves !!) allPieces n
-  .| sliding msb (eastMoves !!) allPieces n
+   sliding lsb (northMoves !!) allPieces n
+  .| sliding lsb (eastMoves !!) allPieces n
+  .| sliding msb (westMoves !!) allPieces n
   .| sliding msb (southMoves !!) allPieces n
 
 queenAttacks :: Board -> Square -> Board
@@ -66,8 +71,9 @@ queenAttacks allPieces n =
 
 
 sliding ::  (Board -> Square) -> (Square -> Board) -> Board -> Square -> Board
-sliding firstBlocker lookupMove allPieces n =
-  ray ^ blockerRay
+sliding firstBlocker lookupMove allPieces n
+  | blockers == 0 = ray
+  | otherwise    = ray ^ lookupMove (firstBlocker (ray & allPieces))
   where
     ray = lookupMove n
-    blockerRay = lookupMove (firstBlocker (ray & allPieces))
+    blockers = ray & allPieces

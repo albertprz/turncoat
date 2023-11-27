@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           stafford
-version:        0.1.1.0
+version:        0.1.0
 synopsis:       Elegant chess engine in Haskell
 description:    Please see the README on GitHub at <https://github.com/albertprz/stafford#readme>
 category:       Chess Engine
@@ -30,6 +30,7 @@ library
       Models.Board
       Models.GameState
       Models.Piece
+      Models.Position
       MoveGen.PieceBoards
       MoveGen.PieceMoves
       Utils.Ord

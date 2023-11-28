@@ -8,7 +8,6 @@ import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceBoards
 
-type Move = (Color, Int, Board)
 
 kingInCheck :: Position -> Bool
 kingInCheck pos@Position {..} =
@@ -34,13 +33,25 @@ allAttacks player enemy color
   where
     allPieces = player .| enemy
 
--- allMoves :: Board -> Board -> Color -> Position -> [Move]
+allMoves :: Position -> [Move]
+allMoves (Position {..}) =
+  foldBoardMoves Pawn (pawnMoves allPieces player color) (player&pawns)
+  $ foldBoardMoves Knight (knightMoves player) (player&knights)
+  $ foldBoardMoves Bishop (bishopMoves allPieces player) (player&bishops)
+  $ foldBoardMoves Rook (rookMoves allPieces player) (player&rooks)
+  $ foldBoardMoves Queen (queenMoves allPieces player) (player&queens)
+  [ (King, kingSquare, kingMoves player kingSquare)]
+  where
+    allPieces = player .| enemy
+    kingSquare = lsb (player&knights)
 
-pawnMoves :: Board -> Board -> Color -> Board -> Board
-pawnMoves allPieces player color board =
+pawnMoves :: Board -> Board -> Color -> Square -> Board
+pawnMoves allPieces player color n =
   (pawnAdvances allPieces color board
   .| pawnAttacks color board)
   .\ player
+  where
+    board = toBoard n
 
 knightMoves :: Board -> Square -> Board
 knightMoves player n =

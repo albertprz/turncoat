@@ -35,7 +35,7 @@ allAttacks player enemy color
 
 allMoves :: Position -> [Move]
 allMoves (Position {..}) =
-  foldBoardMoves Pawn (pawnMoves allPieces player color) (player&pawns)
+  foldBoardMoves Pawn (pawnMoves allPieces player enemy color) (player&pawns)
   $ foldBoardMoves Knight (knightMoves player) (player&knights)
   $ foldBoardMoves Bishop (bishopMoves allPieces player) (player&bishops)
   $ foldBoardMoves Rook (rookMoves allPieces player) (player&rooks)
@@ -45,10 +45,10 @@ allMoves (Position {..}) =
     allPieces = player .| enemy
     kingSquare = lsb (player&knights)
 
-pawnMoves :: Board -> Board -> Color -> Square -> Board
-pawnMoves allPieces player color n =
+pawnMoves :: Board -> Board -> Board -> Color -> Square -> Board
+pawnMoves allPieces player enemy color n =
   (pawnAdvances allPieces color board
-  .| pawnAttacks color board)
+  .| pawnAttacks color board & enemy)
   .\ player
   where
     board = toBoard n
@@ -76,8 +76,8 @@ queenMoves allPieces player n =
 
 pawnAdvances :: Board -> Color -> Board -> Board
 pawnAdvances allPieces color board = case color of
-  White -> board << 8 .| ((rank_2 & board << 8) .\ allPieces) << 8
-  Black -> board >> 8 .| ((rank_7 & board >> 8) .\ allPieces) << 8
+  White -> board << 8 .| ((rank_2 & board) << 8 .\ allPieces) << 8
+  Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) << 8
 
 pawnAttacks :: Color -> Board -> Board
 pawnAttacks color board = case color of

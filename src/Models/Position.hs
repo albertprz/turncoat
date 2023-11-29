@@ -36,3 +36,5 @@ startPosition = Position {
   , queens = (rank_1 .| rank_8) & file_D
   , kings = (rank_1 .| rank_8) & file_E
 }
+
+-- makeMove (Pawn, start, end) position =

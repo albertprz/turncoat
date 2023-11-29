@@ -8,7 +8,7 @@ import qualified Data.Vector.Unboxed as Vector
 import           Models.Piece        (Piece)
 
 type Board = Word64
-type Move = (Piece, Square, Board)
+type Move = (Piece, Square, Square)
 
 type Square = Int
 type SideSquare = Int
@@ -74,9 +74,13 @@ foldMapBoard = foldlBoard 0 (.|)
 
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
 foldBoardMoves piece f board moves =
-  foldlBoard moves (flip cons) mapFn board
+  foldlBoard moves (foldBoardSquares piece f) id board
+
+foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
+foldBoardSquares piece f moves start =
+  foldlBoard moves (flip cons) mapFn (f start)
   where
-    mapFn n = (piece, n, f n)
+    mapFn end = (piece, start, end)
 
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a
 foldlBoard = go 0
@@ -91,9 +95,9 @@ foldlBoard = go 0
 
 
 showMove :: Move -> Text
-showMove (piece, square, board) =
-  tshow piece <> " at " <> showSquare square <> ":"
-  <> "\n" <> showBoard board
+showMove (piece, start, end) =
+  tshow piece <> " at " <> showSquare start <> " -> "
+  <> showSquare end
 
 showBoard :: Board -> Text
 showBoard board = pack $ unlines $ map showBin
@@ -105,7 +109,7 @@ showBoard board = pack $ unlines $ map showBin
     sb True  = 'X'
 
 showSquare :: Square -> Text
-showSquare n = pack [rankChars !! rank, fileChars !! file]
+showSquare n = pack [fileChars !! file, rankChars !! rank]
   where
     file = n % 8
     rank = n / 8

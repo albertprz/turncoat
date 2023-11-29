@@ -42,8 +42,9 @@ allMoves (Position {..}) =
   $ foldBoardMoves Bishop (bishopMoves allPieces player) (player&bishops)
   $ foldBoardMoves Rook (rookMoves allPieces player) (player&rooks)
   $ foldBoardMoves Queen (queenMoves allPieces player) (player&queens)
-  [ (King, kingSquare,
-     kingMoves allPieces player attacked castling (player&rooks) king kingSquare)]
+  $ foldBoardSquares King
+    (kingMoves allPieces player attacked castling (player&rooks) king)
+    [] kingSquare
   where
     allPieces = player .| enemy
     kingSquare = lsb king
@@ -78,7 +79,7 @@ kingCastlingMoves allPieces attacked castling rooks king n
       = bit (ones (castling & rooks & file_A & kingRank))
         * ((castling & king) << 2)
   | longCastleSliding & collisions .| inCheck
-    .| allPieces & kingRank & file_B  == 0
+    .| allPieces & kingRank & file_B == 0
       = bit (ones (castling & rooks & file_H & kingRank))
         * ((castling & king) >> 2)
   | otherwise = 0

@@ -2,6 +2,7 @@ module MoveGen.PieceMoves where
 
 import           AppPrelude
 
+import           Data.Bits           (Bits (bit))
 import           Data.Bits.Extras    (Ranked (lsb), msb)
 import           Models.Board
 import           Models.Piece
@@ -35,31 +36,57 @@ allAttacks player enemy color
 
 allMoves :: Position -> [Move]
 allMoves (Position {..}) =
-  foldBoardMoves Pawn (pawnMoves allPieces player enemy color) (player&pawns)
+  foldBoardMoves Pawn (pawnMoves allPieces player enemy enPassant color)
+    (player&pawns)
   $ foldBoardMoves Knight (knightMoves player) (player&knights)
   $ foldBoardMoves Bishop (bishopMoves allPieces player) (player&bishops)
   $ foldBoardMoves Rook (rookMoves allPieces player) (player&rooks)
   $ foldBoardMoves Queen (queenMoves allPieces player) (player&queens)
-  [ (King, kingSquare, kingMoves player kingSquare)]
+  [ (King, kingSquare,
+     kingMoves allPieces player attacked castling (player&rooks) king kingSquare)]
   where
     allPieces = player .| enemy
-    kingSquare = lsb (player&knights)
+    kingSquare = lsb king
+    king = player&kings
 
-pawnMoves :: Board -> Board -> Board -> Color -> Square -> Board
-pawnMoves allPieces player enemy color n =
+pawnMoves :: Board -> Board -> Board -> Board -> Color -> Square -> Board
+pawnMoves allPieces player enemy enPassant color n =
   (pawnAdvances allPieces color board
-  .| pawnAttacks color board & enemy)
+  .| pawnAttacks color board & (enemy .| enPassant))
   .\ player
   where
     board = toBoard n
+
+pawnAdvances :: Board -> Color -> Board -> Board
+pawnAdvances allPieces color board = case color of
+  White -> board << 8 .| ((rank_2 & board) << 8 .\ allPieces) << 8
+  Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) << 8
 
 knightMoves :: Board -> Square -> Board
 knightMoves player n =
   knightAttacks n .\ player
 
-kingMoves :: Board -> Square -> Board
-kingMoves player n =
-  kingAttacks n .\ player
+kingMoves :: Board -> Board -> Board -> Board -> Board -> Board -> Square -> Board
+kingMoves allPieces player attacked castling rooks king n =
+  (kingAttacks n
+  .| kingCastlingMoves allPieces attacked castling rooks king n)
+  .\ (attacked .| player)
+
+kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Int -> Board
+kingCastlingMoves allPieces attacked castling rooks king n
+  | shortCastleSliding & collisions .| inCheck == 0
+      = bit (ones (castling & rooks & file_A & kingRank))
+        * ((castling & king) << 2)
+  | longCastleSliding & collisions .| inCheck
+    .| allPieces & kingRank & file_B  == 0
+      = bit (ones (castling & rooks & file_H & kingRank))
+        * ((castling & king) >> 2)
+  | otherwise = 0
+  where
+    collisions = kingRank & (attacked .| allPieces)
+    kingRank = rankMovesVec !! n
+    inCheck = king & attacked
+
 
 bishopMoves :: Board -> Board -> Square -> Board
 bishopMoves allPieces player n =
@@ -72,12 +99,6 @@ rookMoves allPieces player n =
 queenMoves :: Board -> Board -> Square -> Board
 queenMoves allPieces player n =
   queenAttacks allPieces n .\ player
-
-
-pawnAdvances :: Board -> Color -> Board -> Board
-pawnAdvances allPieces color board = case color of
-  White -> board << 8 .| ((rank_2 & board) << 8 .\ allPieces) << 8
-  Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) << 8
 
 pawnAttacks :: Color -> Board -> Board
 pawnAttacks color board = case color of

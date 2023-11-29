@@ -7,20 +7,26 @@ import           MoveGen.PieceBoards
 
 
 data Position = Position {
-  color   :: Color,
-  player  :: Board,
-  enemy   :: Board,
-  pawns   :: Board,
-  rooks   :: Board,
-  knights :: Board,
-  bishops :: Board,
-  queens  :: Board,
-  kings   :: Board
+  color     :: Color,
+  attacked  :: Board,
+  castling  :: Board,
+  enPassant :: Board,
+  player    :: Board,
+  enemy     :: Board,
+  pawns     :: Board,
+  rooks     :: Board,
+  knights   :: Board,
+  bishops   :: Board,
+  queens    :: Board,
+  kings     :: Board
 }
 
 startPosition :: Position
 startPosition = Position {
   color = White
+  , attacked = 0
+  , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
+  , enPassant = 0
   , player = rank_1 .| rank_2
   , enemy = rank_7 .| rank_8
   , pawns = rank_2 .| rank_7

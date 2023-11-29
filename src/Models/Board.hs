@@ -72,7 +72,6 @@ toBoard n = 1 << n
 foldMapBoard ::  (Square -> Board) -> Board -> Board
 foldMapBoard = foldlBoard 0 (.|)
 
-
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
 foldBoardMoves piece f board moves =
   foldlBoard moves (flip cons) mapFn board

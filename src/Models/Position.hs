@@ -1,9 +1,8 @@
 module Models.Position where
 
 
-import           Models.Board
-import           Models.Piece        (Color (..))
 import           Constants.Boards
+import           Models.Piece     (Color (..))
 
 
 data Position = Position {
@@ -36,4 +35,3 @@ startPosition = Position {
   , queens = (rank_1 .| rank_8) & file_D
   , kings = (rank_1 .| rank_8) & file_E
 }
-

@@ -1,19 +1,19 @@
 module MoveGen.MakeMove where
 
-import AppPrelude
+import           AppPrelude
 
-import Models.Piece
-import Models.Board
-import Models.Position (Position(..))
-import MoveGen.PieceMoves (allEnemyAttacks)
-import Data.Bits.Extras (lsb)
-import Constants.Boards (rankMovesVec)
+import           Constants.Boards
+import           Data.Bits.Extras   (lsb)
+import           Models.Move
+import           Models.Piece
+import           Models.Position    (Position (..))
+import           MoveGen.PieceMoves (allEnemyAttacks)
 
 
 makeMove :: Move -> Position -> Position
-makeMove (piece, start, end) pos =
+makeMove Move {..} pos =
   switchPlayers
-  $ movePiece piece startBoard endBoard
+  $ movePiece piece promotion startBoard endBoard
   $ updatePlayerBoards startBoard endBoard pos
   where
     startBoard = toBoard start
@@ -40,53 +40,86 @@ updatePlayerBoards start end pos@Position {..} =
     queens = rooks .\ end
   }
 
-movePiece :: Piece -> Board -> Board -> Position -> Position
-movePiece Pawn start end pos@Position {..} =
+movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
+movePiece Pawn Nothing start end pos@Position {..} =
   case color of
     White ->
       pos {
         pawns = (pawns ^ (start .| enPassantCapture)) .| end,
-        enPassant = start << 8 & end >> 8,
-        enemy = enemy ^ enPassantCapture
+        enemy = enemy ^ enPassantCapture,
+        enPassant = start << 8 & end >> 8
       }
       where
         enPassantCapture = (enPassant & end) >> 8
     Black ->
       pos {
         pawns = (pawns ^ (start .| enPassantCapture)) .| end,
-        enPassant = start >> 8 & end << 8,
-        enemy = enemy ^ enPassantCapture
+        enemy = enemy ^ enPassantCapture,
+        enPassant = start >> 8 & end << 8
       }
       where
         enPassantCapture = (enPassant & end) << 8
 
-movePiece Knight start end pos@Position {..} =
+movePiece Pawn (Just KnightProm) start end pos@Position {..} =
   pos {
-    knights = (knights ^ start) .| end
+    pawns = pawns ^ start,
+    knights = knights .| end,
+    enPassant = 0
   }
 
-movePiece Bishop start end pos@Position {..} =
+movePiece Pawn (Just BishopProm) start end pos@Position {..} =
   pos {
-    bishops = (bishops ^ start) .| end
+    pawns = pawns ^ start,
+    bishops = bishops .| end,
+    enPassant = 0
   }
 
-movePiece Rook start end pos@Position {..} =
+movePiece Pawn (Just RookProm) start end pos@Position {..} =
+  pos {
+    pawns = pawns ^ start,
+    rooks = rooks .| end,
+    enPassant = 0
+  }
+
+movePiece Pawn (Just QueenProm) start end pos@Position {..} =
+  pos {
+    pawns = pawns ^ start,
+    queens = queens .| end,
+    enPassant = 0
+  }
+
+movePiece Knight _ start end pos@Position {..} =
+  pos {
+    knights = (knights ^ start) .| end,
+    enPassant = 0
+  }
+
+movePiece Bishop _ start end pos@Position {..} =
+  pos {
+    bishops = (bishops ^ start) .| end,
+    enPassant = 0
+  }
+
+movePiece Rook _ start end pos@Position {..} =
   pos {
     rooks = (rooks ^ start) .| end,
-    castling = castling .\ start
+    castling = castling .\ start,
+    enPassant = 0
   }
 
-movePiece Queen start end pos@Position {..} =
+movePiece Queen _ start end pos@Position {..} =
   pos {
-    queens = (queens ^ start) .| end
+    queens = (queens ^ start) .| end,
+    enPassant = 0
   }
 
-movePiece King start end pos@Position {..} =
+movePiece King _ start end pos@Position {..} =
   pos {
     kings = (kings ^ start) .| end,
     castling = castling .\ kingRank,
     player = (player ^ rookStart) .| rookEnd,
-    rooks = (rooks ^ rookStart) .| rookEnd
+    rooks = (rooks ^ rookStart) .| rookEnd,
+    enPassant = 0
   }
   where
     rookStart = shortCastle << 1 .| longCastle >> 2

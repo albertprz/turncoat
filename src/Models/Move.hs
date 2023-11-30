@@ -1,72 +1,20 @@
-module Models.Board where
+module Models.Move where
 
 import           AppPrelude
+import           Constants.Boards
 import           Data.Bits
 import           Data.Bits.Extras    (Ranked (lsb))
 import           Data.List           (iterate)
 import qualified Data.Vector.Unboxed as Vector
-import           Models.Piece        (Piece)
-
-type Board = Word64
-type Move = (Piece, Square, Square)
-
-type Square = Int
-type SideSquare = Int
-type Diagonal = Int
-type Rank = Int
-type File = Int
-type Diag = Int
-type AntiDiag = Int
-
-type Shift = forall a. Bits a => a -> Int -> a
+import           Models.Piece        (Piece (..), Promotion (..))
 
 
-infixl 9 <<
-(<<) :: Shift
-(<<) = unsafeShiftL
-
-infixl 9 >>
-(>>) :: Shift
-(>>) = unsafeShiftR
-
-infixl 7 /
-(/) :: Square -> Square -> Square
-(/) = div
-
-infixl 7 %
-(%) :: Square -> Square -> Square
-(%) = rem
-
-infixl 8 &
-(&) :: Board -> Board -> Board
-(&) = (.&.)
-
-infixl 8 .\
-(.\) :: Board -> Board -> Board
-(.\) x y = x & (!) y
-
-infixl 7 .|
-(.|) :: Board -> Board -> Board
-(.|) = (.|.)
-
-infixl 7 ^
-(^) :: Board -> Board -> Board
-(^) = xor
-
-(!) :: Board -> Board
-(!) = complement
-
-ones :: Board -> Int
-ones = popCount
-
-trailZeros :: Board -> Int
-trailZeros = countTrailingZeros
-
-leadZeros :: Board -> Int
-leadZeros = countLeadingZeros
-
-toBoard :: Int -> Board
-toBoard n = 1 << n
+data Move = Move {
+  piece     :: Piece,
+  promotion :: Maybe Promotion,
+  start     :: Square,
+  end       :: Square
+}
 
 
 foldMapBoard ::  (Square -> Board) -> Board -> Board
@@ -77,10 +25,23 @@ foldBoardMoves piece f board moves =
   foldlBoard moves (foldBoardSquares piece f) id board
 
 foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
+foldBoardSquares Pawn f moves start =
+  foldlBoard moves foldFn id (f start)
+  where
+    foldFn xs end
+      | toBoard end & (rank_1 .| rank_8) /= 0 =
+        Move Pawn (Just QueenProm) start end
+        : Move Pawn (Just KnightProm) start end
+        : Move Pawn (Just RookProm) start end
+        : Move Pawn (Just BishopProm) start end
+        : xs
+      | otherwise =
+        Move Pawn Nothing start end : xs
+
 foldBoardSquares piece f moves start =
   foldlBoard moves (flip cons) mapFn (f start)
   where
-    mapFn end = (piece, start, end)
+    mapFn = Move piece Nothing start
 
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a
 foldlBoard = go 0
@@ -95,8 +56,10 @@ foldlBoard = go 0
 
 
 showMove :: Move -> Text
-showMove (piece, start, end) =
-  tshow piece <> " at " <> showSquare start <> " -> "
+showMove (Move {..}) =
+  tshow piece <> " at "
+  <> showSquare start <> " -> "
+  <> maybe "" ((<> " ") . tshow) promotion
   <> showSquare end
 
 showBoard :: Board -> Text

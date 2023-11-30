@@ -1,12 +1,72 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Constants.Boards (knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, westMovesVec, northMovesVec, southMovesVec, eastMovesVec, northWestMovesVec, northEastMovesVec, southEastMovesVec, southWestMovesVec, longCastleSliding, shortCastleSliding, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
+module Constants.Boards where
 
 import           AppPrelude          hiding (fmap, map, (<$>))
 
-import           Data.Vector.Unboxed as Vector
-import           Models.Board
+import           Data.Bits
+import           Data.Vector.Unboxed as Vector hiding ((!))
 import           Utils.Ord           (inRange)
+
+type Board = Word64
+
+type Square = Int
+type SideSquare = Int
+type Diagonal = Int
+type Rank = Int
+type File = Int
+type Diag = Int
+type AntiDiag = Int
+
+type Shift = forall a. Bits a => a -> Square -> a
+
+infixl 9 <<
+(<<) :: Shift
+(<<) = unsafeShiftL
+
+infixl 9 >>
+(>>) :: Shift
+(>>) = unsafeShiftR
+
+infixl 7 /
+(/) :: Square -> Square -> Square
+(/) = div
+
+infixl 7 %
+(%) :: Square -> Square -> Square
+(%) = rem
+
+infixl 8 &
+(&) :: Board -> Board -> Board
+(&) = (.&.)
+
+infixl 8 .\
+(.\) :: Board -> Board -> Board
+(.\) x y = x & (!) y
+
+infixl 7 .|
+(.|) :: Board -> Board -> Board
+(.|) = (.|.)
+
+infixl 7 ^
+(^) :: Board -> Board -> Board
+(^) = xor
+
+(!) :: Board -> Board
+(!) = complement
+
+ones :: Board -> Int
+ones = popCount
+
+trailZeros :: Board -> Int
+trailZeros = countTrailingZeros
+
+leadZeros :: Board -> Int
+leadZeros = countLeadingZeros
+
+toBoard :: Square -> Board
+toBoard n = 1 << n
+
 
 
 knightMove :: Square -> Board
@@ -114,62 +174,62 @@ belowMask n = toBoard n - 1
 
 -- Directions
 ranks :: Vector Board
-ranks = getRank <$> sideSquares
+ranks = map getRank sideSquares
 
 files :: Vector Board
-files = getFile <$> sideSquares
+files = map getFile sideSquares
 
 diags :: Vector Board
-diags = getDiag <$> diagonals
+diags = map getDiag diagonals
 
 antiDiags :: Vector Board
-antiDiags = getAntiDiag <$> diagonals
+antiDiags = map getAntiDiag diagonals
 
 
 -- Cached Piece moves
 knightMovesVec :: Vector Board
-knightMovesVec = knightMove <$> squares
+knightMovesVec = map knightMove squares
 
 kingMovesVec :: Vector Board
-kingMovesVec = kingMove <$> squares
+kingMovesVec = map kingMove squares
 
 
 -- Sliding moves
 fileMovesVec :: Vector Board
-fileMovesVec = fileMove <$> squares
+fileMovesVec = map fileMove squares
 
 rankMovesVec :: Vector Board
-rankMovesVec = rankMove <$> squares
+rankMovesVec = map rankMove squares
 
 diagMovesVec :: Vector Board
-diagMovesVec = diagMove <$> squares
+diagMovesVec = map diagMove squares
 
 antiDiagMovesVec :: Vector Board
-antiDiagMovesVec = antiDiagMove <$> squares
+antiDiagMovesVec = map antiDiagMove squares
 
 westMovesVec :: Vector Board
-westMovesVec = westMove <$> squares
+westMovesVec = map westMove squares
 
 northMovesVec :: Vector Board
-northMovesVec = northMove <$> squares
+northMovesVec = map northMove squares
 
 eastMovesVec :: Vector Board
-eastMovesVec = eastMove <$> squares
+eastMovesVec = map eastMove squares
 
 southMovesVec :: Vector Board
-southMovesVec = southMove <$> squares
+southMovesVec = map southMove squares
 
 northWestMovesVec :: Vector Board
-northWestMovesVec = northWestMove <$> squares
+northWestMovesVec = map northWestMove squares
 
 northEastMovesVec :: Vector Board
-northEastMovesVec = northEastMove <$> squares
+northEastMovesVec = map northEastMove squares
 
 southEastMovesVec :: Vector Board
-southEastMovesVec = southEastMove <$> squares
+southEastMovesVec = map southEastMove squares
 
 southWestMovesVec :: Vector Board
-southWestMovesVec = southWestMove <$> squares
+southWestMovesVec = map southWestMove squares
 
 
 -- Ranges
@@ -238,6 +298,3 @@ file_G = getFile 6
 
 file_H :: Board
 file_H = getFile 7
-
-(<$>) :: (Int -> Board) -> Vector Int -> Vector Board
-(<$>) = map

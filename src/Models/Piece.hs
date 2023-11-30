@@ -6,9 +6,12 @@ import           ClassyPrelude
 data Piece = Pawn | Knight | Bishop | Rook | Queen | King
   deriving (Eq, Ord, Enum, Bounded, Show)
 
+data Promotion = KnightProm | BishopProm | RookProm | QueenProm
+  deriving (Eq, Ord, Enum, Bounded, Show)
 
 data Color = White | Black
   deriving (Eq, Ord, Enum, Bounded, Show)
+
 
 reverseColor :: Color -> Color
 reverseColor = \case

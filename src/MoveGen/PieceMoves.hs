@@ -2,12 +2,12 @@ module MoveGen.PieceMoves where
 
 import           AppPrelude
 
-import           Data.Bits           (Bits (bit))
-import           Data.Bits.Extras    (Ranked (lsb), msb)
-import           Models.Board
+import           Constants.Boards
+import           Data.Bits        (Bits (bit))
+import           Data.Bits.Extras (Ranked (lsb), msb)
+import           Models.Move
 import           Models.Piece
 import           Models.Position
-import           Constants.Boards
 
 
 kingInCheck :: Position -> Bool
@@ -75,13 +75,16 @@ kingMoves allPieces player attacked castling rooks king n =
 
 kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Int -> Board
 kingCastlingMoves allPieces attacked castling rooks king n
+
   | shortCastleSliding & collisions .| inCheck == 0
       = bit (ones (castling & rooks & file_A & kingRank))
         * ((castling & king) << 2)
+
   | longCastleSliding & collisions .| inCheck
     .| allPieces & kingRank & file_B == 0
       = bit (ones (castling & rooks & file_H & kingRank))
         * ((castling & king) >> 2)
+
   | otherwise = 0
   where
     collisions = kingRank & (attacked .| allPieces)

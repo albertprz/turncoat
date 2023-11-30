@@ -3,7 +3,7 @@ module Models.Position where
 
 import           Models.Board
 import           Models.Piece        (Color (..))
-import           MoveGen.PieceBoards
+import           Constants.Boards
 
 
 data Position = Position {
@@ -37,4 +37,3 @@ startPosition = Position {
   , kings = (rank_1 .| rank_8) & file_E
 }
 
--- makeMove (Pawn, start, end) position =

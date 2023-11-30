@@ -27,11 +27,12 @@ source-repository head
 library
   exposed-modules:
       AppPrelude
+      Constants.Boards
       Models.Board
       Models.GameState
       Models.Piece
       Models.Position
-      MoveGen.PieceBoards
+      MoveGen.MakeMove
       MoveGen.PieceMoves
       Utils.Ord
   other-modules:

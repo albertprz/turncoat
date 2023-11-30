@@ -6,6 +6,7 @@ import           ClassyPrelude
 data Piece = Pawn | Knight | Bishop | Rook | Queen | King
   deriving (Eq, Ord, Enum, Bounded, Show)
 
+
 data Color = White | Black
   deriving (Eq, Ord, Enum, Bounded, Show)
 

@@ -1,6 +1,6 @@
 {- HLINT ignore "Use camelCase" -}
 
-module MoveGen.PieceBoards (knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, westMovesVec, northMovesVec, southMovesVec, eastMovesVec, northWestMovesVec, northEastMovesVec, southEastMovesVec, southWestMovesVec, longCastleSliding, shortCastleSliding, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
+module Constants.Boards (knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, westMovesVec, northMovesVec, southMovesVec, eastMovesVec, northWestMovesVec, northEastMovesVec, southEastMovesVec, southWestMovesVec, longCastleSliding, shortCastleSliding, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H) where
 
 import           AppPrelude          hiding (fmap, map, (<$>))
 

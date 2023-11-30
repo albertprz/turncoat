@@ -7,7 +7,7 @@ import           Data.Bits.Extras    (Ranked (lsb), msb)
 import           Models.Board
 import           Models.Piece
 import           Models.Position
-import           MoveGen.PieceBoards
+import           Constants.Boards
 
 
 kingInCheck :: Position -> Bool
@@ -36,12 +36,12 @@ allAttacks player enemy color
 
 allMoves :: Position -> [Move]
 allMoves (Position {..}) =
-  foldBoardMoves Pawn (pawnMoves allPieces player enemy enPassant color)
-    (player&pawns)
-  $ foldBoardMoves Knight (knightMoves player) (player&knights)
-  $ foldBoardMoves Bishop (bishopMoves allPieces player) (player&bishops)
-  $ foldBoardMoves Rook (rookMoves allPieces player) (player&rooks)
-  $ foldBoardMoves Queen (queenMoves allPieces player) (player&queens)
+    foldBoardMoves   Pawn (pawnMoves allPieces player enemy enPassant color)
+                                                           (player&pawns)
+  $ foldBoardMoves   Knight (knightMoves player)           (player&knights)
+  $ foldBoardMoves   Bishop (bishopMoves allPieces player) (player&bishops)
+  $ foldBoardMoves   Rook   (rookMoves allPieces player)   (player&rooks)
+  $ foldBoardMoves   Queen  (queenMoves allPieces player)  (player&queens)
   $ foldBoardSquares King
     (kingMoves allPieces player attacked castling (player&rooks) king)
     [] kingSquare

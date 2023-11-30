@@ -6,6 +6,8 @@ import Models.Piece
 import Models.Board
 import Models.Position (Position(..))
 import MoveGen.PieceMoves (allEnemyAttacks)
+import Data.Bits.Extras (lsb)
+import Constants.Boards (rankMovesVec)
 
 
 makeMove :: Move -> Position -> Position
@@ -70,10 +72,25 @@ movePiece Bishop start end pos@Position {..} =
 
 movePiece Rook start end pos@Position {..} =
   pos {
-    rooks = (rooks ^ start) .| end
+    rooks = (rooks ^ start) .| end,
+    castling = castling .\ start
   }
 
 movePiece Queen start end pos@Position {..} =
   pos {
     queens = (queens ^ start) .| end
   }
+
+movePiece King start end pos@Position {..} =
+  pos {
+    kings = (kings ^ start) .| end,
+    castling = castling .\ kingRank,
+    player = (player ^ rookStart) .| rookEnd,
+    rooks = (rooks ^ rookStart) .| rookEnd
+  }
+  where
+    rookStart = shortCastle << 1 .| longCastle >> 2
+    rookEnd = shortCastle >> 1 .| longCastle << 1
+    shortCastle = (start << 2) & end
+    longCastle = (start >> 2) & end
+    kingRank = rankMovesVec !! lsb start

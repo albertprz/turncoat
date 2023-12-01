@@ -53,31 +53,31 @@ foldlBoard = go 0
         board'  = board >> (current + 1)
         current = lsb board
 
-
-showMove :: Move -> Text
-showMove (Move {..}) =
-  tshow piece <> " at "
-  <> showSquare start <> " -> "
-  <> maybe "" ((<> " ") . tshow) promotion
-  <> showSquare end
-
-showBoard :: Board -> Text
-showBoard board = pack $ unlines $ map showBin
-                       $ reverse $ take 8
-                       $ iterate (>> 8) board
+showBoard :: Board -> String
+showBoard board = unlines $ map showBin
+                          $ reverse $ take 8
+                          $ iterate (>> 8) board
   where
     showBin w = intersperse ' ' [sb (testBit w i) | i <- [0 .. 7]]
     sb False = '0'
     sb True  = 'X'
 
-showSquare :: Square -> Text
-showSquare n = pack [fileChars !! file, rankChars !! rank]
+showSquare :: Square -> String
+showSquare n = [fileChars !! file, rankChars !! rank]
   where
     file = n % 8
     rank = n / 8
+
 
 fileChars :: Vector Char
 fileChars = Vector.fromList ['A' .. 'H']
 
 rankChars :: Vector Char
 rankChars = Vector.fromList ['1' .. '8']
+
+instance Show Move where
+  show (Move {..}) =
+    show piece <> " at "
+    <> showSquare start <> " -> "
+    <> maybe "" ((<> " ") . show) promotion
+    <> showSquare end

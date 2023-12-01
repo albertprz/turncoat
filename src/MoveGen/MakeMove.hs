@@ -36,7 +36,7 @@ updatePlayerBoards start end pos@Position {..} =
     knights = knights .\ end,
     bishops = bishops .\ end,
     rooks = rooks .\ end,
-    queens = rooks .\ end
+    queens = queens .\ end
   }
 
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position

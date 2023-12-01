@@ -4,7 +4,6 @@ import           AppPrelude
 
 import           Constants.Boards
 import           Data.Bits        (Bits (bit))
-import           Data.Bits.Extras (Ranked (lsb), msb)
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -134,11 +133,11 @@ queenAttacks allPieces n =
      rookAttacks allPieces n
   .| bishopAttacks allPieces n
 
-
-sliding ::  (Board -> Square) -> (Square -> Board) -> Board -> Square -> Board
-sliding firstBlocker lookupMove allPieces n
-  | blockers == 0 = ray
-  | otherwise    = ray ^ lookupMove (firstBlocker (ray & allPieces))
+sliding :: (Board -> Square) -> (Square -> Board) -> Board -> Square -> Board
+sliding findBlocker lookupMove allPieces n =
+   ray ^ blockerRay
   where
     ray = lookupMove n
+    blockerRay = lookupMove firstBlocker
+    firstBlocker = findBlocker blockers
     blockers = ray & allPieces

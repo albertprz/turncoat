@@ -3,7 +3,6 @@ module Models.Move where
 import           AppPrelude
 import           Constants.Boards
 import           Data.Bits
-import           Data.Bits.Extras    (Ranked (lsb))
 import           Data.List           (iterate)
 import qualified Data.Vector.Unboxed as Vector
 import           Models.Piece        (Piece (..), Promotion (..))

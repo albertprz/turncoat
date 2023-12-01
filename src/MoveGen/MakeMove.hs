@@ -3,7 +3,6 @@ module MoveGen.MakeMove where
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits.Extras   (lsb)
 import           Models.Move
 import           Models.Piece
 import           Models.Position    (Position (..))

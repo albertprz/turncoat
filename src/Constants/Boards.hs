@@ -55,14 +55,16 @@ infixl 7 ^
 (!) :: Board -> Board
 (!) = complement
 
-ones :: Board -> Int
+ones :: Board -> Square
 ones = popCount
 
-trailZeros :: Board -> Int
-trailZeros = countTrailingZeros
+lsb :: Board -> Square
+lsb = countTrailingZeros
 
-leadZeros :: Board -> Int
-leadZeros = countLeadingZeros
+msb :: Board -> Square
+msb board = 65 * (zeros / 64) + 63 - zeros
+  where
+    zeros = countLeadingZeros board
 
 toBoard :: Square -> Board
 toBoard n = 1 << n
@@ -208,28 +210,28 @@ antiDiagMovesVec :: Vector Board
 antiDiagMovesVec = map antiDiagMove squares
 
 westMovesVec :: Vector Board
-westMovesVec = map westMove squares
+westMovesVec = Vector.snoc (map westMove squares) 0
 
 northMovesVec :: Vector Board
-northMovesVec = map northMove squares
+northMovesVec = Vector.snoc (map northMove squares) 0
 
 eastMovesVec :: Vector Board
-eastMovesVec = map eastMove squares
+eastMovesVec = Vector.snoc (map eastMove squares) 0
 
 southMovesVec :: Vector Board
-southMovesVec = map southMove squares
+southMovesVec = Vector.snoc (map southMove squares) 0
 
 northWestMovesVec :: Vector Board
-northWestMovesVec = map northWestMove squares
+northWestMovesVec = Vector.snoc (map northWestMove squares) 0
 
 northEastMovesVec :: Vector Board
-northEastMovesVec = map northEastMove squares
+northEastMovesVec = Vector.snoc (map northEastMove squares) 0
 
 southEastMovesVec :: Vector Board
-southEastMovesVec = map southEastMove squares
+southEastMovesVec = Vector.snoc (map southEastMove squares) 0
 
 southWestMovesVec :: Vector Board
-southWestMovesVec = map southWestMove squares
+southWestMovesVec = Vector.snoc (map southWestMove squares) 0
 
 
 -- Ranges

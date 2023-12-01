@@ -4,10 +4,14 @@ import           ClassyPrelude
 
 
 data Piece = Pawn | Knight | Bishop | Rook | Queen | King
-  deriving (Eq, Ord, Enum, Bounded, Show)
+  deriving (Eq, Ord, Enum, Bounded, Show, Generic)
+
+instance Hashable Piece
 
 data Promotion = KnightProm | BishopProm | RookProm | QueenProm
-  deriving (Eq, Ord, Enum, Bounded, Show)
+  deriving (Eq, Ord, Enum, Bounded, Show, Generic)
+
+instance Hashable Promotion
 
 data Color = White | Black
   deriving (Eq, Ord, Enum, Bounded, Show)

@@ -24,7 +24,10 @@ dependencies:
 - mtl
 - text
 - vector
+- unordered-containers
+- containers
 - extra
+- composition
 
 language: GHC2021
 

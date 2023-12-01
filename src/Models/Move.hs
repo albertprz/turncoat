@@ -13,7 +13,9 @@ data Move = Move {
   promotion :: Maybe Promotion,
   start     :: Square,
   end       :: Square
-}
+} deriving (Eq, Ord, Generic)
+
+instance Hashable Move
 
 
 foldMapBoard ::  (Square -> Board) -> Board -> Board
@@ -78,6 +80,6 @@ rankChars = Vector.fromList ['1' .. '8']
 instance Show Move where
   show (Move {..}) =
     show piece <> " at "
-    <> showSquare start <> " -> "
+    <> showSquare start <> " to "
     <> maybe "" ((<> " ") . show) promotion
     <> showSquare end

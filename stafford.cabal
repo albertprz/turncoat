@@ -34,6 +34,8 @@ library
       Models.Position
       MoveGen.MakeMove
       MoveGen.PieceMoves
+      Search.Perft
+      Uci.Commands
       Utils.Ord
   other-modules:
       Paths_stafford
@@ -63,9 +65,12 @@ library
   build-depends:
       base ==4.*
     , classy-prelude
+    , composition
+    , containers
     , extra
     , mtl
     , text
+    , unordered-containers
     , vector
   default-language: GHC2021
 
@@ -99,9 +104,12 @@ executable stafford
   build-depends:
       base ==4.*
     , classy-prelude
+    , composition
+    , containers
     , extra
     , mtl
     , stafford
     , text
+    , unordered-containers
     , vector
   default-language: GHC2021

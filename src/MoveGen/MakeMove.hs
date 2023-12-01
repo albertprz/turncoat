@@ -6,13 +6,25 @@ import           Constants.Boards
 import           Models.Move
 import           Models.Piece
 import           Models.Position    (Position (..))
-import           MoveGen.PieceMoves (allEnemyAttacks)
+import           MoveGen.PieceMoves (allEnemyAttacks, kingInCheck)
 
+
+playMove :: Move -> Position -> Maybe Position
+playMove mv pos =
+  switchPlayers <$> makeLegalMove mv pos
+
+makeLegalMove :: Move -> Position -> Maybe Position
+makeLegalMove mv pos =
+  if kingInCheck pos' then
+    Nothing
+  else
+    Just pos'
+  where
+    pos' = makeMove mv pos
 
 makeMove :: Move -> Position -> Position
 makeMove Move {..} pos =
-  switchPlayers
-  $ movePiece piece promotion startBoard endBoard
+  movePiece piece promotion startBoard endBoard
   $ updatePlayerBoards startBoard endBoard pos
   where
     startBoard = toBoard start

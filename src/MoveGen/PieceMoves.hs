@@ -51,7 +51,7 @@ allMoves (Position {..}) =
 
 pawnMoves :: Board -> Board -> Board -> Board -> Color -> Square -> Board
 pawnMoves allPieces player enemy enPassant color n =
-  (pawnAdvances allPieces color board
+  ((pawnAdvances allPieces color board .\ enemy)
   .| pawnAttacks color board & (enemy .| enPassant))
   .\ player
   where
@@ -60,7 +60,7 @@ pawnMoves allPieces player enemy enPassant color n =
 pawnAdvances :: Board -> Color -> Board -> Board
 pawnAdvances allPieces color board = case color of
   White -> board << 8 .| ((rank_2 & board) << 8 .\ allPieces) << 8
-  Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) << 8
+  Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) >> 8
 
 knightMoves :: Board -> Square -> Board
 knightMoves player n =
@@ -87,7 +87,7 @@ kingCastlingMoves allPieces attacked castling rooks king n
   | otherwise = 0
   where
     collisions = kingRank & (attacked .| allPieces)
-    kingRank = rankMovesVec !! n
+    kingRank = fileMovesVec !! n
     inCheck = king & attacked
 
 

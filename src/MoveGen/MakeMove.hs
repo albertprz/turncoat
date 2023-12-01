@@ -6,7 +6,7 @@ import           Constants.Boards
 import           Models.Move
 import           Models.Piece
 import           Models.Position    (Position (..))
-import           MoveGen.PieceMoves (allEnemyAttacks, kingInCheck)
+import           MoveGen.PieceMoves (allPlayerAttacks, kingInCheck)
 
 
 playMove :: Move -> Position -> Maybe Position
@@ -34,7 +34,7 @@ switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
     color = reverseColor color,
-    attacked = allEnemyAttacks pos,
+    attacked = allPlayerAttacks pos,
     player = enemy,
     enemy = player
   }

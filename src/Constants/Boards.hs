@@ -76,14 +76,14 @@ knightMove n =
     move1 .| move2 .| move3 .| move4 .| move5
           .| move6 .| move7 .| move8
   where
-    move1 = (board .\ (file_G .| file_A .| rank_8)) << 10
+    move1 = (board .\ (file_H .| file_G .| rank_8)) << 10
     move3 = (board .\ (file_H .| rank_7 .| rank_8)) << 17
     move4 = (board .\ (file_A .| rank_7 .| rank_8)) << 15
-    move5 = (board .\ (file_B .| file_H .| rank_8)) << 6
-    move6 = (board .\ (file_B .| file_H .| rank_1)) >> 10
+    move5 = (board .\ (file_A .| file_B .| rank_8)) << 6
+    move6 = (board .\ (file_A .| file_B .| rank_1)) >> 10
     move7 = (board .\ (file_A .| rank_2 .| rank_1)) >> 17
     move8 = (board .\ (file_H .| rank_2 .| rank_1)) >> 15
-    move2 = (board .\ (file_G .| file_A .| rank_1)) >> 6
+    move2 = (board .\ (file_H .| file_G .| rank_1)) >> 6
     board = toBoard n
 
 kingMove :: Square -> Board

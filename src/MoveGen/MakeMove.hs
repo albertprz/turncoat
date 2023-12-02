@@ -9,10 +9,12 @@ import           Models.Position    (Position (..))
 import           MoveGen.PieceMoves (allPlayerAttacks, kingInCheck)
 
 
+{-# INLINE  playMove #-}
 playMove :: Move -> Position -> Maybe Position
 playMove mv pos =
   switchPlayers <$> makeLegalMove mv pos
 
+{-# INLINE  makeLegalMove #-}
 makeLegalMove :: Move -> Position -> Maybe Position
 makeLegalMove mv pos =
   if kingInCheck pos' then
@@ -22,6 +24,7 @@ makeLegalMove mv pos =
   where
     pos' = makeMove mv pos
 
+{-# INLINE  makeMove #-}
 makeMove :: Move -> Position -> Position
 makeMove Move {..} pos =
   movePiece piece promotion startBoard endBoard
@@ -30,6 +33,7 @@ makeMove Move {..} pos =
     startBoard = toBoard start
     endBoard = toBoard end
 
+{-# INLINE  switchPlayers #-}
 switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
@@ -39,6 +43,7 @@ switchPlayers pos@Position {..} =
     enemy = player
   }
 
+{-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Position -> Position
 updatePlayerBoards start end pos@Position {..} =
   pos {
@@ -51,6 +56,7 @@ updatePlayerBoards start end pos@Position {..} =
     queens = queens .\ end
   }
 
+{-# INLINE  movePiece #-}
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
 movePiece Pawn Nothing start end pos@Position {..} =
   case color of

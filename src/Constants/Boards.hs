@@ -20,52 +20,65 @@ type AntiDiag = Int
 
 type Shift = forall a. Bits a => a -> Square -> a
 
+{-# INLINE  (<<) #-}
 infixl 9 <<
 (<<) :: Shift
 (<<) = unsafeShiftL
 
+{-# INLINE  (>>) #-}
 infixl 9 >>
 (>>) :: Shift
 (>>) = unsafeShiftR
 
+{-# INLINE  (/) #-}
 infixl 7 /
 (/) :: Square -> Square -> Square
 (/) = div
 
+{-# INLINE  (%) #-}
 infixl 7 %
 (%) :: Square -> Square -> Square
 (%) = rem
 
+{-# INLINE  (&) #-}
 infixl 8 &
 (&) :: Board -> Board -> Board
 (&) = (.&.)
 
+{-# INLINE  (.\) #-}
 infixl 8 .\
 (.\) :: Board -> Board -> Board
 (.\) x y = x & (!) y
 
+{-# INLINE  (.|) #-}
 infixl 7 .|
 (.|) :: Board -> Board -> Board
 (.|) = (.|.)
 
+{-# INLINE  (^) #-}
 infixl 7 ^
 (^) :: Board -> Board -> Board
 (^) = xor
 
+{-# INLINE  (!) #-}
 (!) :: Board -> Board
 (!) = complement
 
+{-# INLINE  ones #-}
 ones :: Board -> Square
 ones = popCount
 
+{-# INLINE  lsb #-}
 lsb :: Board -> Square
 lsb = countTrailingZeros
 
+{-# INLINE  msb #-}
 msb :: Board -> Square
 msb board = 65 * (zeros / 64) + 63 - zeros
   where
     zeros = countLeadingZeros board
 
+{-# INLINE  toBoard #-}
 toBoard :: Square -> Board
 toBoard n = 1 << n
 

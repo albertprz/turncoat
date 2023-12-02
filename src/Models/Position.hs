@@ -77,4 +77,4 @@ instance Show Position where
       boardStr = intercalate "\n" (intersperse ' ' <$> pieces)
       pieces = reverse $ chunksOf 8 do
         n <- toList squares
-        pure $ maybe ' ' pieceToChar (pieceAt n pos)
+        pure $! maybe ' ' pieceToChar (pieceAt n pos)

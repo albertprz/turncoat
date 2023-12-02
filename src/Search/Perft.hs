@@ -9,6 +9,7 @@ import           MoveGen.PieceMoves (allMoves)
 
 import qualified Data.Map           as Map
 
+{-# INLINE  perft #-}
 perft :: Int -> Position -> Int
 perft = go 0
   where
@@ -20,6 +21,7 @@ perft = go 0
                          (playMove mv pos)
 
 
+{-# INLINE  divide #-}
 divide :: Int -> Position -> Map Move Int
 divide 0     _   = Map.empty
 divide depth pos = Map.fromList

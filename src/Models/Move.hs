@@ -18,13 +18,16 @@ data Move = Move {
 instance Hashable Move
 
 
+{-# INLINE  foldMapBoard #-}
 foldMapBoard ::  (Square -> Board) -> Board -> Board
 foldMapBoard = foldlBoard 0 (.|)
 
+{-# INLINE  foldBoardMoves #-}
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
 foldBoardMoves piece f board moves =
   foldlBoard moves (foldBoardSquares piece f) id board
 
+{-# INLINE  foldBoardSquares #-}
 foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
 foldBoardSquares Pawn f moves start =
   foldlBoard moves foldFn id (f start)
@@ -44,6 +47,7 @@ foldBoardSquares piece f moves start =
   where
     mapFn = Move piece Nothing start
 
+{-# INLINE  foldlBoard #-}
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a
 foldlBoard = go 0
   where

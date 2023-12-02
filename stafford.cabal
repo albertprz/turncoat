@@ -61,14 +61,14 @@ library
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
-  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base ==4.*
     , classy-prelude
     , composition
     , containers
-    , extra
     , mtl
+    , split
     , text
     , unordered-containers
     , vector
@@ -100,14 +100,14 @@ executable stafford
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
-  ghc-options: -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*
     , classy-prelude
     , composition
     , containers
-    , extra
     , mtl
+    , split
     , stafford
     , text
     , unordered-containers

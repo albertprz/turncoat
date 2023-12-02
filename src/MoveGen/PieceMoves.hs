@@ -31,7 +31,7 @@ allAttacks player enemy color
   .| foldMapBoard (queenAttacks allPieces)  (player&queens)
   .| kingAttacks                       (lsb (player&kings))
   where
-    allPieces = player .| enemy
+    allPieces = player .| (enemy .\ kings)
 
 allMoves :: Position -> [Move]
 allMoves (Position {..}) =

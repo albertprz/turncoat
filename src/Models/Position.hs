@@ -6,7 +6,7 @@ import           Constants.Boards
 import           Data.Bitraversable (bisequence)
 import           Data.Bits          (Bits (..))
 import qualified Data.Char          as Char
-import           Data.List.Extra    (chunksOf)
+import           Data.List.Split    (chunksOf)
 import           Models.Piece
 
 

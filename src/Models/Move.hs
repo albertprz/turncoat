@@ -52,7 +52,7 @@ foldlBoard = go 0
       where
         acc'    = foldFn acc $! mapFn i'
         i'      = i + current
-        board'  = board >> (current + 1)
+        board'  = (board >> current) >> 1
         current = lsb board
 
 showBoard :: Board -> String

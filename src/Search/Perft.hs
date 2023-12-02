@@ -13,10 +13,10 @@ import qualified Data.Map           as Map
 perft :: Int -> Position -> Int
 perft = go 0
   where
-    go nodes 0     _   = nodes + 1
-    go nodes depth pos = foldl' f nodes (allMoves pos)
+    go !nodes 0     _     = nodes + 1
+    go !nodes !depth !pos = foldr f nodes (allMoves pos)
       where
-        f acc mv = maybe acc
+        f mv acc = maybe acc
                          (go acc (depth - 1))
                          (playMove mv pos)
 

@@ -43,7 +43,7 @@ library
       src
   default-extensions:
       NoImplicitPrelude
-      Strict
+      StrictData
       LambdaCase
       MultiWayIf
       BlockArguments
@@ -61,7 +61,7 @@ library
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
-  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+  ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base ==4.*
     , classy-prelude
@@ -82,7 +82,7 @@ executable stafford
       app
   default-extensions:
       NoImplicitPrelude
-      Strict
+      StrictData
       LambdaCase
       MultiWayIf
       BlockArguments
@@ -100,7 +100,7 @@ executable stafford
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
-  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*
     , classy-prelude

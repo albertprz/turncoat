@@ -36,7 +36,7 @@ default-extensions:
 - NoImplicitPrelude
 
 # Evaluation
-- Strict
+- StrictData
 
 # Syntax
 - LambdaCase
@@ -67,6 +67,8 @@ default-extensions:
 
 ghc-options:
 - -O2
+- -optc-O3
+- -funbox-strict-fields
 - -Wall
 - -Wcompat
 - -Wincomplete-record-updates

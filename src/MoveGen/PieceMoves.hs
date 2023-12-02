@@ -42,11 +42,11 @@ allMoves :: Position -> [Move]
 allMoves (Position {..}) =
     foldBoardMoves   Pawn (pawnMoves allPieces player enemy enPassant color)
                                                            (player&pawns)
-  $! foldBoardMoves   Knight (knightMoves player)           (player&knights)
-  $! foldBoardMoves   Bishop (bishopMoves allPieces player) (player&bishops)
-  $! foldBoardMoves   Rook   (rookMoves allPieces player)   (player&rooks)
-  $! foldBoardMoves   Queen  (queenMoves allPieces player)  (player&queens)
-  $! foldBoardSquares King
+  $ foldBoardMoves   Knight (knightMoves player)           (player&knights)
+  $ foldBoardMoves   Bishop (bishopMoves allPieces player) (player&bishops)
+  $ foldBoardMoves   Rook   (rookMoves allPieces player)   (player&rooks)
+  $ foldBoardMoves   Queen  (queenMoves allPieces player)  (player&queens)
+  $ foldBoardSquares King
     (kingMoves allPieces player attacked castling (player&rooks) king)
     [] kingSquare
   where

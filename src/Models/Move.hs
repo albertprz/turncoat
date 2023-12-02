@@ -8,6 +8,7 @@ import qualified Data.Vector.Unboxed as Vector
 import           Models.Piece        (Piece (..), Promotion (..))
 
 
+
 data Move = Move {
   piece     :: Piece,
   promotion :: Maybe Promotion,
@@ -51,13 +52,13 @@ foldBoardSquares piece f moves start =
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a
 foldlBoard = go 0
   where
-    go _ acc _ _ board | board == 0 = acc
-    go i acc foldFn mapFn board    = go (i' + 1) acc' foldFn mapFn board'
+    go _ !acc _ _ !board | board == 0   = acc
+    go !i !acc !foldFn !mapFn !board = go (i' + 1) acc' foldFn mapFn board'
       where
-        acc'    = foldFn acc $! mapFn i'
-        i'      = i + current
-        board'  = (board >> current) >> 1
-        current = lsb board
+        !acc'    = foldFn acc $! mapFn i'
+        !i'      = i + current
+        !board'  = (board >> current) >> 1
+        !current = lsb board
 
 showBoard :: Board -> String
 showBoard board = unlines $ map showBin

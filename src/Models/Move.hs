@@ -2,11 +2,11 @@ module Models.Move where
 
 import           AppPrelude
 import           Constants.Boards
+import           Models.Piece
+
 import           Data.Bits
 import           Data.List           (iterate)
 import qualified Data.Vector.Unboxed as Vector
-import           Models.Piece        (Piece (..), Promotion (..))
-
 
 
 data Move = Move {
@@ -15,6 +15,7 @@ data Move = Move {
   start     :: Square,
   end       :: Square
 } deriving (Eq, Ord, Generic)
+
 
 instance Hashable Move
 

@@ -58,6 +58,7 @@ default-extensions:
 - ApplicativeDo
 - OverloadedStrings
 - ViewPatterns
+- PatternSynonyms
 
 # Type Level Programming
 - GADTs

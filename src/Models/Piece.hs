@@ -3,18 +3,40 @@ module Models.Piece where
 import           ClassyPrelude
 
 
-data Piece = Pawn | Knight | Bishop | Rook | Queen | King
+newtype Piece = Piece Word8
   deriving (Eq, Ord, Enum, Bounded, Show, Generic)
 
 instance Hashable Piece
 
-data Promotion = KnightProm | BishopProm | RookProm | QueenProm
+newtype Promotion = Promotion Word8
   deriving (Eq, Ord, Enum, Bounded, Show, Generic)
 
 instance Hashable Promotion
 
-data Color = White | Black
+newtype Color = Color Bool
   deriving (Eq, Ord, Enum, Bounded, Show)
+
+
+{-# COMPLETE Pawn, Knight, Bishop, Rook, Queen, King #-}
+pattern Pawn, Knight, Bishop, Rook, Queen, King :: Piece
+pattern Pawn   = Piece 0
+pattern Knight = Piece 1
+pattern Bishop = Piece 2
+pattern Rook   = Piece 3
+pattern Queen  = Piece 4
+pattern King   = Piece 5
+
+{-# COMPLETE  KnightProm, BishopProm, RookProm, QueenProm #-}
+pattern KnightProm, BishopProm, RookProm, QueenProm :: Promotion
+pattern KnightProm = Promotion 0
+pattern BishopProm = Promotion 1
+pattern RookProm   = Promotion 2
+pattern QueenProm  = Promotion 3
+
+{-# COMPLETE White, Black #-}
+pattern White, Black :: Color
+pattern White = Color True
+pattern Black = Color False
 
 
 reverseColor :: Color -> Color

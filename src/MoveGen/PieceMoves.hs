@@ -1,9 +1,10 @@
 module MoveGen.PieceMoves where
 
-import           AppPrelude
+import           AppPrelude       hiding (Vector)
 
 import           Constants.Boards
 import           Data.Bits        (Bits (bit))
+import           Data.Vector      as Vector
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -38,9 +39,9 @@ allAttacks player enemy color
     allPieces = player .| (enemy .\ kings)
 
 {-# INLINE  allMoves #-}
-allMoves :: Position -> [Move]
-allMoves (Position {..}) =
-    foldBoardMoves   Pawn (pawnMoves allPieces player enemy enPassant color)
+allMoves :: Position -> Vector Move
+allMoves (Position {..}) = Vector.fromList
+  $ foldBoardMoves   Pawn (pawnMoves allPieces player enemy enPassant color)
                                                            (player&pawns)
   $ foldBoardMoves   Knight (knightMoves player)           (player&knights)
   $ foldBoardMoves   Bishop (bishopMoves allPieces player) (player&bishops)

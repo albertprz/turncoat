@@ -25,7 +25,7 @@ perft = go 0
 divide :: Int -> Position -> Map Move Int
 divide 0     _   = Map.empty
 divide depth pos = Map.fromList
-  (second (perft (depth - 1)) <$> mapMaybe f moves)
+  (second (perft (depth - 1)) <$> mapMaybe f (toList moves))
   where
     moves = allMoves pos
     f mv = (mv,) <$> playMove mv pos

@@ -82,8 +82,6 @@ msb board = 65 * (zeros / 64) + 63 - zeros
 toBoard :: Square -> Board
 toBoard n = 1 << n
 
-
-
 knightMove :: Square -> Board
 knightMove n =
     move1 .| move2 .| move3 .| move4 .| move5

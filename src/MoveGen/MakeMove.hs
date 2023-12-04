@@ -6,27 +6,17 @@ import           Constants.Boards
 import           Models.Move
 import           Models.Piece
 import           Models.Position    (Position (..))
-import           MoveGen.PieceMoves (allPlayerAttacks, kingInCheck)
+import qualified MoveGen.PieceMoves as MoveGen
 
 
 {-# INLINE  playMove #-}
-playMove :: Move -> Position -> Maybe Position
+playMove :: Move -> Position -> Position
 playMove mv pos =
-  switchPlayers <$> makeLegalMove mv pos
+  switchPlayers $ makeLegalMove mv pos
 
 {-# INLINE  makeLegalMove #-}
-makeLegalMove :: Move -> Position -> Maybe Position
-makeLegalMove mv pos =
-  if kingInCheck pos' then
-    Nothing
-  else
-    Just pos'
-  where
-    pos' = makeMove mv pos
-
-{-# INLINE  makeMove #-}
-makeMove :: Move -> Position -> Position
-makeMove Move {..} pos =
+makeLegalMove :: Move -> Position -> Position
+makeLegalMove Move {..} pos =
   movePiece piece promotion startBoard endBoard
   $ updatePlayerBoards startBoard endBoard pos
   where
@@ -38,10 +28,16 @@ switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
     color = reverseColor color,
-    attacked = allPlayerAttacks pos,
+    attacked = MoveGen.allPlayerAttacks pos,
     player = enemy,
-    enemy = player
+    enemy = player,
+    directCheckers = MoveGen.getDirectCheckers pos,
+    sliderCheckers = MoveGen.getSliderCheckers checkerRays pos,
+    pinnedPieces = MoveGen.getPinnedPieces checkerRays sliderRays pos
   }
+  where
+    checkerRays = MoveGen.getEnemyKingCheckerRays pos
+    sliderRays = MoveGen.getEnemyKingCheckerRays pos
 
 {-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Position -> Position

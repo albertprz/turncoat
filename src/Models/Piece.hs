@@ -13,7 +13,7 @@ newtype Promotion = Promotion Word8
 
 instance Hashable Promotion
 
-newtype Color = Color Bool
+newtype Color = Color Word8
   deriving (Eq, Ord, Enum, Bounded, Show)
 
 
@@ -35,8 +35,8 @@ pattern QueenProm  = Promotion 3
 
 {-# COMPLETE White, Black #-}
 pattern White, Black :: Color
-pattern White = Color True
-pattern Black = Color False
+pattern White = Color 0
+pattern Black = Color 1
 
 
 reverseColor :: Color -> Color

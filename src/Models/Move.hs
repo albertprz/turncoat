@@ -85,7 +85,9 @@ rankChars = Vector.fromList ['1' .. '8']
 
 instance Show Move where
   show (Move {..}) =
-    show piece <> " at "
-    <> showSquare start <> " to "
+    show piece
+    <> " at "
+    <> showSquare start
+    <> " to "
     <> maybe "" ((<> " ") . show) promotion
     <> showSquare end

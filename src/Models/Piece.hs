@@ -4,17 +4,38 @@ import           ClassyPrelude
 
 
 newtype Piece = Piece Word8
-  deriving (Eq, Ord, Enum, Bounded, Show, Generic)
+  deriving (Eq, Ord, Enum, Bounded,  Generic)
+
+instance Show Piece where
+  show = \case
+    Pawn -> "Pawn"
+    Knight -> "Knight"
+    Bishop -> "Bishop"
+    Rook -> "Rook"
+    Queen -> "Queen"
+    King -> "King"
 
 instance Hashable Piece
 
 newtype Promotion = Promotion Word8
-  deriving (Eq, Ord, Enum, Bounded, Show, Generic)
+  deriving (Eq, Ord, Enum, Bounded, Generic)
+
+instance Show Promotion where
+  show = \case
+    KnightProm -> "Knight"
+    BishopProm -> "Bishop"
+    RookProm -> "Rook"
+    QueenProm -> "Queen"
 
 instance Hashable Promotion
 
 newtype Color = Color Word8
-  deriving (Eq, Ord, Enum, Bounded, Show)
+  deriving (Eq, Ord, Enum, Bounded)
+
+instance Show Color where
+  show = \case
+    White -> "White"
+    Black -> "Black"
 
 
 {-# COMPLETE Pawn, Knight, Bishop, Rook, Queen, King #-}

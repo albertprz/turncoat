@@ -18,8 +18,15 @@ isKingInCheck pos@Position {..} =
 {-# INLINE  getDirectCheckers #-}
 getDirectCheckers :: Position -> Board
 getDirectCheckers Position {..} =
-  pawnAttacks (reverseColor color) (enemy&kings)
-  .| knightAttacks (lsb (enemy&kings))
+  player & checkers
+  where
+    checkers = pawnAttacks (reverseColor color) (enemy&kings)
+              .| knightAttacks (lsb (enemy&kings))
+
+{-# INLINE  getSliderCheckers #-}
+getSliderCheckers :: Board -> Position -> Board
+getSliderCheckers checkerRays Position {..} =
+  player & checkerRays & (bishops .| rooks .| queens)
 
 {-# INLINE  getEnemyKingSliderRays #-}
 getEnemyKingSliderRays :: Position -> Board
@@ -30,11 +37,6 @@ getEnemyKingSliderRays Position {..} =
 getEnemyKingCheckerRays :: Position -> Board
 getEnemyKingCheckerRays Position {..} =
   queenAttacks (enemy .| player) (lsb (enemy&kings))
-
-{-# INLINE  getSliderCheckers #-}
-getSliderCheckers :: Board -> Position -> Board
-getSliderCheckers checkerRays Position {..} =
-  checkerRays & player & (bishops .| rooks .| queens)
 
 {-# INLINE  getPinnedPieces #-}
 getPinnedPieces :: Board -> Board -> Position -> Board
@@ -102,42 +104,20 @@ allAttacks player enemy color
   where
     allPieces = player .| (enemy .\ kings)
 
-
 {-# INLINE  allLegalMoves #-}
 allLegalMoves :: Position -> Vector Move
-allLegalMoves Position {..}
+allLegalMoves pos@Position {..}
 
-  | allCheckers == 0 = Vector.fromList
-    $ foldBoardMoves   Pawn (pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
-    $ foldBoardMoves   Knight (knightMoves player)           (unpinned&knights)
-    $ foldBoardMoves   Bishop (bishopMoves allPieces pinnedPieces king player) (player&bishops)
-    $ foldBoardMoves   Rook   (rookMoves allPieces pinnedPieces king player)   (player&rooks)
-    $ foldBoardMoves   Queen  (queenMoves allPieces pinnedPieces king player)  (player&queens)
-      allKingMoves
-
-  | allCheckers > 1 = Vector.fromList allKingMoves
-
-  | sliderCheckers /= 0 = Vector.fromList
-    $ foldBoardMoves   Pawn (captureOrBlockChecker . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
-    $ foldBoardMoves   Knight (captureOrBlockChecker . knightMoves player)           (player&knights)
-    $ foldBoardMoves   Bishop (captureOrBlockChecker . bishopMoves allPieces pinnedPieces king player) (player&bishops)
-    $ foldBoardMoves   Rook   (captureOrBlockChecker . rookMoves allPieces pinnedPieces king player)   (player&rooks)
-    $ foldBoardMoves   Queen  (captureOrBlockChecker . queenMoves allPieces pinnedPieces king player)  (player&queens)
-      allKingMoves
-
-  | otherwise = Vector.fromList
-    $ foldBoardMoves   Pawn (captureChecker . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
-    $ foldBoardMoves   Knight (captureChecker . knightMoves player)           (player&knights)
-    $ foldBoardMoves   Bishop (captureChecker . bishopMoves allPieces  pinnedPieces king player) (player&bishops)
-    $ foldBoardMoves   Rook   (captureChecker . rookMoves allPieces pinnedPieces king player)   (player&rooks)
-    $ foldBoardMoves   Queen  (captureChecker . queenMoves allPieces pinnedPieces king player)  (player&queens)
-      allKingMoves
+  | allCheckers == 0    = genMoves id
+  | allCheckers > 1    = Vector.fromList allKingMoves
+  | sliderCheckers /= 0 = genMoves captureOrBlockChecker
+  | otherwise          = genMoves captureChecker
 
   where
+    genMoves f = allLegalMovesHelper f allKingMoves pos
     captureChecker board = board & allCheckers
     captureOrBlockChecker board = board & (allCheckers .| checkerRay)
     checkerRay = getKingQueenRay king (lsb allCheckers)
-    unpinned = player .\ pinnedPieces
     allKingMoves = foldBoardSquares King
       (kingMoves allPieces player attacked castling (player&rooks) king)
       [] kingSquare
@@ -145,6 +125,22 @@ allLegalMoves Position {..}
     allPieces = player .| enemy
     kingSquare = lsb king
     king = player&kings
+
+{-# INLINE  allLegalMovesHelper #-}
+allLegalMovesHelper :: (Board -> Board) -> [Move] -> Position -> Vector Move
+allLegalMovesHelper f allKingMoves Position {..} =
+  Vector.fromList
+    $ foldBoardMoves   Pawn (f . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
+    $ foldBoardMoves   Knight (f . knightMoves player)           (unpinned&knights)
+    $ foldBoardMoves   Bishop (f . bishopMoves allPieces pinnedPieces king player) (player&bishops)
+    $ foldBoardMoves   Rook   (f . rookMoves allPieces pinnedPieces king player)   (player&rooks)
+    $ foldBoardMoves   Queen  (f . queenMoves allPieces pinnedPieces king player)  (player&queens)
+      allKingMoves
+    where
+    allPieces = player .| enemy
+    unpinned = player .\ pinnedPieces
+    king = player&kings
+
 
 {-# INLINE  pawnMoves #-}
 pawnMoves :: Board -> Board -> Board -> Board -> Color -> Square -> Board

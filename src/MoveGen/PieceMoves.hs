@@ -57,18 +57,26 @@ getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
   .| foldMapBoard queenPins (attackers & queens))
   where
     attackers = sliderRays & player
-    bishopPins = (bishopCheckerRays &) . bishopAttacks allPieces
-    rookPins = (rookCheckerRays &) . rookAttacks allPieces
-    queenPins n = bishopPins n .| rookPins n
+    bishopPins n = getKingBishopRay king n
+      & bishopCheckerRays
+      & bishopAttacks allPieces n
+    rookPins n = getKingRookRay king n
+      & rookCheckerRays
+      & rookAttacks allPieces n
+    queenPins n = getKingQueenRay king n
+      & (bishopCheckerRays .| rookCheckerRays)
+      & queenAttacks allPieces n
+    king = enemy & kings
     allPieces = player .| enemy
 
 {-# INLINE  getKingQueenRay #-}
 getKingQueenRay :: Board -> Square -> Board
 getKingQueenRay king n
-  | file & king /= 0              = file
-  | rank & king /= 0              = rank
-  | diag & king /= 0              = diag
-  | otherwise                    = antiDiag
+  | file & king /= 0     = file
+  | rank & king /= 0     = rank
+  | diag & king /= 0     = diag
+  | antiDiag & king /= 0 = antiDiag
+  | otherwise           = 0
   where
     file = rankMovesVec !! n
     rank = fileMovesVec !! n
@@ -78,8 +86,9 @@ getKingQueenRay king n
 {-# INLINE  getKingBishopRay #-}
 getKingBishopRay :: Board -> Square -> Board
 getKingBishopRay king n
-  | diag & king /= 0              = diag
-  | otherwise                    = antiDiag
+  | diag & king /= 0     = diag
+  | antiDiag & king /= 0 = antiDiag
+  | otherwise           = 0
   where
     diag = antiDiagMovesVec !! n
     antiDiag = diagMovesVec !! n
@@ -87,8 +96,9 @@ getKingBishopRay king n
 {-# INLINE  getKingRookRay #-}
 getKingRookRay :: Board -> Square -> Board
 getKingRookRay king n
-  | file & king /= 0              = file
-  | otherwise                    = rank
+  | file & king /= 0 = file
+  | rank & king /= 0 = rank
+  | otherwise       = 0
   where
     file = rankMovesVec !! n
     rank = fileMovesVec !! n

@@ -34,8 +34,7 @@ switchPlayers pos@Position {..} =
     leapingCheckers = MoveGen.getLeapingCheckers pos,
     sliderCheckers = MoveGen.getSliderCheckers bishopCheckerRays
                         rookCheckerRays queenCheckerRays pos,
-    pinnedPieces = MoveGen.getPinnedPieces bishopCheckerRays
-                        rookCheckerRays sliderRays pos
+    pinnedPieces = MoveGen.getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays pos
   }
   where
     bishopCheckerRays = MoveGen.getBishopCheckerRays pos

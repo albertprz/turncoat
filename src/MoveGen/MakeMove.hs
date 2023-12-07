@@ -28,16 +28,20 @@ switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
     color = reverseColor color,
-    attacked = MoveGen.allPlayerAttacks pos,
     player = enemy,
     enemy = player,
-    directCheckers = MoveGen.getDirectCheckers pos,
-    sliderCheckers = MoveGen.getSliderCheckers checkerRays pos,
-    pinnedPieces = MoveGen.getPinnedPieces checkerRays sliderRays pos
+    attacked = MoveGen.allPlayerAttacks pos,
+    leapingCheckers = MoveGen.getLeapingCheckers pos,
+    sliderCheckers = MoveGen.getSliderCheckers bishopCheckerRays
+                        rookCheckerRays queenCheckerRays pos,
+    pinnedPieces = MoveGen.getPinnedPieces bishopCheckerRays
+                        rookCheckerRays sliderRays pos
   }
   where
-    checkerRays = MoveGen.getEnemyKingCheckerRays pos
-    sliderRays = MoveGen.getEnemyKingCheckerRays pos
+    bishopCheckerRays = MoveGen.getBishopCheckerRays pos
+    rookCheckerRays = MoveGen.getRookCheckerRays pos
+    queenCheckerRays = bishopCheckerRays .| rookCheckerRays
+    sliderRays = MoveGen.getEnemyKingSliderRays pos
 
 {-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Position -> Position
@@ -139,4 +143,4 @@ movePiece King _ start end pos@Position {..} =
     rookEnd = shortCastle >> 1 .| longCastle << 1
     shortCastle = (start << 2) & end
     longCastle = (start >> 2) & end
-    kingRank = rankMovesVec !! lsb start
+    kingRank = fileMovesVec !! lsb start

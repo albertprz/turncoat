@@ -15,70 +15,83 @@ isKingInCheck :: Position -> Bool
 isKingInCheck pos@Position {..} =
   player&kings & allEnemyAttacks pos /= 0
 
-{-# INLINE  getDirectCheckers #-}
-getDirectCheckers :: Position -> Board
-getDirectCheckers Position {..} =
+{-# INLINE  getLeapingCheckers #-}
+getLeapingCheckers :: Position -> Board
+getLeapingCheckers Position {..} =
   player & checkers
   where
-    checkers = pawnAttacks (reverseColor color) (enemy&kings)
-              .| knightAttacks (lsb (enemy&kings))
+    checkers = (pawns   & pawnAttacks   (reverseColor color) (enemy&kings))
+            .| (knights & knightAttacks (lsb (enemy&kings)))
 
 {-# INLINE  getSliderCheckers #-}
-getSliderCheckers :: Board -> Position -> Board
-getSliderCheckers checkerRays Position {..} =
-  player & checkerRays & (bishops .| rooks .| queens)
+getSliderCheckers :: Board -> Board -> Board -> Position -> Board
+getSliderCheckers bishopCheckerRays rookCheckerRays queenCheckerRays
+   Position {..} =
+  player & checkers
+  where
+    checkers = bishopCheckerRays & bishops
+            .| rookCheckerRays   & rooks
+            .| queenCheckerRays  & queens
 
 {-# INLINE  getEnemyKingSliderRays #-}
 getEnemyKingSliderRays :: Position -> Board
 getEnemyKingSliderRays Position {..} =
   queenAttacks player (lsb (enemy&kings))
 
-{-# INLINE  getEnemyKingCheckerRays #-}
-getEnemyKingCheckerRays :: Position -> Board
-getEnemyKingCheckerRays Position {..} =
-  queenAttacks (enemy .| player) (lsb (enemy&kings))
+{-# INLINE  getBishopCheckerRays #-}
+getBishopCheckerRays :: Position -> Board
+getBishopCheckerRays Position {..} =
+  bishopAttacks (enemy .| player) (lsb (enemy&kings))
+
+{-# INLINE  getRookCheckerRays #-}
+getRookCheckerRays :: Position -> Board
+getRookCheckerRays Position {..} =
+  rookAttacks (enemy .| player) (lsb (enemy&kings))
 
 {-# INLINE  getPinnedPieces #-}
-getPinnedPieces :: Board -> Board -> Position -> Board
-getPinnedPieces checkerRays sliderRays Position {..} =
-  checkerRays & enemy &
-  (foldMapBoard (bishopAttacks allPieces) (attackers & bishops)
-  .| foldMapBoard (rookAttacks allPieces) (attackers & rooks)
-  .| foldMapBoard (queenAttacks allPieces) (attackers & queens))
+getPinnedPieces :: Board -> Board -> Board -> Position -> Board
+getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
+  enemy &
+  (foldMapBoard bishopPins (attackers & bishops)
+  .| foldMapBoard rookPins (attackers & rooks)
+  .| foldMapBoard queenPins (attackers & queens))
   where
     attackers = sliderRays & player
+    bishopPins = (bishopCheckerRays &) . bishopAttacks allPieces
+    rookPins = (rookCheckerRays &) . rookAttacks allPieces
+    queenPins n = bishopPins n .| rookPins n
     allPieces = player .| enemy
 
 {-# INLINE  getKingQueenRay #-}
-getKingQueenRay :: Board -> Int -> Board
+getKingQueenRay :: Board -> Square -> Board
 getKingQueenRay king n
   | file & king /= 0              = file
   | rank & king /= 0              = rank
   | diag & king /= 0              = diag
   | otherwise                    = antiDiag
   where
-    file = fileMovesVec !! n
-    rank = rankMovesVec !! n
-    diag = diagMovesVec !! n
-    antiDiag = antiDiagMovesVec !! n
+    file = rankMovesVec !! n
+    rank = fileMovesVec !! n
+    diag = antiDiagMovesVec !! n
+    antiDiag = diagMovesVec !! n
 
 {-# INLINE  getKingBishopRay #-}
-getKingBishopRay :: Board -> Int -> Board
+getKingBishopRay :: Board -> Square -> Board
 getKingBishopRay king n
   | diag & king /= 0              = diag
   | otherwise                    = antiDiag
   where
-    diag = diagMovesVec !! n
-    antiDiag = antiDiagMovesVec !! n
+    diag = antiDiagMovesVec !! n
+    antiDiag = diagMovesVec !! n
 
 {-# INLINE  getKingRookRay #-}
-getKingRookRay :: Board -> Int -> Board
+getKingRookRay :: Board -> Square -> Board
 getKingRookRay king n
   | file & king /= 0              = file
   | otherwise                    = rank
   where
-    file = fileMovesVec !! n
-    rank = rankMovesVec !! n
+    file = rankMovesVec !! n
+    rank = fileMovesVec !! n
 
 
 {-# INLINE  allPlayerAttacks #-}
@@ -108,38 +121,50 @@ allAttacks player enemy color
 allLegalMoves :: Position -> Vector Move
 allLegalMoves pos@Position {..}
 
-  | allCheckers == 0    = genMoves id
-  | allCheckers > 1    = Vector.fromList allKingMoves
-  | sliderCheckers /= 0 = genMoves captureOrBlockChecker
-  | otherwise          = genMoves captureChecker
+  | allCheckers == 0      = genMoves id
+  | ones allCheckers > 1 = Vector.fromList allKingMoves
+  | sliderCheckers /= 0   = genMoves captureOrBlockChecker
+  | otherwise            = genMoves captureChecker
 
   where
-    genMoves f = allLegalMovesHelper f allKingMoves pos
+    genMoves = allLegalMovesHelper allPieces king allKingMoves pos
     captureChecker board = board & allCheckers
     captureOrBlockChecker board = board & (allCheckers .| checkerRay)
-    checkerRay = getKingQueenRay king (lsb allCheckers)
+    checkerRay = getKingQueenRay king checkerSquare
+      & queenAttacks allPieces kingSquare
+      & queenAttacks allPieces checkerSquare
+    checkerSquare = lsb allCheckers
     allKingMoves = foldBoardSquares King
       (kingMoves allPieces player attacked castling (player&rooks) king)
       [] kingSquare
-    allCheckers = directCheckers .| sliderCheckers
+    allCheckers = leapingCheckers .| sliderCheckers
     allPieces = player .| enemy
     kingSquare = lsb king
     king = player&kings
 
 {-# INLINE  allLegalMovesHelper #-}
-allLegalMovesHelper :: (Board -> Board) -> [Move] -> Position -> Vector Move
-allLegalMovesHelper f allKingMoves Position {..} =
+allLegalMovesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> Vector Move
+allLegalMovesHelper allPieces king allKingMoves Position {..} f =
   Vector.fromList
     $ foldBoardMoves   Pawn (f . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
+    $ foldBoardMoves   Pawn (f . filePinnedPawnMoves allPieces enemy color)                filePinnedPawns
+    $ foldBoardMoves   Pawn (f . diagPinnedPawnMoves enemy color)                diagPinnedPawns
+    $ foldBoardMoves   Pawn (f . antiDiagPinnedPawnMoves enemy color)                antiDiagPinnedPawns
     $ foldBoardMoves   Knight (f . knightMoves player)           (unpinned&knights)
     $ foldBoardMoves   Bishop (f . bishopMoves allPieces pinnedPieces king player) (player&bishops)
     $ foldBoardMoves   Rook   (f . rookMoves allPieces pinnedPieces king player)   (player&rooks)
     $ foldBoardMoves   Queen  (f . queenMoves allPieces pinnedPieces king player)  (player&queens)
       allKingMoves
     where
-    allPieces = player .| enemy
     unpinned = player .\ pinnedPieces
-    king = player&kings
+    pinnedPawns = pinnedPieces & pawns
+    filePinnedPawns = pinnedPawns & kingFile
+    diagPinnedPawns = pinnedPawns & kingDiag
+    antiDiagPinnedPawns = pinnedPawns & kingAntiDiag
+    kingFile = rankMovesVec !! kingSquare
+    kingDiag = antiDiagMovesVec !! kingSquare
+    kingAntiDiag = diagMovesVec !! kingSquare
+    kingSquare = lsb king
 
 
 {-# INLINE  pawnMoves #-}
@@ -148,6 +173,27 @@ pawnMoves allPieces player enemy enPassant color n =
   ((pawnAdvances allPieces color board .\ enemy)
   .| pawnAttacks color board & (enemy .| enPassant))
   .\ player
+  where
+    board = toBoard n
+
+{-# INLINE  filePinnedPawnMoves #-}
+filePinnedPawnMoves :: Board -> Board -> Color -> Square -> Board
+filePinnedPawnMoves allPieces enemy color n =
+  pawnAdvances allPieces color board .\ enemy
+  where
+    board = toBoard n
+
+{-# INLINE  diagPinnedPawnMoves #-}
+diagPinnedPawnMoves :: Board -> Color -> Square -> Board
+diagPinnedPawnMoves enemy color n =
+  pawnDiagAttacks color board & enemy
+  where
+    board = toBoard n
+
+{-# INLINE  antiDiagPinnedPawnMoves #-}
+antiDiagPinnedPawnMoves :: Board -> Color -> Square -> Board
+antiDiagPinnedPawnMoves enemy color n =
+  pawnAntiDiagAttacks color board & enemy
   where
     board = toBoard n
 
@@ -174,18 +220,18 @@ kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Int -> Board
 kingCastlingMoves allPieces attacked castling rooks king n
 
   | shortCastleSliding & collisions .| inCheck == 0
-      = bit (ones (castling & rooks & file_A & kingRank))
+      = bit (ones (castling & rooks & file_A & kingFile))
         * ((castling & king) << 2)
 
   | longCastleSliding & collisions .| inCheck
-    .| allPieces & kingRank & file_B == 0
-      = bit (ones (castling & rooks & file_H & kingRank))
+    .| allPieces & kingFile & file_B == 0
+      = bit (ones (castling & rooks & file_H & kingFile))
         * ((castling & king) >> 2)
 
   | otherwise = 0
   where
-    collisions = kingRank & (attacked .| allPieces)
-    kingRank = fileMovesVec !! n
+    collisions = kingFile & (attacked .| allPieces)
+    kingFile = fileMovesVec !! n
     inCheck = king & attacked
 
 
@@ -218,6 +264,18 @@ pawnAttacks :: Color -> Board -> Board
 pawnAttacks color board = case color of
   White -> (board .\ file_A) << 7 .| (board .\ file_H) << 9
   Black -> (board .\ file_A) >> 9 .| (board .\ file_H) >> 7
+
+{-# INLINE  pawnDiagAttacks #-}
+pawnDiagAttacks :: Color -> Board -> Board
+pawnDiagAttacks color board = case color of
+  White -> (board .\ file_H) << 9
+  Black -> (board .\ file_A) >> 9
+
+{-# INLINE  pawnAntiDiagAttacks #-}
+pawnAntiDiagAttacks :: Color -> Board -> Board
+pawnAntiDiagAttacks color board = case color of
+  White -> (board .\ file_A) << 7
+  Black -> (board .\ file_H) >> 7
 
 {-# INLINE  knightAttacks #-}
 knightAttacks :: Square -> Board

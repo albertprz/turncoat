@@ -82,6 +82,13 @@ msb board = 65 * (zeros / 64) + 63 - zeros
 toBoard :: Square -> Board
 toBoard n = 1 << n
 
+{-# INLINE  boardContains #-}
+boardContains :: Board -> Board -> Board
+boardContains mustHave board =
+  if board & mustHave /= 0
+    then board
+    else 0
+
 knightMove :: Square -> Board
 knightMove n =
     move1 .| move2 .| move3 .| move4 .| move5

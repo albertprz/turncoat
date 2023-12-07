@@ -11,31 +11,31 @@ import           Models.Piece
 
 
 data Position = Position {
-  color          :: Color,
-  attacked       :: Board,
-  castling       :: Board,
-  enPassant      :: Board,
-  directCheckers :: Board,
-  sliderCheckers :: Board,
-  pinnedPieces   :: Board,
-  player         :: Board,
-  enemy          :: Board,
-  pawns          :: Board,
-  knights        :: Board,
-  bishops        :: Board,
-  rooks          :: Board,
-  queens         :: Board,
-  kings          :: Board
+  color           :: Color,
+  attacked        :: Board,
+  castling        :: Board,
+  enPassant       :: Board,
+  leapingCheckers :: Board,
+  sliderCheckers  :: Board,
+  pinnedPieces    :: Board,
+  player          :: Board,
+  enemy           :: Board,
+  pawns           :: Board,
+  knights         :: Board,
+  bishops         :: Board,
+  rooks           :: Board,
+  queens          :: Board,
+  kings           :: Board
 }
 
 
 startPosition :: Position
 startPosition = Position {
   color = White
-  , attacked = 0
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
+  , attacked = 0
   , enPassant = 0
-  , directCheckers = 0
+  , leapingCheckers = 0
   , sliderCheckers = 0
   , pinnedPieces = 0
   , player = rank_1 .| rank_2

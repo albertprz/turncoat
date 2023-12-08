@@ -1,10 +1,10 @@
 module AppPrelude (module ClassyPrelude, Vector, (!!)) where
 
-import           ClassyPrelude       hiding (Vector, mask, (/), (>>), (^))
+import           ClassyPrelude        hiding (Vector, mask, (/), (>>), (^))
 
-import           Data.Vector.Unboxed (Vector, (!))
+import           Data.Vector.Storable (Vector)
 
 {-# INLINE  (!!) #-}
 infixl 9 !!
-(!!) :: Unbox a => Vector a -> Int -> a
-(!!) = (!)
+(!!) :: Storable a => Vector a -> Int -> a
+(!!) = unsafeIndex

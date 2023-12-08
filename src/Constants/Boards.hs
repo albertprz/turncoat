@@ -2,11 +2,11 @@
 
 module Constants.Boards where
 
-import           AppPrelude          hiding (fmap, map, (<$>))
+import           AppPrelude           hiding (fmap, map, (<$>))
 
 import           Data.Bits
-import           Data.Vector.Unboxed as Vector hiding ((!))
-import           Utils.Ord           (inRange)
+import           Data.Vector.Storable as Vector hiding (toList, (!))
+import           Utils.Ord            (inRange)
 
 type Board = Word64
 
@@ -152,7 +152,7 @@ diagHelper :: (Int -> Int) -> Int -> Board
 diagHelper f n = foldl1 (.|) xs
   where
   xs = Vector.fromList do
-    x <- Vector.toList sideSquares
+    x <- toList sideSquares
     let y = f (n - x) `rem` 8
     guard $! inRange 0 7 (n - x)
     pure $! toBoard (y + 8 * x)

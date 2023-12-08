@@ -5,8 +5,8 @@ import           Constants.Boards
 import           Models.Piece
 
 import           Data.Bits
-import           Data.List           (iterate)
-import qualified Data.Vector.Unboxed as Vector
+import           Data.List            (iterate)
+import qualified Data.Vector.Storable as Vector
 
 
 data Move = Move {

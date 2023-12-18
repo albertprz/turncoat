@@ -20,7 +20,9 @@ description:         Please see the README on GitHub at <https://github.com/albe
 
 dependencies:
 - base >= 4 && < 5
+- bookhound
 - classy-prelude
+- errors
 - mtl
 - text
 - vector
@@ -78,6 +80,17 @@ ghc-options:
 
 library:
   source-dirs: src
+
+tests:
+  test:
+    build-tools: hspec-discover
+    source-dirs: test
+    main: Spec.hs
+    dependencies:
+    - hspec
+    - stafford
+    ghc-options:
+    - -Wno-type-defaults
 
 executables:
   stafford:

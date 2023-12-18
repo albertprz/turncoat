@@ -56,7 +56,6 @@ getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
   .| foldMapBoard rookPins (attackers & rooks)
   .| foldMapBoard queenPins (attackers & queens))
   where
-    attackers = sliderRays & player
     bishopPins n = getKingBishopRay king n
       & bishopCheckerRays
       & bishopAttacks allPieces n
@@ -66,6 +65,7 @@ getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
     queenPins n = getKingQueenRay king n
       & (bishopCheckerRays .| rookCheckerRays)
       & queenAttacks allPieces n
+    attackers = sliderRays & player
     king = enemy & kings
     allPieces = player .| enemy
 

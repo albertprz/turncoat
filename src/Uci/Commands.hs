@@ -2,10 +2,7 @@ module Uci.Commands where
 
 import           AppPrelude
 
-import           Models.Move
-import           Models.Piece
 import           Models.Position
-import           MoveGen.MakeMove
 import           Search.Perft
 
 import           Data.Composition ((.:))

@@ -1,7 +1,8 @@
 module Models.Piece where
 
 import           ClassyPrelude
-
+import           Data.Char     (isUpper)
+import qualified Data.Char     as Char
 
 newtype Piece = Piece Word8
   deriving (Eq, Ord, Enum, Bounded,  Generic)
@@ -37,6 +38,8 @@ instance Show Color where
     White -> "White"
     Black -> "Black"
 
+data CastlingRights = KingSide | QueenSide
+
 
 {-# COMPLETE Pawn, Knight, Bishop, Rook, Queen, King #-}
 pattern Pawn, Knight, Bishop, Rook, Queen, King :: Piece
@@ -65,11 +68,46 @@ reverseColor = \case
   White -> Black
   Black -> White
 
-pieceVal :: Piece -> Int
-pieceVal = \case
-  Pawn   -> 1
-  Knight -> 3
-  Bishop -> 3
-  Rook   -> 5
-  Queen  -> 9
-  King   -> maxBound
+pieceToChar :: (Piece, Color) -> Char
+pieceToChar (piece, color) =
+  case color of
+    White -> Char.toUpper char
+    Black -> char
+  where
+    char = case piece of
+      Pawn   -> 'p'
+      Knight -> 'n'
+      Bishop -> 'b'
+      Rook   -> 'r'
+      Queen  -> 'q'
+      King   -> 'k'
+
+charToPiece :: Char -> Maybe (Piece, Color)
+charToPiece char = (,color) <$> piece
+  where
+    color | isUpper char = White
+          | otherwise    = Black
+    piece = case Char.toLower char of
+      'p' -> Just Pawn
+      'n' -> Just Knight
+      'b' -> Just Bishop
+      'r' -> Just Rook
+      'q' -> Just Queen
+      'k' -> Just King
+      _   -> Nothing
+
+charToColor :: Char -> Maybe Color
+charToColor char = case char of
+  'w' -> Just White
+  'b' -> Just Black
+  _   -> Nothing
+
+charToCastlingRights :: Char -> Maybe (CastlingRights, Color)
+charToCastlingRights char = (,color) <$> piece
+  where
+    color | isUpper char = White
+          | otherwise    = Black
+    piece = case Char.toLower char of
+      'k' -> Just KingSide
+      'q' -> Just QueenSide
+      _   -> Nothing

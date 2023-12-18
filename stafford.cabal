@@ -65,9 +65,11 @@ library
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base ==4.*
+    , bookhound
     , classy-prelude
     , composition
     , containers
+    , errors
     , mtl
     , split
     , text
@@ -105,9 +107,59 @@ executable stafford
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*
+    , bookhound
     , classy-prelude
     , composition
     , containers
+    , errors
+    , mtl
+    , split
+    , stafford
+    , text
+    , unordered-containers
+    , vector
+  default-language: GHC2021
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Search.PerftSpec
+      Paths_stafford
+  hs-source-dirs:
+      test
+  default-extensions:
+      NoImplicitPrelude
+      StrictData
+      LambdaCase
+      MultiWayIf
+      BlockArguments
+      PostfixOperators
+      LiberalTypeSynonyms
+      FunctionalDependencies
+      DuplicateRecordFields
+      NoFieldSelectors
+      RecordWildCards
+      OverloadedRecordDot
+      ApplicativeDo
+      OverloadedStrings
+      ViewPatterns
+      PatternSynonyms
+      GADTs
+      TypeFamilies
+      TypeFamilyDependencies
+      DataKinds
+  ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wno-type-defaults
+  build-tool-depends:
+      hspec-discover:hspec-discover
+  build-depends:
+      base ==4.*
+    , bookhound
+    , classy-prelude
+    , composition
+    , containers
+    , errors
+    , hspec
     , mtl
     , split
     , stafford

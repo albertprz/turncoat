@@ -2,7 +2,7 @@
 
 module Constants.Boards where
 
-import           AppPrelude           hiding (fmap, map, (<$>))
+import           AppPrelude           hiding (map)
 
 import           Data.Bits
 import           Data.Vector.Storable as Vector hiding (toList, (!))

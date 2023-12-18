@@ -1,0 +1,58 @@
+name: CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+concurrency:
+  group: ${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stack:
+
+    name: ${{ matrix.os }} / ghc ${{ matrix.ghc }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        stack: [latest]
+        ghc: ["9.4.7"]
+
+    steps:
+
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Restore from cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.stack
+          ~/.ghcup
+        key: ${{ runner.os }}-${{ matrix.ghc }}-stack${{ matrix.stack }}
+
+    - name: Setup GHC
+      uses: haskell/actions/setup@v2
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        stack-version: ${{ matrix.stack }}
+        enable-stack: true
+
+    - name: Install dependencies
+      if: steps.cache.outputs.cache-hit != 'true'
+      timeout-minutes: 15
+      run: |
+        stack build --system-ghc --test --no-run-tests --only-dependencies
+
+    - name: Build
+      timeout-minutes: 15
+      run: |
+        stack build --system-ghc --test --no-run-tests
+
+    - name: Run tests
+      timeout-minutes: 15
+      run: |
+        stack test --system-ghc --test --fast

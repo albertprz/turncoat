@@ -2,9 +2,8 @@ module Main where
 
 import           ClassyPrelude
 
-import           Models.Position (startPosition)
 import           Uci.Commands
-
+import           Models.Position 
 
 main :: IO ()
 main = printPerft 6 startPosition

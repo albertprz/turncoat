@@ -3,7 +3,6 @@ module MoveGen.PieceMoves where
 import           AppPrelude       hiding (Vector)
 
 import           Constants.Boards
-import           Data.Bits        (Bits (bit))
 import           Data.Vector      as Vector
 import           Models.Move
 import           Models.Piece
@@ -226,22 +225,24 @@ kingMoves allPieces player attacked castling rooks king n =
   .\ (attacked .| player)
 
 {-# INLINE  kingCastlingMoves #-}
-kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Int -> Board
-kingCastlingMoves allPieces attacked castling rooks king n
+kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
+kingCastlingMoves allPieces attacked castling rooks king n =
 
-  | shortCastleSliding & collisions .| inCheck == 0
-      = bit (ones (castling & rooks & file_A & kingFile))
-        * ((castling & king) << 2)
-
-  | longCastleSliding & collisions .| inCheck
-    .| allPieces & kingFile & file_B == 0
-      = bit (ones (castling & rooks & file_H & kingFile))
-        * ((castling & king) >> 2)
-
-  | otherwise = 0
+  (shortCastlingCond
+      * toEnum (ones (castling & rooks & file_A))
+      * ((castling & king) << 2))
+  .|
+  (longCastlingCond
+      * toEnum (ones (castling & rooks & file_H))
+      * ((castling & king) >> 2))
   where
-    collisions = kingFile & (attacked .| allPieces)
-    kingFile = fileMovesVec !! n
+    shortCastlingCond = 1
+     - min 1 (shortCastleSliding & collisions .| inCheck)
+    longCastlingCond = 1
+     - min 1 (longCastleSliding & collisions .| inCheck
+              .| allPieces & kingRank & file_B)
+    collisions = kingRank & (attacked .| allPieces)
+    kingRank = fileMovesVec !! n
     inCheck = king & attacked
 
 

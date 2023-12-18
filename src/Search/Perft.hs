@@ -22,6 +22,7 @@ perft = go 0
 {-# INLINE  divide #-}
 divide :: Int -> Position -> Map Move Int
 divide 0     _   = Map.empty
+divide 1     pos = Map.fromList $ toList ((,1) <$> allLegalMoves pos)
 divide depth pos = Map.fromList
   (second (perft (depth - 1)) . getResults <$> toList (allLegalMoves pos))
   where

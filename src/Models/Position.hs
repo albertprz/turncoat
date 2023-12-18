@@ -98,8 +98,7 @@ positionFromFen fenStr = do
     <|> Nothing <$ is '-'
   emptySquaresN = (`replicate` Nothing) . digitToInt <$> oneOf ['1' .. '8']
   piece = pure . pure <$> mandatory (map charToPiece anyChar)
-  lengthCheck :: [a] -> Bool
-  lengthCheck = (== 8) . length
+  lengthCheck xs = length xs == 8
   mandatory = (=<<) (fromMaybe empty . map pure)
   foldrFlipped f xs start = foldr f start xs
 

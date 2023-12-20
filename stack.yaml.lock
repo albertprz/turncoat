@@ -13,8 +13,8 @@ packages:
     hackage: bookhound-0.2.2
 snapshots:
 - completed:
-    sha256: 5921ddc75f5dd3f197fbc32e1e5676895a8e7b971d4f82ef6b556657801dd18a
-    size: 640054
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/20.yaml
+    sha256: e176944bc843f740e05242fa7a66ca1f440c127e425254f7f1257f9b19add23f
+    size: 712153
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/0.yaml
   original:
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/21/20.yaml
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/0.yaml

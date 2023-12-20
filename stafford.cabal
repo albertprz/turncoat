@@ -35,7 +35,6 @@ library
       MoveGen.MakeMove
       MoveGen.PieceMoves
       Search.Perft
-      Uci.Commands
       Utils.Ord
   other-modules:
       Paths_stafford
@@ -80,6 +79,8 @@ library
 executable stafford
   main-is: Main.hs
   other-modules:
+      CommandLine.Command
+      CommandLine.UciCommands
       Paths_stafford
   hs-source-dirs:
       app

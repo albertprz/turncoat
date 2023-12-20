@@ -16,6 +16,7 @@ import           Models.Piece
 
 data Position = Position {
   color           :: Color,
+  halfMoveClock   :: Int,
   attacked        :: Board,
   castling        :: Board,
   enPassant       :: Board,
@@ -35,6 +36,7 @@ data Position = Position {
 startPosition :: Position
 startPosition = Position {
   color = White
+  , halfMoveClock = 0
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
   , attacked = 0
   , enPassant = 0
@@ -54,6 +56,7 @@ startPosition = Position {
 emptyPosition :: Position
 emptyPosition = Position {
   color = White
+  , halfMoveClock = 0
   , castling = 0
   , attacked = 0
   , enPassant = 0
@@ -71,15 +74,20 @@ emptyPosition = Position {
 }
 
 positionFromFen :: Text -> Either [ParseError] Position
-positionFromFen fenStr = do
-  (pieces, color, castling, enPassant, _, _) <- runParser positionP fenStr
+positionFromFen = runParser positionFenParser
+
+positionFenParser :: Parser Position
+positionFenParser = do
+  (pieces, color, castling, enPassant, halfMoveClock, _) <- position
   pure
     $ foldrFlipped includePiece pieces
     $ foldrFlipped includeCastling castling
     $ foldrFlipped includeEnPassant enPassant
-    $ includeColor color emptyPosition
+    $ includeHalfMoveClock halfMoveClock
+    $ includeColor color
+    emptyPosition
   where
-  positionP = (,,,,,)
+  position = (,,,,,)
     <$> (piecesP <* space)
     <*> (colorP <* space)
     <*> (castlingP <* space)
@@ -118,8 +126,13 @@ includePiece (square, (piece, pieceColor)) pos@Position {..} =
     King   -> pos { kings = kings .| board }
   board = toBoard square
 
+includeHalfMoveClock :: Int -> Position -> Position
+includeHalfMoveClock halfMoveClock pos =
+  pos { halfMoveClock = halfMoveClock }
+
 includeColor :: Color -> Position -> Position
-includeColor color pos = pos { color = color }
+includeColor color pos =
+  pos { color = color }
 
 includeCastling :: (CastlingRights, Color) -> Position -> Position
 includeCastling (castlingRights, castlingColor) pos@Position {..} =

@@ -34,7 +34,8 @@ switchPlayers pos@Position {..} =
     leapingCheckers = MoveGen.getLeapingCheckers pos,
     sliderCheckers = MoveGen.getSliderCheckers bishopCheckerRays
                         rookCheckerRays queenCheckerRays pos,
-    pinnedPieces = MoveGen.getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays pos
+    pinnedPieces = MoveGen.getPinnedPieces bishopCheckerRays
+                        rookCheckerRays sliderRays pos
   }
   where
     bishopCheckerRays = MoveGen.getBishopCheckerRays pos
@@ -48,12 +49,15 @@ updatePlayerBoards start end pos@Position {..} =
   pos {
     player = (player ^ start) .| end,
     enemy = enemy .\ end,
+    halfMoveClock = clock,
     pawns = pawns .\ end,
     knights = knights .\ end,
     bishops = bishops .\ end,
     rooks = rooks .\ end,
     queens = queens .\ end
   }
+  where
+    clock = (1 - ones (enemy & end)) * (halfMoveClock + 1)
 
 {-# INLINE  movePiece #-}
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
@@ -63,7 +67,8 @@ movePiece Pawn Nothing start end pos@Position {..} =
       pos {
         pawns = (pawns ^ (start .| enPassantCapture)) .| end,
         enemy = enemy ^ enPassantCapture,
-        enPassant = start << 8 & end >> 8
+        enPassant = start << 8 & end >> 8,
+        halfMoveClock = 0
       }
       where
         enPassantCapture = (enPassant & end) >> 8
@@ -71,7 +76,8 @@ movePiece Pawn Nothing start end pos@Position {..} =
       pos {
         pawns = (pawns ^ (start .| enPassantCapture)) .| end,
         enemy = enemy ^ enPassantCapture,
-        enPassant = start >> 8 & end << 8
+        enPassant = start >> 8 & end << 8,
+        halfMoveClock = 0
       }
       where
         enPassantCapture = (enPassant & end) << 8

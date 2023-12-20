@@ -19,7 +19,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         stack: [latest]
-        ghc: ["9.4.7"]
+        ghc: ["9.6.3"]
 
     steps:
 

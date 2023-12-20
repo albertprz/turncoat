@@ -262,11 +262,11 @@ sideSquares = Vector.fromList [0 .. 7]
 diagonals :: Vector Diagonal
 diagonals = Vector.fromList [0 .. 14]
 
-longCastleSliding :: Board
-longCastleSliding = file_C .| file_D
-
 shortCastleSliding :: Board
 shortCastleSliding = file_F .| file_G
+
+longCastleSliding :: Board
+longCastleSliding = file_C .| file_D
 
 -- Ranks
 rank_1 :: Board

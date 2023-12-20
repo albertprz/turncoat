@@ -17,7 +17,7 @@ spec = do
       perft 6 startPosition `shouldBe` 119_060_324
 
     it "Kiwipete" $ do
-      perft 2 kiwipete `shouldBe` 2039
+      perft 5 kiwipete `shouldBe` 193_690_690
 
 kiwipete :: Position
 kiwipete = position

@@ -229,11 +229,11 @@ kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Boar
 kingCastlingMoves allPieces attacked castling rooks king n =
 
   (shortCastlingCond
-      * toEnum (ones (castling & rooks & file_A))
+      * toEnum (ones (castling & rooks & file_H))
       * ((castling & king) << 2))
   .|
   (longCastlingCond
-      * toEnum (ones (castling & rooks & file_H))
+      * toEnum (ones (castling & rooks & file_A))
       * ((castling & king) >> 2))
   where
     shortCastlingCond = 1

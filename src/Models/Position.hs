@@ -152,8 +152,8 @@ includeEnPassant square pos =
 squareParser :: Parser Square
 squareParser = (+) <$> column <*> map (* 8) row
   where
-    column = (fromEnum 'a' -) . fromEnum <$> oneOf ['a' .. 'h']
-    row = (1 -) . digitToInt <$> oneOf ['1' .. '8']
+    column = (\x -> x - fromEnum 'a') . fromEnum <$> oneOf ['a' .. 'h']
+    row = (\x -> x - 1) . digitToInt <$> oneOf ['1' .. '8']
 
 
 pieceAt :: Square -> Position -> Maybe (Piece, Color)

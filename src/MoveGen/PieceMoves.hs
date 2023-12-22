@@ -68,6 +68,23 @@ getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
     king = enemy & kings
     allPieces = player .| enemy
 
+{-# INLINE  getEnPassantPinnedPawns #-}
+getEnPassantPinnedPawns :: Board -> Position -> Board
+getEnPassantPinnedPawns rookCheckerRays pos@Position {..} =
+  pawns & getPinnedPieces 0 rookCheckerRays sliderRays pos'
+  where
+    sliderRays = getEnemyKingSliderRays pos' & enPassantRank
+    pos' = pos {
+      pawns = pawns ^ enPassantPawn,
+      player = player ^ enPassantPawn
+    }
+    enPassantPawn = case color of
+      White -> enPassant << 8
+      Black -> enPassant >> 8
+    enPassantSquare = lsb enPassantPawn
+    enPassantRank = fileMovesVec !! enPassantSquare
+
+
 {-# INLINE  getKingQueenRay #-}
 getKingQueenRay :: Board -> Square -> Board
 getKingQueenRay king n

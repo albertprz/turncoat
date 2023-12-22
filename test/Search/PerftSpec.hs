@@ -1,11 +1,13 @@
 module Search.PerftSpec where
 
 import           AppPrelude
-import           Test.Hspec
 
 import           Control.Error.Util (hush)
 import           Data.Maybe         (fromJust)
+import           Test.Hspec
+
 import           Models.Position
+import           Parsers.Position
 import           Search.Perft
 
 spec :: Spec
@@ -18,6 +20,9 @@ spec = do
 
     it "Kiwipete" $ do
       perft 5 kiwipete `shouldBe` 193_690_690
+
+    it "Extra Position 1" $ do
+      perft 2 extraPos1 `shouldBe` 191
 
 kiwipete :: Position
 kiwipete = position

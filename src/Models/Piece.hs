@@ -1,8 +1,8 @@
 module Models.Piece where
 
-import           ClassyPrelude
-import           Data.Char     (isUpper)
-import qualified Data.Char     as Char
+import           AppPrelude
+import           Data.Char  (isUpper)
+import qualified Data.Char  as Char
 
 newtype Piece = Piece Word8
   deriving (Eq, Ord, Enum, Bounded,  Generic)

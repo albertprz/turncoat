@@ -9,6 +9,7 @@ import           Bookhound.Parsers.Number
 import           Bookhound.Parsers.Text
 import           CommandLine.UciCommands
 import           Models.Position
+import           Parsers.Position
 
 
 data Command
@@ -39,6 +40,6 @@ parseCommand = runParser command
 
 executeCommand :: Command -> CommandM ()
 executeCommand = \case
+  SetPosition pos -> setPosition pos
   Perft n -> printPerft n
   Divide n -> printDivide n
-  SetPosition pos -> setPosition pos

@@ -34,6 +34,7 @@ library
       Models.Position
       MoveGen.MakeMove
       MoveGen.PieceMoves
+      Parsers.Position
       Search.Perft
       Utils.Ord
   other-modules:

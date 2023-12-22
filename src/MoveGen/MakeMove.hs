@@ -27,63 +27,58 @@ makeLegalMove Move {..} pos =
 switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
-    color = reverseColor color,
-    player = enemy,
-    enemy = player,
-    attacked = MoveGen.allPlayerAttacks pos,
+    color           = reverseColor color,
+    player          = enemy,
+    enemy           = player,
+    attacked        = MoveGen.allPlayerAttacks pos,
     leapingCheckers = MoveGen.getLeapingCheckers pos,
-    sliderCheckers = MoveGen.getSliderCheckers bishopCheckerRays
+    sliderCheckers  = MoveGen.getSliderCheckers bishopCheckerRays
                         rookCheckerRays queenCheckerRays pos,
-    pinnedPieces = MoveGen.getPinnedPieces bishopCheckerRays
+    pinnedPieces    = MoveGen.getPinnedPieces bishopCheckerRays
                         rookCheckerRays sliderRays pos
+                      .| enPassantPinnedPawns
   }
   where
     bishopCheckerRays = MoveGen.getBishopCheckerRays pos
     rookCheckerRays = MoveGen.getRookCheckerRays pos
     queenCheckerRays = bishopCheckerRays .| rookCheckerRays
     sliderRays = MoveGen.getEnemyKingSliderRays pos
+    enPassantPinnedPawns
+      | enPassant == 0 = 0
+      | otherwise = MoveGen.getEnPassantPinnedPawns rookCheckerRays pos
 
 {-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Position -> Position
 updatePlayerBoards start end pos@Position {..} =
   pos {
+    halfMoveClock = (1 - ones (enemy & end)) * (halfMoveClock + 1),
     player = (player ^ start) .| end,
     enemy = enemy .\ end,
-    halfMoveClock = clock,
     pawns = pawns .\ end,
     knights = knights .\ end,
     bishops = bishops .\ end,
     rooks = rooks .\ end,
     queens = queens .\ end
   }
-  where
-    clock = (1 - ones (enemy & end)) * (halfMoveClock + 1)
 
 {-# INLINE  movePiece #-}
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
 movePiece Pawn Nothing start end pos@Position {..} =
-  case color of
-    White ->
-      pos {
-        pawns = (pawns ^ (start .| enPassantCapture)) .| end,
-        enemy = enemy ^ enPassantCapture,
-        enPassant = start << 8 & end >> 8,
-        halfMoveClock = 0
-      }
-      where
-        enPassantCapture = (enPassant & end) >> 8
-    Black ->
-      pos {
-        pawns = (pawns ^ (start .| enPassantCapture)) .| end,
-        enemy = enemy ^ enPassantCapture,
-        enPassant = start >> 8 & end << 8,
-        halfMoveClock = 0
-      }
-      where
-        enPassantCapture = (enPassant & end) << 8
+  pos {
+    halfMoveClock = 0,
+    pawns = (pawns ^ (start .| enPassantCapture)) .| end,
+    enemy = enemy ^ enPassantCapture,
+    enPassant = start <<! 8 & end !>> 8
+  }
+  where
+    ((<<!), (!>>)) = case color of
+      White -> ((<<), (>>))
+      Black -> ((>>), (<<))
+    enPassantCapture = (enPassant & end) !>> 8
 
 movePiece Pawn (Just KnightProm) start end pos@Position {..} =
   pos {
+    halfMoveClock = 0,
     pawns = pawns ^ start,
     knights = knights .| end,
     enPassant = 0
@@ -91,6 +86,7 @@ movePiece Pawn (Just KnightProm) start end pos@Position {..} =
 
 movePiece Pawn (Just BishopProm) start end pos@Position {..} =
   pos {
+    halfMoveClock = 0,
     pawns = pawns ^ start,
     bishops = bishops .| end,
     enPassant = 0
@@ -98,6 +94,7 @@ movePiece Pawn (Just BishopProm) start end pos@Position {..} =
 
 movePiece Pawn (Just RookProm) start end pos@Position {..} =
   pos {
+    halfMoveClock = 0,
     pawns = pawns ^ start,
     rooks = rooks .| end,
     enPassant = 0
@@ -105,6 +102,7 @@ movePiece Pawn (Just RookProm) start end pos@Position {..} =
 
 movePiece Pawn (Just QueenProm) start end pos@Position {..} =
   pos {
+    halfMoveClock = 0,
     pawns = pawns ^ start,
     queens = queens .| end,
     enPassant = 0

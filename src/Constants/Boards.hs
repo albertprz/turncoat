@@ -76,7 +76,7 @@ lsb = countTrailingZeros
 msb :: Board -> Square
 msb board = 65 * (zeros / 64) + 63 - zeros
   where
-    zeros = countLeadingZeros board
+    !zeros = countLeadingZeros board
 
 {-# INLINE  toBoard #-}
 toBoard :: Square -> Board
@@ -267,6 +267,7 @@ shortCastleSliding = file_F .| file_G
 
 longCastleSliding :: Board
 longCastleSliding = file_C .| file_D
+
 
 -- Ranks
 rank_1 :: Board

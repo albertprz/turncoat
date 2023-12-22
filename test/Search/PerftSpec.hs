@@ -22,7 +22,18 @@ spec = do
       perft 5 kiwipete `shouldBe` 193_690_690
 
     it "Extra Position 1" $ do
-      perft 2 extraPos1 `shouldBe` 191
+      perft 7 extraPos1 `shouldBe` 178_633_661
+
+    it "Extra Position 2" $ do
+      perft 6 extraPos2 `shouldBe` 706_045_033
+
+    it "Extra Position 3" $ do
+      perft 5 extraPos3 `shouldBe` 89_941_194
+
+    it "Extra Position 4" $ do
+      perft 5 extraPos4 `shouldBe` 164_075_551
+
+
 
 kiwipete :: Position
 kiwipete = position

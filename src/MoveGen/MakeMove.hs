@@ -35,8 +35,9 @@ switchPlayers pos@Position {..} =
     sliderCheckers  = MoveGen.getSliderCheckers bishopCheckerRays
                         rookCheckerRays queenCheckerRays pos,
     pinnedPieces    = MoveGen.getPinnedPieces bishopCheckerRays
-                        rookCheckerRays sliderRays pos
-                      .| enPassantPinnedPawns
+                        rookCheckerRays sliderRays pos,
+    enPassant = toEnum (1 - ones enPassantPinnedPawns) * enPassant
+
   }
   where
     bishopCheckerRays = MoveGen.getBishopCheckerRays pos
@@ -45,7 +46,7 @@ switchPlayers pos@Position {..} =
     sliderRays = MoveGen.getEnemyKingSliderRays pos
     enPassantPinnedPawns
       | enPassant == 0 = 0
-      | otherwise = MoveGen.getEnPassantPinnedPawns rookCheckerRays pos
+      | otherwise = MoveGen.getEnPassantPinnedPawns pos
 
 {-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Position -> Position

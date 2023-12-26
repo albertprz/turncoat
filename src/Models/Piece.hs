@@ -43,9 +43,8 @@ pattern Black = Color 1
 
 
 reverseColor :: Color -> Color
-reverseColor = \case
-  White -> Black
-  Black -> White
+reverseColor (Color color) =
+  Color (1 - color)
 
 pieceToChar :: (Piece, Color) -> Char
 pieceToChar (piece, color) =

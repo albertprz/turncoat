@@ -3,26 +3,37 @@ module Evaluation.Score where
 import           AppPrelude
 
 import           Constants.Boards
-import           Models.Piece
+import           Models.Move
 
 
 newtype Score = Score Int
-  deriving (Eq, Ord, Num, Bounded)
+  deriving (Eq, Ord, Num, Bounded, Storable)
 
 
 {-# INLINE  boardScore #-}
-boardScore :: Piece -> Board -> Score
-boardScore piece board =
-  materialScore piece * Score count
+boardScore :: Score -> Vector Score -> Board -> Score
+boardScore !pieceTypeScore !pieceSquareTable !board =
+  foldlBoard (Score 0) (+) pieceScore board
   where
-    count = ones board
+    pieceScore !n = pieceTypeScore + pieceSquareTable !! n
 
-{-# INLINE  materialScore #-}
-materialScore :: Piece -> Score
-materialScore = \case
-  Pawn -> 100
-  Knight -> 310
-  Bishop -> 320
-  Rook -> 500
-  Queen -> 900
-  King -> 100_000
+
+{-# INLINE  pawnScore #-}
+pawnScore :: Score
+pawnScore = 100
+
+{-# INLINE  knightScore #-}
+knightScore :: Score
+knightScore = 310
+
+{-# INLINE  bishopScore #-}
+bishopScore :: Score
+bishopScore = 320
+
+{-# INLINE  rookScore #-}
+rookScore :: Score
+rookScore = 500
+
+{-# INLINE  queenScore #-}
+queenScore :: Score
+queenScore = 900

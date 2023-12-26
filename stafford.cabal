@@ -29,6 +29,7 @@ library
       AppPrelude
       Constants.Boards
       Evaluation.Evaluation
+      Evaluation.PieceSquareTables
       Evaluation.Score
       Models.GameState
       Models.Move

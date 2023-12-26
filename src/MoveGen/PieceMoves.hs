@@ -51,9 +51,9 @@ getRookCheckerRays Position {..} =
 getPinnedPieces :: Board -> Board -> Board -> Position -> Board
 getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
   enemy &
-  (foldMapBoard bishopPins (attackers & bishops)
-  .| foldMapBoard rookPins (attackers & rooks)
-  .| foldMapBoard queenPins (attackers & queens))
+  (foldBoard bishopPins (attackers & bishops)
+  .| foldBoard rookPins (attackers & rooks)
+  .| foldBoard queenPins (attackers & queens))
   where
     bishopPins n = getKingBishopRay king n
       & bishopCheckerRays
@@ -136,10 +136,10 @@ allAttacks :: Board -> Board -> Color -> Position -> Board
 allAttacks player enemy color
   Position {pawns, knights, bishops, rooks, queens, kings} =
      pawnAttacks  color                     (player&pawns)
-  .| foldMapBoard knightAttacks             (player&knights)
-  .| foldMapBoard (bishopAttacks allPieces) (player&bishops)
-  .| foldMapBoard (rookAttacks allPieces)   (player&rooks)
-  .| foldMapBoard (queenAttacks allPieces)  (player&queens)
+  .| foldBoard knightAttacks             (player&knights)
+  .| foldBoard (bishopAttacks allPieces) (player&bishops)
+  .| foldBoard (rookAttacks allPieces)   (player&rooks)
+  .| foldBoard (queenAttacks allPieces)  (player&queens)
   .| kingAttacks                       (lsb (player&kings))
   where
     allPieces = player .| (enemy .\ kings)

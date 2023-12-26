@@ -20,9 +20,9 @@ data Move = Move {
 instance Hashable Move
 
 
-{-# INLINE  foldMapBoard #-}
-foldMapBoard ::  (Square -> Board) -> Board -> Board
-foldMapBoard = foldlBoard 0 (.|)
+{-# INLINE  foldBoard #-}
+foldBoard ::  (Square -> Board) -> Board -> Board
+foldBoard = foldlBoard 0 (.|)
 
 {-# INLINE  foldBoardMoves #-}
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]

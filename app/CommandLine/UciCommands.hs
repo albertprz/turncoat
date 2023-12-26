@@ -5,20 +5,24 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Position
-import           Search.Perft
-
-import           Control.Monad.State
-
-import           Data.Composition    ((.:))
-import           Data.Map            (traverseWithKey)
 import           MoveGen.MakeMove    (playMove)
 import           MoveGen.PieceMoves  (allLegalMoves)
+import           Search.Perft
+import           Search.Search
+import           Search.SearchOptions
+
+
+import           Control.Monad.State
+import           Data.Composition    ((.:))
+import           Data.Map            (traverseWithKey)
 
 
 printPerft :: Int -> CommandM ()
 printPerft = withPosition go
   where
-    go = putStrLn . tshow .: perft
+    go = putStrLn
+         . tshow
+         .: perft
 
 printDivide :: Int -> CommandM ()
 printDivide = withPosition go
@@ -26,6 +30,14 @@ printDivide = withPosition go
     go = void
          . traverseWithKey (\k v -> putStrLn (tshow k <> " => " <> tshow v))
          .: divide
+
+printBestMove :: SearchOptions -> CommandM ()
+printBestMove opts = withPosition go opts.depth
+  where
+    go =  putStrLn
+         . foldMap (("Best move: " ++ ) . tshow)
+         .: getBestMove 
+    
 
 setPosition :: PositionSpec -> CommandM ()
 setPosition PositionSpec {..} =
@@ -58,3 +70,5 @@ data UnknownMove = UnknownMove
   { start :: Square,
     end   :: Square
   }
+
+  

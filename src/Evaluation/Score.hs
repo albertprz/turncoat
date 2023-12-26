@@ -1,18 +1,23 @@
 module Evaluation.Score where
 
 import           AppPrelude
+
 import           Constants.Boards
 import           Models.Piece
 
-newtype Score = Score Int deriving Num
+
+newtype Score = Score Int
+  deriving (Eq, Ord, Num, Bounded)
 
 
+{-# INLINE  boardScore #-}
 boardScore :: Piece -> Board -> Score
 boardScore piece board =
   materialScore piece * Score count
   where
     count = ones board
 
+{-# INLINE  materialScore #-}
 materialScore :: Piece -> Score
 materialScore = \case
   Pawn -> 100

@@ -9,13 +9,17 @@ import           Bookhound.Parsers.Number
 import           Bookhound.Parsers.Text
 import           CommandLine.UciCommands
 import           Models.Position
+import Search.SearchOptions
 import           Parsers.Position
+
+import Data.Monoid
 
 
 data Command
   = SetPosition PositionSpec
   | Perft Int
   | Divide Int
+  | BestMove SearchOptions
 
 
 parseCommand :: Text -> Either [ParseError] Command
@@ -26,10 +30,14 @@ parseCommand = runParser command
       <|> stringToken "go" *> (
           stringToken "perft"  *> (Perft  <$> unsignedInt)
       <|> stringToken "divide" *> (Divide <$> unsignedInt)
+      <|> (BestMove <$> searchOptions)
     )
   positionSpec = PositionSpec
     <$> initialPosition
     <*> (stringToken "moves" *> (token unknownMove |+) <|> pure [])
+  searchOptions =
+    (`appEndo` defaultSearchOptions) . foldMap Endo <$> (searchOption |*)
+  searchOption = includeDepth <$> (stringToken "depth" *> unsignedInt)
   initialPosition =
     stringToken "startpos" $> startPosition
     <|> stringToken "fen" *> positionFenParser
@@ -43,3 +51,4 @@ executeCommand = \case
   SetPosition pos -> setPosition pos
   Perft n -> printPerft n
   Divide n -> printDivide n
+  BestMove opts -> printBestMove opts

@@ -7,6 +7,8 @@ import           Evaluation.Score
 import           Models.Piece
 import           Models.Position
 
+
+{-# INLINE  evaluatePosition #-}
 evaluatePosition :: Position -> Score
 evaluatePosition Position {..} =
   boardScoreDiff Pawn pawns

@@ -65,7 +65,7 @@ infixl 7 ^
 (!) = complement
 
 {-# INLINE  ones #-}
-ones :: Board -> Square
+ones :: Board -> Int
 ones = popCount
 
 {-# INLINE  lsb #-}

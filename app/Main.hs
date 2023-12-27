@@ -9,14 +9,13 @@ import           Models.Position     (startPosition)
 
 
 main :: IO ()
-main = evalStateT (forever repl) startPosition
-  where
-  repl = do
-    putStrLn ""
-    input <- getLine
-    unless (all isSpace input)
-      (eval input)
-  eval input =
-    either (putStrLn . ("Error when parsing command:" <>) . tshow)
-           executeCommand
-           (parseCommand input)
+main = putStrLn "Stafford engine by albertprz" *>
+       evalStateT (forever repl) startPosition
+    where
+    repl = do input <- getLine
+              unless (all isSpace input)
+                     (eval input)
+    eval = either (putStrLn . (errorMsg <>) . tshow)
+                  executeCommand
+           . parseCommand
+    errorMsg = "Error when parsing command: "

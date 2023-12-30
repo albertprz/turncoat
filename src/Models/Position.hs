@@ -3,10 +3,13 @@ module Models.Position where
 
 import           AppPrelude
 import           Constants.Boards
-import           Data.Bitraversable (bisequence)
-import           Data.Bits          (Bits (..))
-import           Data.List.Split    (chunksOf)
+import           Data.Bitraversable        (bisequence)
+import           Data.Bits                 (Bits (..))
+import           Data.List.Split           (chunksOf)
+import           Data.Maybe                (fromJust)
+import           Models.Move               (foldlBoard)
 import           Models.Piece
+import           Models.TranspositionTable (ZKey (..))
 
 
 data Position = Position {
@@ -27,6 +30,7 @@ data Position = Position {
   queens          :: Board,
   kings           :: Board
 }
+
 
 startPosition :: Position
 startPosition = Position {
@@ -68,6 +72,51 @@ emptyPosition = Position {
   , kings = 0
 }
 
+{-# INLINE  getZobristKey #-}
+getZobristKey :: Position -> ZKey
+getZobristKey pos@Position {..} = ZKey
+  (piecesHash ^ castlingHash ^ enPassantHash ^ sideToMoveHash)
+  where
+
+    !piecesHash = foldlBoard 0 (^) hashPiece (player .| enemy)
+
+    !castlingHash = castlingRngVec !! idx
+      where
+      idx =   inBoard file_A + 2 * inBoard file_H
+        + 4 * inBoard rank_1 + 8 * inBoard rank_8
+      inBoard x = fromEnum $ min 1 (castling & x)
+
+    !enPassantHash = enPassantRngVec !! idx
+      where
+        idx = toFile $ lsb enPassant
+
+    !sideToMoveHash = sideToMoveRngVec !! idx
+      where
+        idx = fromEnum color
+
+    hashPiece n = pieceRngVec !! idx
+      where
+      idx = n + 64 * (fromEnum piece + 6 * fromEnum pieceColor)
+      (Piece piece, Color pieceColor) = fromJust $ pieceAt n pos
+
+
+{-# INLINE  pieceAt #-}
+pieceAt :: Square -> Position -> Maybe (Piece, Color)
+pieceAt n (Position {..}) = bisequence (piece, color')
+  where
+    piece  | testBit pawns n = Just Pawn
+           | testBit knights n = Just Knight
+           | testBit bishops n = Just Bishop
+           | testBit rooks n = Just Rook
+           | testBit queens n = Just Queen
+           | testBit kings n = Just King
+           | otherwise = Nothing
+
+    color' | testBit player n = Just color
+           | testBit enemy n = Just $ reverseColor color
+           | otherwise = Nothing
+
+
 includePiece :: (Square, (Piece, Color)) -> Position -> Position
 includePiece (square, (piece, pieceColor)) pos@Position {..} =
   if pieceColor == color then
@@ -106,22 +155,6 @@ includeCastling (castlingRights, castlingColor) pos@Position {..} =
 includeEnPassant :: Square -> Position -> Position
 includeEnPassant square pos =
   pos {enPassant = toBoard square}
-
-
-pieceAt :: Square -> Position -> Maybe (Piece, Color)
-pieceAt n (Position {..}) = bisequence (piece, color')
-  where
-    piece  | testBit pawns n = Just Pawn
-           | testBit knights n = Just Knight
-           | testBit bishops n = Just Bishop
-           | testBit rooks n = Just Rook
-           | testBit queens n = Just Queen
-           | testBit kings n = Just King
-           | otherwise = Nothing
-
-    color' | testBit player n = Just color
-           | testBit enemy n = Just $ reverseColor color
-           | otherwise = Nothing
 
 
 instance Show Position where

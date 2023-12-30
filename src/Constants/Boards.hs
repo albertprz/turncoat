@@ -5,7 +5,9 @@ module Constants.Boards where
 import           AppPrelude           hiding (map)
 
 import           Data.Bits
-import           Data.Vector.Storable as Vector hiding (toList, (!))
+import           Data.Vector.Storable (foldl1, map)
+import           System.IO.Unsafe     (unsafePerformIO)
+import           System.Random
 import           Utils.Ord            (inRange)
 
 type Board = Word64
@@ -82,6 +84,14 @@ msb board = 65 * (zeros / 64) + 63 - zeros
 toBoard :: Square -> Board
 toBoard n = 1 << n
 
+{-# INLINE  toFile #-}
+toFile :: Square -> File
+toFile n = n % 8
+
+{-# INLINE  toRank #-}
+toRank :: Square -> Rank
+toRank n = n / 8
+
 {-# INLINE  boardContains #-}
 boardContains :: Board -> Board -> Board
 boardContains mustHave board =
@@ -121,16 +131,16 @@ kingMove n =
 
 
 fileMove :: Square -> Board
-fileMove n = ranks !! (n / 8)
+fileMove n = ranks !! toRank n
 
 rankMove :: Square -> Board
-rankMove n = files !! (n % 8)
+rankMove n = files !! toFile n
 
 diagMove :: Square -> Board
-diagMove n = antiDiags !! (n % 8 + n / 8)
+diagMove n = antiDiags !! (toFile n + toRank n)
 
 antiDiagMove :: Square -> Board
-antiDiagMove n = diags !! (7 - n % 8 + n / 8 )
+antiDiagMove n = diags !! (7 - toFile n + toRank n)
 
 getRank :: Rank -> Board
 getRank n = foldl1 (.|) (map f sideSquares)
@@ -151,7 +161,7 @@ getAntiDiag = diagHelper id
 diagHelper :: (Int -> Int) -> Int -> Board
 diagHelper f n = foldl1 (.|) xs
   where
-  xs = Vector.fromList do
+  xs = fromList do
     x <- toList sideSquares
     let y = f (n - x) `rem` 8
     guard $! inRange 0 7 (n - x)
@@ -228,39 +238,58 @@ antiDiagMovesVec :: Vector Board
 antiDiagMovesVec = map antiDiagMove squares
 
 westMovesVec :: Vector Board
-westMovesVec = Vector.snoc (map westMove squares) 0
+westMovesVec = snoc (map westMove squares) 0
 
 northMovesVec :: Vector Board
-northMovesVec = Vector.snoc (map northMove squares) 0
+northMovesVec = snoc (map northMove squares) 0
 
 eastMovesVec :: Vector Board
-eastMovesVec = Vector.snoc (map eastMove squares) 0
+eastMovesVec = snoc (map eastMove squares) 0
 
 southMovesVec :: Vector Board
-southMovesVec = Vector.snoc (map southMove squares) 0
+southMovesVec = snoc (map southMove squares) 0
 
 northWestMovesVec :: Vector Board
-northWestMovesVec = Vector.snoc (map northWestMove squares) 0
+northWestMovesVec = snoc (map northWestMove squares) 0
 
 northEastMovesVec :: Vector Board
-northEastMovesVec = Vector.snoc (map northEastMove squares) 0
+northEastMovesVec = snoc (map northEastMove squares) 0
 
 southEastMovesVec :: Vector Board
-southEastMovesVec = Vector.snoc (map southEastMove squares) 0
+southEastMovesVec = snoc (map southEastMove squares) 0
 
 southWestMovesVec :: Vector Board
-southWestMovesVec = Vector.snoc (map southWestMove squares) 0
+southWestMovesVec = snoc (map southWestMove squares) 0
+
+
+pieceRngVec :: Vector Board
+pieceRngVec = genNRandoms 768
+
+castlingRngVec :: Vector Board
+castlingRngVec = genNRandoms 8
+
+enPassantRngVec :: Vector Board
+enPassantRngVec = genNRandoms 16
+
+sideToMoveRngVec :: Vector Board
+sideToMoveRngVec = genNRandoms 2
+
+
+genNRandoms :: Int -> Vector Board
+genNRandoms n = fromList
+  $ take n
+  $ unsafePerformIO (randoms <$> getStdGen)
 
 
 -- Ranges
 squares :: Vector Square
-squares = Vector.fromList [0 .. 63]
+squares = fromList [0 .. 63]
 
 sideSquares :: Vector SideSquare
-sideSquares = Vector.fromList [0 .. 7]
+sideSquares = fromList [0 .. 7]
 
 diagonals :: Vector Diagonal
-diagonals = Vector.fromList [0 .. 14]
+diagonals = fromList [0 .. 14]
 
 shortCastleSliding :: Board
 shortCastleSliding = file_F .| file_G

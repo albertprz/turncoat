@@ -1,13 +1,10 @@
-module Evaluation.Score where
+module Evaluation.BoardScore where
 
 import           AppPrelude
 
 import           Constants.Boards
 import           Models.Move
-
-
-newtype Score = Score Int
-  deriving (Eq, Ord, Num, Bounded, Storable)
+import           Models.Score
 
 
 {-# INLINE  boardScore #-}

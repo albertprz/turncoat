@@ -28,13 +28,15 @@ library
   exposed-modules:
       AppPrelude
       Constants.Boards
+      Evaluation.BoardScore
       Evaluation.Evaluation
       Evaluation.PieceSquareTables
-      Evaluation.Score
       Models.GameState
       Models.Move
       Models.Piece
       Models.Position
+      Models.Score
+      Models.TranspositionTable
       MoveGen.MakeMove
       MoveGen.PieceMoves
       Parsers.Position
@@ -75,7 +77,9 @@ library
     , composition
     , containers
     , errors
+    , hashtables
     , mtl
+    , random
     , split
     , text
     , unordered-containers
@@ -119,7 +123,9 @@ executable stafford
     , composition
     , containers
     , errors
+    , hashtables
     , mtl
+    , random
     , split
     , stafford
     , text
@@ -166,8 +172,10 @@ test-suite test
     , composition
     , containers
     , errors
+    , hashtables
     , hspec
     , mtl
+    , random
     , split
     , stafford
     , text

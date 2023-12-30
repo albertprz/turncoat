@@ -3,7 +3,7 @@ module Evaluation.PieceSquareTables where
 import           AppPrelude
 import           Data.List.Split      (chunksOf)
 import qualified Data.Vector.Storable as Vector
-import           Evaluation.Score     (Score)
+import           Models.Score
 
 
 blackPawnSquareTable :: Vector Score

@@ -28,6 +28,8 @@ dependencies:
 - vector
 - unordered-containers
 - containers
+- hashtables
+- random
 - split
 - composition
 

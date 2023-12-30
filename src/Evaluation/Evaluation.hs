@@ -3,10 +3,11 @@ module Evaluation.Evaluation where
 import           AppPrelude
 
 import           Constants.Boards
+import           Evaluation.BoardScore
 import           Evaluation.PieceSquareTables
-import           Evaluation.Score
 import           Models.Piece
 import           Models.Position
+import           Models.Score
 
 
 {-# INLINE  evaluatePosition #-}

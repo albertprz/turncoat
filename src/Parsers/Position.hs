@@ -8,12 +8,12 @@ import           Bookhound.Parsers.Char      (space)
 import           Bookhound.Parsers.Number    (unsignedInt)
 import           Data.Char                   (digitToInt)
 
-import Models.Position
-import Models.Piece
-import Constants.Boards
-import MoveGen.MakeMove
+import           Constants.Boards
+import           Models.Piece
+import           Models.Position
+import           MoveGen.MakeMove
 
-  
+
 positionFromFen :: Text -> Either [ParseError] Position
 positionFromFen = runParser positionFenParser
 
@@ -21,8 +21,7 @@ positionFenParser :: Parser Position
 positionFenParser = do
   (pieces, color, castling, enPassant, halfMoveClock, _) <- position
   pure
-    $ switchPlayers -- Switch players twice to calculate attack/pin boards
-    $ switchPlayers
+    $ newPosition
     $ foldrFlipped includePiece pieces
     $ foldrFlipped includeCastling castling
     $ foldrFlipped includeEnPassant enPassant
@@ -52,7 +51,7 @@ positionFenParser = do
   lengthCheck xs = length xs == 8
   mandatory = (=<<) (fromMaybe empty . map pure)
   foldrFlipped f xs start = foldr f start xs
-  
+
 
 squareParser :: Parser Square
 squareParser = (+) <$> column <*> map (* 8) row

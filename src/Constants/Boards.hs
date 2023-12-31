@@ -8,7 +8,6 @@ import           Data.Bits
 import           Data.Vector.Storable (foldl1, map)
 import           System.IO.Unsafe     (unsafePerformIO)
 import           System.Random
-import           Utils.Ord            (inRange)
 
 type Board = Word64
 

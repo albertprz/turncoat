@@ -75,17 +75,11 @@ showBoard board = unlines $ map showBin
     sb True  = 'X'
 
 showSquare :: Square -> String
-showSquare n = [fileChars !! file, rankChars !! rank]
+showSquare n = [fileChars !! toFile n, rankChars !! toRank n]
   where
-    file = n % 8
-    rank = n / 8
+    fileChars = Vector.fromList ['a' .. 'h']
+    rankChars = Vector.fromList ['1' .. '8']
 
-
-fileChars :: Vector Char
-fileChars = Vector.fromList ['A' .. 'H']
-
-rankChars :: Vector Char
-rankChars = Vector.fromList ['1' .. '8']
 
 instance Show Move where
   show (Move {..}) =

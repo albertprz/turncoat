@@ -43,6 +43,7 @@ library
       Search.Perft
       Search.Search
       Search.SearchOptions
+      Utils.Maybe
       Utils.Ord
   other-modules:
       Paths_stafford
@@ -69,6 +70,7 @@ library
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
+      ImplicitParams
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       base ==4.*
@@ -115,6 +117,7 @@ executable stafford
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
+      ImplicitParams
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       base ==4.*
@@ -162,6 +165,7 @@ test-suite test
       TypeFamilies
       TypeFamilyDependencies
       DataKinds
+      ImplicitParams
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wno-type-defaults
   build-tool-depends:
       hspec-discover:hspec-discover

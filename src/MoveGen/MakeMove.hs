@@ -5,23 +5,27 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Piece
-import           Models.Position    (Position (..))
+import           Models.Position    (Position (..), initZobristKey)
 import qualified MoveGen.PieceMoves as MoveGen
 
 
-{-# INLINE  playMove #-}
-playMove :: Move -> Position -> Position
-playMove mv pos =
-  switchPlayers $ makeLegalMove mv pos
-
-{-# INLINE  makeLegalMove #-}
-makeLegalMove :: Move -> Position -> Position
-makeLegalMove Move {..} pos =
-  movePiece piece promotion startBoard endBoard
+{-# INLINE  makeMove #-}
+makeMove :: Move -> Position -> Position
+makeMove Move {..} pos =
+  initZobristKey
+  $ switchPlayers
+  $ movePiece piece promotion startBoard endBoard
   $ updatePlayerBoards startBoard endBoard pos
   where
     startBoard = toBoard start
     endBoard = toBoard end
+
+
+{-# INLINE  newPosition #-}
+newPosition :: Position -> Position
+newPosition =
+  initZobristKey . switchPlayers . switchPlayers
+
 
 {-# INLINE  switchPlayers #-}
 switchPlayers :: Position -> Position
@@ -48,6 +52,7 @@ switchPlayers pos@Position {..} =
       | enPassant == 0 = 0
       | otherwise = MoveGen.getEnPassantPinnedPawns pos
 
+
 {-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Position -> Position
 updatePlayerBoards start end pos@Position {..} =
@@ -61,6 +66,7 @@ updatePlayerBoards start end pos@Position {..} =
     rooks = rooks .\ end,
     queens = queens .\ end
   }
+
 
 {-# INLINE  movePiece #-}
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position

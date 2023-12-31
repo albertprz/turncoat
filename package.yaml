@@ -70,6 +70,10 @@ default-extensions:
 - TypeFamilyDependencies
 - DataKinds
 
+# Implicits
+- ImplicitParams
+
+
 ghc-options:
 - -O2
 - -optc-O3

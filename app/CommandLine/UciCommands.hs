@@ -5,16 +5,16 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Position
-import           MoveGen.MakeMove    (playMove)
-import           MoveGen.PieceMoves  (allLegalMoves)
+import           MoveGen.MakeMove     (makeMove)
+import           MoveGen.PieceMoves   (allLegalMoves)
 import           Search.Perft
 import           Search.Search
 import           Search.SearchOptions
 
 
 import           Control.Monad.State
-import           Data.Composition    ((.:))
-import           Data.Map            (traverseWithKey)
+import           Data.Composition     ((.:))
+import           Data.Map             (traverseWithKey)
 
 
 printPerft :: Int -> CommandM ()
@@ -36,8 +36,8 @@ printBestMove opts = withPosition go opts.depth
   where
     go =  putStrLn
          . foldMap (("Best move: " ++ ) . tshow)
-         .: getBestMove 
-    
+         .: getBestMove
+
 
 setPosition :: PositionSpec -> CommandM ()
 setPosition PositionSpec {..} =
@@ -45,16 +45,16 @@ setPosition PositionSpec {..} =
     Just position -> put position
     Nothing       -> putStrLn "Error: Invalid Position"
   where
-    newPos = foldM (flip playUnknownMove) initialPosition moves
+    newPos = foldM (flip makeUnknownMove) initialPosition moves
 
 withPosition :: MonadState Position m => (a -> Position -> m b) -> a -> m b
 withPosition f n = do
   position <- get
   f n position
 
-playUnknownMove :: UnknownMove -> Position -> Maybe Position
-playUnknownMove UnknownMove {..} pos =
-  (`playMove` pos) <$> mv
+makeUnknownMove :: UnknownMove -> Position -> Maybe Position
+makeUnknownMove UnknownMove {..} pos =
+  (`makeMove` pos) <$> mv
   where
   mv = find (\x -> x.start == start && x.end == end)
             (allLegalMoves pos)
@@ -70,5 +70,3 @@ data UnknownMove = UnknownMove
   { start :: Square,
     end   :: Square
   }
-
-  

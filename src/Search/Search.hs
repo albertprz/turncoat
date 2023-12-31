@@ -46,7 +46,7 @@ moveScore :: Score -> Int -> Position -> Move -> State (Score, Maybe Move) (Mayb
 moveScore !beta !depth !pos !move =
   do !alpha <- gets fst
      let !score = -negamax (-beta) (-alpha) (depth - 1)
-                           (playMove move pos)
+                           (makeMove move pos)
      if | score >= beta -> pure (Just beta)
         | score > alpha -> put (score, Just move) $> Nothing
         | otherwise     -> pure Nothing

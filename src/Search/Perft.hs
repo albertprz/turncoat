@@ -16,7 +16,7 @@ perft = go 0
     go !nodes  1     !pos = nodes + length (allLegalMoves pos)
     go !nodes !depth !pos = foldr f nodes (allLegalMoves pos)
       where
-        f mv acc = go acc (depth - 1) (playMove mv pos)
+        f mv acc = go acc (depth - 1) (makeMove mv pos)
 
 
 {-# INLINE  divide #-}
@@ -26,4 +26,4 @@ divide 1     pos = Map.fromList $ toList ((,1) <$> allLegalMoves pos)
 divide depth pos = Map.fromList
   (second (perft (depth - 1)) . getResults <$> toList (allLegalMoves pos))
   where
-    getResults mv = (mv, playMove mv pos)
+    getResults mv = (mv, makeMove mv pos)

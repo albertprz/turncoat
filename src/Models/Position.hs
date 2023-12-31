@@ -9,12 +9,13 @@ import           Data.List.Split           (chunksOf)
 import           Data.Maybe                (fromJust)
 import           Models.Move               (foldlBoard)
 import           Models.Piece
-import           Models.TranspositionTable (ZKey (..))
+import           Models.TranspositionTable (ZKey (ZKey))
 
 
 data Position = Position {
   color           :: Color,
   halfMoveClock   :: Int,
+  zobristKey      :: ZKey,
   attacked        :: Board,
   castling        :: Board,
   enPassant       :: Board,
@@ -33,9 +34,10 @@ data Position = Position {
 
 
 startPosition :: Position
-startPosition = Position {
+startPosition = initZobristKey $ Position {
   color = White
   , halfMoveClock = 0
+  , zobristKey = 0
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
   , attacked = 0
   , enPassant = 0
@@ -53,9 +55,10 @@ startPosition = Position {
 }
 
 emptyPosition :: Position
-emptyPosition = Position {
+emptyPosition = initZobristKey $ Position {
   color = White
   , halfMoveClock = 0
+  , zobristKey = 0
   , castling = 0
   , attacked = 0
   , enPassant = 0
@@ -72,13 +75,21 @@ emptyPosition = Position {
   , kings = 0
 }
 
+{-# INLINE  initZobristKey #-}
+initZobristKey :: Position -> Position
+initZobristKey pos =
+  pos {
+    zobristKey = getZobristKey pos
+  }
+
 {-# INLINE  getZobristKey #-}
 getZobristKey :: Position -> ZKey
 getZobristKey pos@Position {..} = ZKey
   (piecesHash ^ castlingHash ^ enPassantHash ^ sideToMoveHash)
   where
 
-    !piecesHash = foldlBoard 0 (^) hashPiece (player .| enemy)
+    !piecesHash =
+      foldlBoard 0 (^) getPieceHash (player .| enemy)
 
     !castlingHash = castlingRngVec !! idx
       where
@@ -94,7 +105,7 @@ getZobristKey pos@Position {..} = ZKey
       where
         idx = fromEnum color
 
-    hashPiece n = pieceRngVec !! idx
+    getPieceHash n = pieceRngVec !! idx
       where
       idx = n + 64 * (fromEnum piece + 6 * fromEnum pieceColor)
       (Piece piece, Color pieceColor) = fromJust $ pieceAt n pos

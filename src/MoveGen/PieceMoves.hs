@@ -3,7 +3,6 @@ module MoveGen.PieceMoves where
 import           AppPrelude       hiding (Vector)
 
 import           Constants.Boards
-import           Data.Vector      as Vector
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -145,11 +144,11 @@ allAttacks player enemy color
     allPieces = player .| (enemy .\ kings)
 
 {-# INLINE  allLegalMoves #-}
-allLegalMoves :: Position -> Vector Move
+allLegalMoves :: Position -> [Move]
 allLegalMoves pos@Position {..}
 
   | allCheckers == 0      = genMoves id id
-  | ones allCheckers > 1 = Vector.fromList allKingMoves
+  | ones allCheckers > 1 = allKingMoves
   | sliderCheckers /= 0   = genMoves captureOrBlockChecker pawnCaptureOrBlockChecker
   | otherwise            = genMoves captureChecker pawnCaptureChecker
 
@@ -173,10 +172,10 @@ allLegalMoves pos@Position {..}
     king = player&kings
 
 {-# INLINE  allLegalMovesHelper #-}
-allLegalMovesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> Vector Move
+allLegalMovesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
 allLegalMovesHelper allPieces king allKingMoves Position {..} f g =
-  Vector.fromList
-    $ foldBoardMoves   Pawn (g . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
+
+    foldBoardMoves   Pawn (g . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
     $ foldBoardMoves   Pawn (g . filePinnedPawnMoves allPieces color)                filePinnedPawns
     $ foldBoardMoves   Pawn (g . diagPinnedPawnMoves enemy color)                diagPinnedPawns
     $ foldBoardMoves   Pawn (g . antiDiagPinnedPawnMoves enemy color)                antiDiagPinnedPawns

@@ -40,9 +40,11 @@ library
       MoveGen.MakeMove
       MoveGen.PieceMoves
       Parsers.Position
+      Search.MoveOrdering
       Search.Perft
       Search.Search
       Search.SearchOptions
+      Utils.Functor
       Utils.Maybe
       Utils.Ord
   other-modules:

@@ -24,8 +24,8 @@ newtype ZKey = ZKey Word64
 {-# INLINE  lookup #-}
 lookup :: (?tTable :: TTable) => Int -> ZKey -> IO (Maybe TEntry)
 lookup depth zKey = do
-    entry <- HashTable.lookup ?tTable zKey
-    pure $! maybeFilter ((>= depth) . (.depth)) entry
+  entry <- HashTable.lookup ?tTable zKey
+  pure $! maybeFilter ((>= depth) . (.depth)) entry
 
 
 {-# INLINE  insert #-}

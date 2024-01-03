@@ -10,18 +10,19 @@ import           Models.TranspositionTable (TEntry (..), TTable, ZKey)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           MoveGen.PieceMoves
+import           Search.MoveOrdering
 
 import           Control.Monad.State
 
 
 {-# INLINE  getBestMove #-}
 getBestMove :: (?tTable :: TTable) => Int -> Position -> IO (Maybe Move)
-getBestMove !depth !pos =
+getBestMove !depth !pos = do
+  moves <- getSortedMoves depth pos
+  let scoreState = findTraverse (getMoveScore initialBeta depth pos)
+                                moves
   snd <$> execStateT scoreState (initialAlpha, Nothing)
-  where
-    scoreState = findTraverse (getMoveScore initialBeta depth pos)
-                              moves
-    moves      = toList (allLegalMoves pos)
+
 
 {-# INLINE  initialAlpha #-}
 initialAlpha :: Score
@@ -49,7 +50,10 @@ cacheNodeScore !alpha !beta !depth !pos !zKey = do
   !score <- getNodeScore alpha beta depth pos
   !bestMove <- gets snd
   let
-    !nodeType = getNodeType alpha beta score
+    !nodeType
+      | score >= beta  = Cut
+      | score > alpha = PV
+      | otherwise     = All
     !newTEntry = TEntry {
       depth = depth,
       bestMove = bestMove,
@@ -57,7 +61,7 @@ cacheNodeScore !alpha !beta !depth !pos !zKey = do
       nodeType = nodeType
     }
   liftIO $ TTable.insert zKey newTEntry
-  pure $! score
+  pure score
 
 {-# INLINE  getNodeScore #-}
 getNodeScore :: (?tTable :: TTable) => Score -> Score -> Int -> Position -> SearchM Score
@@ -79,13 +83,6 @@ getMoveScore !beta !depth !pos !move =
      if | score >= beta -> pure (Just beta)
         | score > alpha -> put (score, Just move) $> Nothing
         | otherwise     -> pure Nothing
-
-{-# INLINE  getNodeType #-}
-getNodeType :: Score -> Score -> Score -> NodeType
-getNodeType !alpha !beta !score
-  | score >= beta  = Cut
-  | score > alpha = PV
-  | otherwise     = All
 
 
 type SearchM = StateT (Score, Maybe Move) IO

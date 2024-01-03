@@ -5,16 +5,18 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Position
-import           MoveGen.MakeMove     (makeMove)
-import           MoveGen.PieceMoves   (allLegalMoves)
+import qualified Models.TranspositionTable as TTable
+import           MoveGen.MakeMove          (makeMove)
+import           MoveGen.PieceMoves        (allLegalMoves)
 import           Search.Perft
 import           Search.Search
 import           Search.SearchOptions
 
 
 import           Control.Monad.State
-import           Data.Composition     ((.:))
-import           Data.Map             (traverseWithKey)
+import           Data.Composition          ((.:))
+import           Data.Map                  (traverseWithKey)
+import           System.TimeIt
 
 
 printPerft :: Int -> CommandM ()
@@ -32,11 +34,15 @@ printDivide = withPosition go
          .: divide
 
 printBestMove :: SearchOptions -> CommandM ()
-printBestMove opts = withPosition go opts.depth
+printBestMove opts = do
+  tTable <- liftIO $ TTable.create 100_000_000
+  withPosition (go tTable) opts.depth
   where
-    go =  putStrLn
-         . foldMap (("Best move: " ++ ) . tshow)
-         .: getBestMove
+    go tTable =
+      ((putStrLn . foldMap (("bestmove " ++) . tshow)) <=< liftIO . timeIt)
+      .: getBestMove
+      where
+        ?tTable = tTable
 
 
 setPosition :: PositionSpec -> CommandM ()
@@ -49,8 +55,7 @@ setPosition PositionSpec {..} =
 
 withPosition :: MonadState Position m => (a -> Position -> m b) -> a -> m b
 withPosition f n = do
-  position <- get
-  f n position
+  f n =<< get
 
 makeUnknownMove :: UnknownMove -> Position -> Maybe Position
 makeUnknownMove UnknownMove {..} pos =

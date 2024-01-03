@@ -24,9 +24,6 @@ instance Hashable Move
 foldBoard ::  (Square -> Board) -> Board -> Board
 foldBoard = foldlBoard 0 (.|)
 
-{-# INLINE  foldBoardXor #-}
-foldBoardXor :: (Square -> Board) -> Board -> Board
-foldBoardXor = foldlBoard 0 (^)
 
 {-# INLINE  foldBoardMoves #-}
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
@@ -83,9 +80,6 @@ showSquare n = [fileChars !! toFile n, rankChars !! toRank n]
 
 instance Show Move where
   show (Move {..}) =
-    show piece
-    <> " at "
-    <> showSquare start
-    <> " to "
-    <> maybe "" ((<> " ") . show) promotion
+    showSquare start
     <> showSquare end
+    <> foldMap show promotion

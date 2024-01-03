@@ -102,10 +102,10 @@ instance Show Piece where
 
 instance Show Promotion where
   show = \case
-    KnightProm -> "Knight"
-    BishopProm -> "Bishop"
-    RookProm -> "Rook"
-    QueenProm -> "Queen"
+    KnightProm -> "n"
+    BishopProm -> "b"
+    RookProm -> "r"
+    QueenProm -> "q"
 
 instance Show Color where
   show = \case

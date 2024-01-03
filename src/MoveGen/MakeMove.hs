@@ -5,15 +5,14 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Piece
-import           Models.Position    (Position (..), initZobristKey)
+import           Models.Position    (Position (..))
 import qualified MoveGen.PieceMoves as MoveGen
 
 
 {-# INLINE  makeMove #-}
 makeMove :: Move -> Position -> Position
 makeMove Move {..} pos =
-  initZobristKey
-  $ switchPlayers
+  switchPlayers
   $ movePiece piece promotion startBoard endBoard
   $ updatePlayerBoards startBoard endBoard pos
   where
@@ -23,8 +22,7 @@ makeMove Move {..} pos =
 
 {-# INLINE  newPosition #-}
 newPosition :: Position -> Position
-newPosition =
-  initZobristKey . switchPlayers . switchPlayers
+newPosition = switchPlayers . switchPlayers
 
 
 {-# INLINE  switchPlayers #-}

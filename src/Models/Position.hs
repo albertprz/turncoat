@@ -15,7 +15,6 @@ import           Models.TranspositionTable (ZKey (ZKey))
 data Position = Position {
   color           :: Color,
   halfMoveClock   :: Int,
-  zobristKey      :: ZKey,
   attacked        :: Board,
   castling        :: Board,
   enPassant       :: Board,
@@ -34,10 +33,9 @@ data Position = Position {
 
 
 startPosition :: Position
-startPosition = initZobristKey $ Position {
+startPosition = Position {
   color = White
   , halfMoveClock = 0
-  , zobristKey = 0
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
   , attacked = 0
   , enPassant = 0
@@ -55,10 +53,9 @@ startPosition = initZobristKey $ Position {
 }
 
 emptyPosition :: Position
-emptyPosition = initZobristKey $ Position {
+emptyPosition = Position {
   color = White
   , halfMoveClock = 0
-  , zobristKey = 0
   , castling = 0
   , attacked = 0
   , enPassant = 0
@@ -74,13 +71,6 @@ emptyPosition = initZobristKey $ Position {
   , queens = 0
   , kings = 0
 }
-
-{-# INLINE  initZobristKey #-}
-initZobristKey :: Position -> Position
-initZobristKey pos =
-  pos {
-    zobristKey = getZobristKey pos
-  }
 
 {-# INLINE  getZobristKey #-}
 getZobristKey :: Position -> ZKey

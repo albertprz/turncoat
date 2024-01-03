@@ -84,6 +84,7 @@ library
     , random
     , split
     , text
+    , timeit
     , unordered-containers
     , vector
   default-language: GHC2021
@@ -132,6 +133,7 @@ executable stafford
     , split
     , stafford
     , text
+    , timeit
     , unordered-containers
     , vector
   default-language: GHC2021
@@ -183,6 +185,7 @@ test-suite test
     , split
     , stafford
     , text
+    , timeit
     , unordered-containers
     , vector
   default-language: GHC2021

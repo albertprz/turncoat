@@ -64,7 +64,6 @@ makeUnknownMove UnknownMove {..} pos =
   mv = find (\x -> x.start == start && x.end == end)
             (allLegalMoves pos)
 
-type CommandM = StateT Position IO
 
 data PositionSpec = PositionSpec
   { initialPosition :: Position,
@@ -75,3 +74,5 @@ data UnknownMove = UnknownMove
   { start :: Square,
     end   :: Square
   }
+
+type CommandM = StateT Position IO

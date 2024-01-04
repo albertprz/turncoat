@@ -17,10 +17,10 @@ partitionTraverse = partitionTraverseHelper []
 
 {-# INLINE  partitionTraverseHelper #-}
 partitionTraverseHelper :: Monad m => [a] -> (a -> m (Maybe b)) -> [a] -> m ([b], [a])
-partitionTraverseHelper acc !f (!x : xs) =
-  do !result <- f x
+partitionTraverseHelper acc f (x : xs) =
+  do result <- f x
      (valid, nonValid) <- partitionTraverseHelper acc f xs
-     pure $! maybe (valid, x : nonValid) ((,nonValid) . (: valid)) result
+     pure $ maybe (valid, x : nonValid) ((,nonValid) . (: valid)) result
 
 partitionTraverseHelper acc _ [] =
   pure ([], acc)
@@ -28,8 +28,8 @@ partitionTraverseHelper acc _ [] =
 
 {-# INLINE  findTraverse #-}
 findTraverse :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
-findTraverse !f (!x : xs) =
-  do !result <- f x
+findTraverse f (x : xs) =
+  do result <- f x
      maybe (findTraverse f xs) (pure . Just) result
 
 findTraverse _ [] =

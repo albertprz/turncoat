@@ -265,10 +265,10 @@ pieceRngVec :: Vector Board
 pieceRngVec = genNRandoms 768
 
 castlingRngVec :: Vector Board
-castlingRngVec = genNRandoms 8
+castlingRngVec = genNRandoms 16
 
 enPassantRngVec :: Vector Board
-enPassantRngVec = genNRandoms 16
+enPassantRngVec = genNRandoms 8
 
 sideToMoveRngVec :: Vector Board
 sideToMoveRngVec = genNRandoms 2

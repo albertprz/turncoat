@@ -9,7 +9,6 @@ import           Models.Score
 import           Models.TranspositionTable (TEntry (..), TTable, ZKey)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
-import           MoveGen.PieceMoves
 import           Search.MoveOrdering
 
 import           Control.Monad.State
@@ -24,65 +23,80 @@ getBestMove !depth !pos = do
   snd <$> execStateT scoreState (initialAlpha, Nothing)
 
 
-{-# INLINE  initialAlpha #-}
 initialAlpha :: Score
-initialAlpha = -1000
+initialAlpha = minBound + 1
 
-{-# INLINE  initialBeta #-}
 initialBeta :: Score
-initialBeta = 1000
+initialBeta = maxBound - 1
 
 {-# INLINE  negamax #-}
-negamax :: (?tTable :: TTable) => Score -> Score -> Int -> Position -> SearchM Score
+negamax :: (?tTable :: TTable) => Score -> Score -> Int -> Position -> IO Score
 negamax !alpha !beta !depth !pos
   | depth == 0 = pure $! evaluatePosition pos
-  | depth <= 2 = getNodeScore alpha beta depth pos
+  | depth == 1 = fst <$> getNodeScore alpha beta depth pos
   | otherwise = do
     let !zKey = getZobristKey pos
-    !tEntry <- liftIO $ TTable.lookup depth zKey
-    case tEntry of
-      Just entry -> pure $! entry.score
-      Nothing    -> cacheNodeScore alpha beta depth pos zKey
+    !ttScore <- liftIO $ TTable.lookupScore alpha beta depth zKey
+    case ttScore of
+      Just !score -> pure score
+      Nothing     -> cacheNodeScore alpha beta depth pos zKey
 
 {-# INLINE  cacheNodeScore #-}
-cacheNodeScore :: (?tTable:: TTable) => Score -> Score -> Int -> Position -> ZKey -> SearchM Score
+cacheNodeScore :: (?tTable:: TTable) => Score -> Score -> Int -> Position -> ZKey -> IO Score
 cacheNodeScore !alpha !beta !depth !pos !zKey = do
-  !score <- getNodeScore alpha beta depth pos
-  !bestMove <- gets snd
+  (!score, !bestMove) <- getNodeScore alpha beta depth pos
   let
-    !nodeType
-      | score >= beta  = Cut
-      | score > alpha = PV
-      | otherwise     = All
+    !nodeType = getNodeType alpha beta score
+    !ttScore = case nodeType of
+      PV  -> score
+      Cut -> beta
+      All -> alpha
     !newTEntry = TEntry {
       depth = depth,
       bestMove = bestMove,
-      score = score,
-      nodeType = nodeType
+      score = ttScore,
+      nodeType = nodeType,
+      zobristKey = zKey
     }
-  liftIO $ TTable.insert zKey newTEntry
+  TTable.insert zKey newTEntry
   pure score
 
 {-# INLINE  getNodeScore #-}
-getNodeScore :: (?tTable :: TTable) => Score -> Score -> Int -> Position -> SearchM Score
+getNodeScore :: (?tTable :: TTable) => Score -> Score -> Int -> Position
+  -> IO (Score, Maybe Move)
 getNodeScore !alpha !beta !depth !pos = do
-  (!score, (!newAlpha, _)) <- liftIO $ runStateT scoreState
-                                    (alpha, Nothing)
-  pure $! fromMaybe newAlpha score
-  where
-    scoreState = findTraverse (getMoveScore beta depth pos)
-                              moves
-    moves      = toList (allLegalMoves pos)
+  moves <- getSortedMoves depth pos
+  let scoreState = findTraverse (getMoveScore beta depth pos)
+                                moves
+  (!score, (!newAlpha, !bestMove)) <- runStateT scoreState
+                                               (alpha, Nothing)
+  pure (fromMaybe newAlpha score, bestMove)
 
 {-# INLINE  getMoveScore #-}
-getMoveScore :: (?tTable :: TTable) => Score -> Int -> Position -> Move -> SearchM (Maybe Score)
+getMoveScore :: (?tTable :: TTable) => Score -> Int -> Position -> Move
+  -> SearchM (Maybe Score)
 getMoveScore !beta !depth !pos !move =
   do !alpha <- gets fst
-     !score <- negate <$> negamax (-beta) (-alpha) (depth - 1)
-                           (makeMove move pos)
-     if | score >= beta -> pure (Just beta)
-        | score > alpha -> put (score, Just move) $> Nothing
-        | otherwise     -> pure Nothing
+     !score <- negate <$> liftIO (negamax (-beta) (-alpha) (depth - 1)
+                                (makeMove move pos))
+     let !nodeType = getNodeType alpha beta score
+     advanceState beta score move nodeType
 
+
+{-# INLINE  advanceState #-}
+advanceState :: Score -> Score -> Move -> NodeType -> SearchM (Maybe Score)
+advanceState beta score move nodeType =
+  case nodeType of
+    Cut -> Just beta    <$ modify' (second (const $ Just move))
+    PV  -> Nothing      <$ put (score, Just move)
+    All -> pure Nothing
+
+
+{-# INLINE  getNodeType #-}
+getNodeType :: Score -> Score -> Score -> NodeType
+getNodeType alpha beta score
+  | score >= beta  = Cut
+  | score > alpha = PV
+  | otherwise     = All
 
 type SearchM = StateT (Score, Maybe Move) IO

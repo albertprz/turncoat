@@ -85,19 +85,20 @@ getZobristKey pos@Position {..} = ZKey
       where
       idx =   inBoard file_A + 2 * inBoard file_H
         + 4 * inBoard rank_1 + 8 * inBoard rank_8
-      inBoard x = fromEnum $ min 1 (castling & x)
+      inBoard x = fromIntegral $ min 1 (castling & x)
 
-    !enPassantHash = enPassantRngVec !! idx
+    !enPassantHash = min 1 enPassant * enPassantRngVec !! idx
       where
         idx = toFile $ lsb enPassant
 
     !sideToMoveHash = sideToMoveRngVec !! idx
       where
-        idx = fromEnum color
+        Color colorN = color
+        idx = fromIntegral colorN
 
     getPieceHash n = pieceRngVec !! idx
       where
-      idx = n + 64 * (fromEnum piece + 6 * fromEnum pieceColor)
+      idx = n + 64 * (fromIntegral piece + 6 * fromIntegral pieceColor)
       (Piece piece, Color pieceColor) = fromJust $ pieceAt n pos
 
 

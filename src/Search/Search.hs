@@ -15,7 +15,7 @@ import           Control.Monad.State
 
 
 {-# INLINE  getBestMove #-}
-getBestMove :: (?tTable :: TTable) => Int -> Position -> IO (Maybe Move)
+getBestMove :: (?tTable :: TTable) => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth !pos = do
   moves <- getSortedMoves depth pos
   let scoreState = findTraverse (getMoveScore initialBeta depth pos)
@@ -30,7 +30,7 @@ initialBeta :: Score
 initialBeta = maxBound - 1
 
 {-# INLINE  negamax #-}
-negamax :: (?tTable :: TTable) => Score -> Score -> Int -> Position -> IO Score
+negamax :: (?tTable :: TTable) => Score -> Score -> Depth -> Position -> IO Score
 negamax !alpha !beta !depth !pos
   | depth == 0 = pure $! evaluatePosition pos
   | depth == 1 = fst <$> getNodeScore alpha beta depth pos
@@ -42,7 +42,7 @@ negamax !alpha !beta !depth !pos
       Nothing     -> cacheNodeScore alpha beta depth pos zKey
 
 {-# INLINE  cacheNodeScore #-}
-cacheNodeScore :: (?tTable:: TTable) => Score -> Score -> Int -> Position -> ZKey -> IO Score
+cacheNodeScore :: (?tTable:: TTable) => Score -> Score -> Depth -> Position -> ZKey -> IO Score
 cacheNodeScore !alpha !beta !depth !pos !zKey = do
   (!score, !bestMove) <- getNodeScore alpha beta depth pos
   let
@@ -62,7 +62,7 @@ cacheNodeScore !alpha !beta !depth !pos !zKey = do
   pure score
 
 {-# INLINE  getNodeScore #-}
-getNodeScore :: (?tTable :: TTable) => Score -> Score -> Int -> Position
+getNodeScore :: (?tTable :: TTable) => Score -> Score -> Depth -> Position
   -> IO (Score, Maybe Move)
 getNodeScore !alpha !beta !depth !pos = do
   moves <- getSortedMoves depth pos
@@ -73,7 +73,7 @@ getNodeScore !alpha !beta !depth !pos = do
   pure (fromMaybe newAlpha score, bestMove)
 
 {-# INLINE  getMoveScore #-}
-getMoveScore :: (?tTable :: TTable) => Score -> Int -> Position -> Move
+getMoveScore :: (?tTable :: TTable) => Score -> Depth -> Position -> Move
   -> SearchM (Maybe Score)
 getMoveScore !beta !depth !pos !move =
   do !alpha <- gets fst

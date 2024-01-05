@@ -80,8 +80,8 @@ library
     , classy-prelude
     , composition
     , containers
+    , derive-storable
     , errors
-    , hashtables
     , mtl
     , random
     , split
@@ -128,8 +128,8 @@ executable stafford
     , classy-prelude
     , composition
     , containers
+    , derive-storable
     , errors
-    , hashtables
     , mtl
     , random
     , split
@@ -179,8 +179,8 @@ test-suite test
     , classy-prelude
     , composition
     , containers
+    , derive-storable
     , errors
-    , hashtables
     , hspec
     , mtl
     , random

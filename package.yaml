@@ -26,10 +26,10 @@ dependencies:
 - mtl
 - text
 - vector
-- unordered-containers
 - containers
-- hashtables
+- unordered-containers
 - random
+- derive-storable
 - split
 - composition
 - timeit

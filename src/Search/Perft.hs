@@ -8,9 +8,10 @@ import           MoveGen.MakeMove
 import           MoveGen.PieceMoves (allLegalMoves)
 
 import qualified Data.Map           as Map
+import           Models.Score
 
 {-# INLINE  perft #-}
-perft :: Int -> Position -> Int
+perft :: Depth -> Position -> Int
 perft = go 0
   where
     go !nodes  1     !pos = nodes + length (allLegalMoves pos)
@@ -20,9 +21,9 @@ perft = go 0
 
 
 {-# INLINE  divide #-}
-divide :: Int -> Position -> Map Move Int
-divide 0     _   = Map.empty
-divide 1     pos = Map.fromList $ toList ((,1) <$> allLegalMoves pos)
+divide :: Depth -> Position -> Map Move Int
+divide (Depth 0)     _   = Map.empty
+divide (Depth 1)     pos = Map.fromList $ toList ((,1) <$> allLegalMoves pos)
 divide depth pos = Map.fromList
   (second (perft (depth - 1)) . getResults <$> toList (allLegalMoves pos))
   where

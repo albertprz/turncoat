@@ -1,12 +1,17 @@
 module Models.Score where
 
 import           AppPrelude
+import           GHC.Word   (Word16)
 
-newtype Score = Score Int
-  deriving (Eq, Ord, Num, Bounded, Storable)
+newtype Score = Score Word16
+  deriving (Eq, Ord, Num, Enum, Bounded, Storable)
 
-newtype NodeType = NodeType Int
-  deriving (Eq, Ord, Num)
+newtype NodeType = NodeType Word8
+  deriving (Eq, Ord, Num, Storable)
+
+newtype Depth = Depth Word8
+  deriving (Eq, Ord, Num, Storable)
+
 
 {-# COMPLETE PV, Cut, All #-}
 pattern PV, Cut, All :: NodeType

@@ -1,10 +1,10 @@
 module Search.SearchOptions where
 
-import AppPrelude
+import           Models.Score (Depth)
 
 
 data SearchOptions = SearchOptions
-  { depth :: Int
+  { depth :: Depth
   }
 
 
@@ -12,9 +12,9 @@ defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions {
   depth = 4
 }
-  
 
-includeDepth :: Int -> SearchOptions -> SearchOptions
+
+includeDepth :: Depth -> SearchOptions -> SearchOptions
 includeDepth depth opts = opts {
   depth = depth
   }

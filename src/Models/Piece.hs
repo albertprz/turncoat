@@ -1,19 +1,22 @@
 module Models.Piece where
 
 import           AppPrelude
-import           Data.Char  (isUpper)
-import qualified Data.Char  as Char
+import           Data.Char                (isUpper)
+import qualified Data.Char                as Char
+import           Foreign.Storable.Generic
 
 
 newtype Piece = Piece Word8
   deriving (Eq, Ord, Enum, Bounded,  Generic)
 
 instance Hashable Piece
+instance GStorable Piece
 
 newtype Promotion = Promotion Word8
   deriving (Eq, Ord, Enum, Bounded, Generic)
 
 instance Hashable Promotion
+instance GStorable Promotion
 
 newtype Color = Color Word8
   deriving (Eq, Ord, Enum, Bounded)
@@ -32,10 +35,10 @@ pattern King   = Piece 5
 
 {-# COMPLETE  KnightProm, BishopProm, RookProm, QueenProm #-}
 pattern KnightProm, BishopProm, RookProm, QueenProm :: Promotion
-pattern KnightProm = Promotion 0
-pattern BishopProm = Promotion 1
-pattern RookProm   = Promotion 2
-pattern QueenProm  = Promotion 3
+pattern KnightProm = Promotion 1
+pattern BishopProm = Promotion 2
+pattern RookProm   = Promotion 3
+pattern QueenProm  = Promotion 4
 
 {-# COMPLETE White, Black #-}
 pattern White, Black :: Color

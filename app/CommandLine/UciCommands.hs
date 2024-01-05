@@ -5,6 +5,7 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Position
+import           Models.Score
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove          (makeMove)
 import           MoveGen.PieceMoves        (allLegalMoves)
@@ -19,14 +20,14 @@ import           Data.Map                  (traverseWithKey)
 import           System.TimeIt
 
 
-printPerft :: Int -> CommandM ()
+printPerft :: Depth -> CommandM ()
 printPerft = withPosition go
   where
     go = putStrLn
          . tshow
          .: perft
 
-printDivide :: Int -> CommandM ()
+printDivide :: Depth -> CommandM ()
 printDivide = withPosition go
   where
     go = void
@@ -35,7 +36,7 @@ printDivide = withPosition go
 
 printBestMove :: SearchOptions -> CommandM ()
 printBestMove opts = do
-  tTable <- liftIO $ TTable.create 100_000_000
+  tTable <- liftIO TTable.create
   withPosition (go tTable) opts.depth
   where
     go tTable =

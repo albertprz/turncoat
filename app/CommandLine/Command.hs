@@ -9,6 +9,7 @@ import           Bookhound.Parsers.Number
 import           Bookhound.Parsers.Text
 import           CommandLine.UciCommands
 import           Models.Position
+import           Models.Score
 import           Parsers.Position
 import           Search.SearchOptions
 
@@ -17,8 +18,8 @@ import           Data.Monoid
 
 data Command
   = SetPosition PositionSpec
-  | Perft Int
-  | Divide Int
+  | Perft Depth
+  | Divide Depth
   | Search SearchOptions
 
 
@@ -28,8 +29,8 @@ parseCommand = runParser command
   command =
     stringToken "position" *> (SetPosition <$> positionSpec)
       <|> stringToken "go" *> (
-          stringToken "perft"  *> (Perft  <$> unsignedInt)
-      <|> stringToken "divide" *> (Divide <$> unsignedInt)
+          stringToken "perft"  *> (Perft  <$> depth)
+      <|> stringToken "divide" *> (Divide <$> depth)
       <|> (Search <$> searchOptions)
     )
   positionSpec = PositionSpec
@@ -38,13 +39,14 @@ parseCommand = runParser command
   searchOptions =
     (`appEndo` defaultSearchOptions) . foldMap Endo <$> (searchOption |*)
   searchOption =
-    includeDepth <$> (stringToken "depth" *> unsignedInt)
+    includeDepth <$> (stringToken "depth" *> depth)
   initialPosition =
     stringToken "startpos" $> startPosition
     <|> stringToken "fen" *> positionFenParser
   unknownMove = UnknownMove <$> squareParser <*> squareParser
   token = withTransform maybeBetweenSpacing
   stringToken = token . string
+  depth = (Depth . fromIntegral) <$> unsignedInt
 
 
 executeCommand :: Command -> CommandM ()

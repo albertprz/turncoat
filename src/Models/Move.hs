@@ -8,6 +8,8 @@ import           Data.Bits
 import           Data.List                (iterate)
 import qualified Data.Vector.Storable     as Vector
 import           Foreign.Storable.Generic
+import           Test.QuickCheck          (Arbitrary (..), chooseInt,
+                                           genericShrink)
 
 
 data Move = Move {
@@ -17,7 +19,13 @@ data Move = Move {
   end       :: Square
 } deriving (Eq, Ord, Generic)
 
-newtype StorableMove = StorableMove Int
+instance Arbitrary Move where
+  arbitrary = Move
+    <$> arbitrary <*> arbitrary
+    <*> chooseInt (0, 63) <*> chooseInt (0, 63)
+  shrink = genericShrink
+
+newtype StorableMove = StorableMove Word32
   deriving (Eq, Ord, Num, Generic, Storable)
 
 instance GStorable StorableMove
@@ -27,12 +35,13 @@ instance Hashable Move
 
 {-# INLINE  encodeMove #-}
 encodeMove :: Maybe Move -> StorableMove
-encodeMove Nothing = 1
+encodeMove Nothing = fromIntegral (toBoard 31)
 encodeMove (Just Move {..}) = StorableMove
-  (fromIntegral pieceN << 1
-  .|. fromIntegral promotionN << 8
-  .|. start << 16
-  .|. end << 24)
+  (fromIntegral start
+  .|. (fromIntegral end << 8)
+  .|. (fromIntegral pieceN << 16)
+  .|. (fromIntegral promotionN << 24)
+  )
   where
     Piece pieceN = piece
     Promotion promotionN = fromMaybe (Promotion 0) promotion
@@ -40,18 +49,20 @@ encodeMove (Just Move {..}) = StorableMove
 {-# INLINE  decodeMove #-}
 decodeMove :: StorableMove -> Maybe Move
 decodeMove (StorableMove n)
-  | testBit n 0 = Nothing
+  | testBit n 31 = Nothing
   | otherwise = Just Move {
-      piece = piece,
-      promotion = if promotion /= Promotion 0 then Just promotion else Nothing,
       start = start,
-      end = end
+      end = end,
+      piece = piece,
+      promotion = if promotion /= Promotion 0
+        then Just promotion
+        else Nothing
     }
     where
-      piece = Piece $ fromIntegral n
-      promotion = Promotion $ fromIntegral (n >> 8)
-      start = start >> 16
-      end = end >> 24
+      start = fromIntegral n .&. 63
+      end = fromIntegral (n >> 8) .&. 63
+      piece = Piece $ fromIntegral (n >> 16)
+      promotion = Promotion $ fromIntegral ((n >> 24) .&. 7)
 
 
 {-# INLINE  foldBoard #-}

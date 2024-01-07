@@ -1,19 +1,27 @@
 module Models.Piece where
 
 import           AppPrelude
-import           Data.Char                (isUpper)
-import qualified Data.Char                as Char
+import           Data.Char                 (isUpper)
+import qualified Data.Char                 as Char
 import           Foreign.Storable.Generic
+import           Test.QuickCheck           (Arbitrary, chooseEnum)
+import           Test.QuickCheck.Arbitrary (Arbitrary (..))
 
 
 newtype Piece = Piece Word8
-  deriving (Eq, Ord, Enum, Bounded,  Generic)
+  deriving (Eq, Ord, Enum, Bounded, Generic)
+
+instance Arbitrary Piece where
+  arbitrary = chooseEnum (Pawn, King)
 
 instance Hashable Piece
 instance GStorable Piece
 
 newtype Promotion = Promotion Word8
   deriving (Eq, Ord, Enum, Bounded, Generic)
+
+instance Arbitrary Promotion where
+  arbitrary = chooseEnum (KnightProm, QueenProm)
 
 instance Hashable Promotion
 instance GStorable Promotion

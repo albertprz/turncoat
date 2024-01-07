@@ -33,6 +33,8 @@ dependencies:
 - split
 - composition
 - timeit
+- QuickCheck
+- generic-random
 
 language: GHC2021
 

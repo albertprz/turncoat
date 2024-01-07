@@ -7,9 +7,11 @@ import           Foreign.Storable.Generic
 import           Constants.Boards
 import           Data.Vector.Storable.Mutable (IOVector)
 import qualified Data.Vector.Storable.Mutable as Vector
+import           Generic.Random               (genericArbitrary, uniform)
 import           GHC.Bits
 import           Models.Move
 import           Models.Score
+import           Test.QuickCheck              (Arbitrary (..), genericShrink)
 
 type TTable = IOVector StorableTEntry
 
@@ -20,7 +22,11 @@ data TEntry = TEntry {
   score      :: Score,
   depth      :: Depth,
   nodeType   :: NodeType
-}
+} deriving (Eq, Show, Generic)
+
+instance Arbitrary TEntry where
+  arbitrary = genericArbitrary uniform
+  shrink = genericShrink
 
 data StorableTEntry = StorableTEntry {
   zobristKey :: ZKey,
@@ -30,17 +36,17 @@ data StorableTEntry = StorableTEntry {
 instance GStorable StorableTEntry
 
 newtype ZKey = ZKey Word64
-  deriving (Eq, Ord, Num, Hashable, Storable)
+  deriving (Eq, Show, Generic, Ord, Num, Hashable, Storable, Arbitrary)
 
 
-emptyStorableTEntry :: StorableTEntry
-emptyStorableTEntry = StorableTEntry {
+emptyTEntry :: StorableTEntry
+emptyTEntry = StorableTEntry {
   zobristKey = 0,
-  info = 1 << 63
+  info = toBoard 63
 }
 
 tTableSize :: Word64
-tTableSize = 1 << 26
+tTableSize = toBoard 26
 
 {-# INLINE  hashZKey #-}
 hashZKey :: ZKey -> Int
@@ -51,16 +57,16 @@ hashZKey (ZKey zKey) =
 encodeTEntry :: TEntry -> StorableTEntry
 encodeTEntry TEntry {..} = StorableTEntry {
   zobristKey = zobristKey,
-  info = fromIntegral bestMove'
-    .|. fromIntegral score' << 32
-    .|. fromIntegral depth' << 48
-    .|. fromIntegral nodeType' << 54
+  info = fromIntegral bestMoveN
+    .|. fromIntegral scoreN << 32
+    .|. fromIntegral depthN << 48
+    .|. fromIntegral nodeTypeN << 56
 }
   where
-    StorableMove bestMove' = encodeMove bestMove
-    Score score' = score
-    Depth depth' = depth
-    NodeType nodeType' = nodeType
+    StorableMove bestMoveN = encodeMove bestMove
+    Score scoreN = score
+    Depth depthN = depth
+    NodeType nodeTypeN = nodeType
 
 {-# INLINE  decodeTEntry #-}
 decodeTEntry :: StorableTEntry -> Maybe TEntry
@@ -71,7 +77,7 @@ decodeTEntry StorableTEntry {..}
       bestMove = decodeMove $ fromIntegral info,
       score = fromIntegral (info >> 32),
       depth = fromIntegral (info >> 48),
-      nodeType = fromIntegral (info >> 54)
+      nodeType = fromIntegral ((info >> 56) .&. 7)
     }
 
 
@@ -109,4 +115,7 @@ insert zKey entry =
 
 
 create :: IO TTable
-create = Vector.new (fromIntegral tTableSize)
+create = Vector.replicate (fromIntegral tTableSize) emptyTEntry
+
+clear ::  TTable -> IO ()
+clear = Vector.clear

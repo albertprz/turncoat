@@ -75,13 +75,15 @@ library
       ImplicitParams
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
-      base ==4.*
+      QuickCheck
+    , base ==4.*
     , bookhound
     , classy-prelude
     , composition
     , containers
     , derive-storable
     , errors
+    , generic-random
     , mtl
     , random
     , split
@@ -123,13 +125,15 @@ executable stafford
       ImplicitParams
   ghc-options: -O2 -optc-O3 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base ==4.*
+      QuickCheck
+    , base ==4.*
     , bookhound
     , classy-prelude
     , composition
     , containers
     , derive-storable
     , errors
+    , generic-random
     , mtl
     , random
     , split
@@ -144,6 +148,7 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Models.TranspositionTableSpec
       Search.PerftSpec
       Paths_stafford
   hs-source-dirs:
@@ -174,13 +179,15 @@ test-suite test
   build-tool-depends:
       hspec-discover:hspec-discover
   build-depends:
-      base ==4.*
+      QuickCheck
+    , base ==4.*
     , bookhound
     , classy-prelude
     , composition
     , containers
     , derive-storable
     , errors
+    , generic-random
     , hspec
     , mtl
     , random

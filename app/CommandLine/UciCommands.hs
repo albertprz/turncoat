@@ -37,7 +37,9 @@ printDivide = withPosition go
 printBestMove :: SearchOptions -> CommandM ()
 printBestMove opts = do
   tTable <- liftIO TTable.create
-  withPosition (go tTable) opts.depth
+  result <- withPosition (go tTable) opts.depth
+  liftIO $ TTable.clear tTable
+  pure result
   where
     go tTable =
       ((putStrLn . foldMap (("bestmove " ++) . tshow)) <=< liftIO . timeIt)

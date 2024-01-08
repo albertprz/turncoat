@@ -14,7 +14,7 @@ instance Arbitrary NodeType where
   arbitrary = chooseEnum (PV, All)
 
 newtype Depth = Depth Word8
-  deriving (Eq, Ord, Num, Storable, Arbitrary, Show)
+  deriving (Eq, Ord, Num, Enum, Storable, Arbitrary, Show)
 
 
 {-# COMPLETE PV, Cut, All #-}

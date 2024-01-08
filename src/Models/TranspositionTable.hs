@@ -7,12 +7,11 @@ import           Foreign.Storable.Generic
 import           Constants.Boards
 import           Data.Vector.Storable.Mutable (IOVector)
 import qualified Data.Vector.Storable.Mutable as Vector
-import           Generic.Random               (genericArbitrary, uniform)
 import           GHC.Bits
 import           GHC.Word                     (Word16)
 import           Models.Move
 import           Models.Score
-import           Test.QuickCheck              (Arbitrary (..), genericShrink)
+import           Test.QuickCheck              (Arbitrary (..))
 
 type TTable = IOVector StorableTEntry
 
@@ -26,8 +25,8 @@ data TEntry = TEntry {
 } deriving (Eq, Show, Generic)
 
 instance Arbitrary TEntry where
-  arbitrary = genericArbitrary uniform
-  shrink = genericShrink
+  arbitrary = TEntry <$> arbitrary <*> arbitrary
+                     <*> arbitrary <*> arbitrary <*> arbitrary
 
 data StorableTEntry = StorableTEntry {
   zobristKey :: ZKey,

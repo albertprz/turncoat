@@ -14,20 +14,32 @@ import           Search.MoveOrdering
 import           Control.Monad.State
 
 
-{-# INLINE  getBestMove #-}
-getBestMove :: (?tTable :: TTable) => Depth -> Position -> IO (Maybe Move)
-getBestMove !depth !pos = do
-  moves <- getSortedMoves depth pos
-  let scoreState = findTraverse (getMoveScore initialBeta depth pos)
-                                moves
-  snd <$> execStateT scoreState (initialAlpha, Nothing)
 
+{-# INLINE  getBestMove #-}
+getBestMove :: (?tTable::TTable) => Depth -> Position -> IO (Maybe Move)
+getBestMove !depth !pos =
+  lastEx <$> evalStateT (traverse (`search` pos) [1 .. depth])
+                        (initialAlpha, initialBeta)
+
+delta :: Score
+delta = 50
 
 initialAlpha :: Score
-initialAlpha = minBound + 1
+initialAlpha = minBound + 1000
 
 initialBeta :: Score
-initialBeta = maxBound - 1
+initialBeta = maxBound - 1000
+
+{-# INLINE  search #-}
+search :: (?tTable::TTable) => Depth -> Position
+                          -> StateT (Score, Score) IO (Maybe Move)
+search !depth !pos = do
+  (!alpha, !beta) <- get
+  (!score, !mv) <- liftIO $ getNodeScore alpha beta depth pos
+  if score > alpha && score < beta
+    then put (score - delta, score + delta) $> mv
+    else modify (bimap (\x -> x - delta) (+ delta))
+         *> search depth pos
 
 {-# INLINE  negamax #-}
 negamax :: (?tTable :: TTable) => Score -> Score -> Depth -> Position -> IO Score

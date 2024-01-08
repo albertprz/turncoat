@@ -1,10 +1,10 @@
 module Models.Score where
 
 import           AppPrelude
-import           GHC.Word        (Word16)
+import           Data.Int        (Int16)
 import           Test.QuickCheck (Arbitrary (..), chooseEnum)
 
-newtype Score = Score Word16
+newtype Score = Score Int16
   deriving (Eq, Ord, Num, Enum, Bounded, Storable, Arbitrary, Show)
 
 newtype NodeType = NodeType Word8

@@ -9,6 +9,7 @@ import           Data.Vector.Storable.Mutable (IOVector)
 import qualified Data.Vector.Storable.Mutable as Vector
 import           Generic.Random               (genericArbitrary, uniform)
 import           GHC.Bits
+import           GHC.Word                     (Word16)
 import           Models.Move
 import           Models.Score
 import           Test.QuickCheck              (Arbitrary (..), genericShrink)
@@ -58,7 +59,7 @@ encodeTEntry :: TEntry -> StorableTEntry
 encodeTEntry TEntry {..} = StorableTEntry {
   zobristKey = zobristKey,
   info = fromIntegral bestMoveN
-    .|. fromIntegral scoreN << 32
+    .|. fromIntegral (fromIntegral scoreN :: Word16) << 32
     .|. fromIntegral depthN << 48
     .|. fromIntegral nodeTypeN << 56
 }
@@ -77,7 +78,7 @@ decodeTEntry StorableTEntry {..}
       bestMove = decodeMove $ fromIntegral info,
       score = fromIntegral (info >> 32),
       depth = fromIntegral (info >> 48),
-      nodeType = fromIntegral ((info >> 56) .&. 7)
+      nodeType = fromIntegral ((info >> 56) .&. 3)
     }
 
 

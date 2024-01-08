@@ -33,7 +33,6 @@ initialBeta = maxBound - 1
 negamax :: (?tTable :: TTable) => Score -> Score -> Depth -> Position -> IO Score
 negamax !alpha !beta !depth !pos
   | depth == 0 = pure $! evaluatePosition pos
-  | depth == 1 = fst <$> getNodeScore alpha beta depth pos
   | otherwise = do
     let !zKey = getZobristKey pos
     !ttScore <- liftIO $ TTable.lookupScore alpha beta depth zKey

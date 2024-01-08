@@ -270,8 +270,8 @@ castlingRngVec = genNRandoms 16
 enPassantRngVec :: Vector Board
 enPassantRngVec = genNRandoms 8
 
-sideToMoveRngVec :: Vector Board
-sideToMoveRngVec = genNRandoms 2
+sideToMoveRng :: Board
+sideToMoveRng = headEx $ genNRandoms 1
 
 
 genNRandoms :: Int -> Vector Board

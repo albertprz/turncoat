@@ -89,12 +89,11 @@ getZobristKey pos@Position {..} = ZKey
 
     !enPassantHash = min 1 enPassant * enPassantRngVec !! idx
       where
-        idx = toFile $ lsb enPassant
+        idx = toFile (lsb enPassant) + 1
 
-    !sideToMoveHash = sideToMoveRngVec !! idx
+    !sideToMoveHash = fromIntegral (min 1 colorN) * sideToMoveRng
       where
         Color colorN = color
-        idx = fromIntegral colorN
 
     getPieceHash n = pieceRngVec !! idx
       where

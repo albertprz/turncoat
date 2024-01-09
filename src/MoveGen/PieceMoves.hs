@@ -1,6 +1,6 @@
 module MoveGen.PieceMoves where
 
-import           AppPrelude       hiding (Vector)
+import           AppPrelude
 
 import           Constants.Boards
 import           Models.Move

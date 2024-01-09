@@ -1,8 +1,7 @@
-module Search.Search where
+module Search.Search (getBestMove) where
 
 import           AppPrelude
 
-import           Evaluation.Evaluation
 import           Models.Move
 import           Models.Position
 import           Models.Score
@@ -10,6 +9,7 @@ import           Models.TranspositionTable (TEntry (..), TTable, ZKey)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           Search.MoveOrdering
+import           Search.Quiescence
 
 import           Control.Monad.State
 
@@ -18,34 +18,32 @@ import           Control.Monad.State
 {-# INLINE  getBestMove #-}
 getBestMove :: (?tTable::TTable) => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth !pos =
-  lastEx <$> evalStateT (traverse (`search` pos) [1 .. depth])
+  lastEx <$> evalStateT (traverse (search pos) [1 .. depth])
                         (initialAlpha, initialBeta)
 
 delta :: Score
 delta = 50
 
 initialAlpha :: Score
-initialAlpha = minBound + 1000
+initialAlpha = minBound + 1
 
 initialBeta :: Score
-initialBeta = maxBound - 1000
+initialBeta = maxBound - 1
 
 {-# INLINE  search #-}
-search :: (?tTable::TTable) => Depth -> Position
+search :: (?tTable::TTable) => Position -> Depth
                           -> StateT (Score, Score) IO (Maybe Move)
-search !depth !pos = do
+search !pos !depth  = do
   (!alpha, !beta) <- get
   (!score, !mv) <- liftIO $ getNodeScore alpha beta depth pos
-  if score > alpha && score < beta
-    then put (score - delta, score + delta) $> mv
-    else modify (bimap (\x -> x - delta) (+ delta))
-         *> search depth pos
+  case getNodeType alpha beta score of
+    PV  -> put (score - delta, score + delta) $> mv
+    Cut -> modify (second (+ delta))          *> search pos depth
+    All -> modify (first (\x -> x - delta))    *> search pos depth
 
 {-# INLINE  negamax #-}
 negamax :: (?tTable :: TTable) => Score -> Score -> Depth -> Position -> IO Score
-negamax !alpha !beta !depth !pos
-  | depth == 0 = pure $! evaluatePosition pos
-  | otherwise = do
+negamax !alpha !beta !depth !pos = do
     let !zKey = getZobristKey pos
     !ttScore <- liftIO $ TTable.lookupScore alpha beta depth zKey
     case ttScore of
@@ -75,8 +73,10 @@ cacheNodeScore !alpha !beta !depth !pos !zKey = do
 {-# INLINE  getNodeScore #-}
 getNodeScore :: (?tTable :: TTable) => Score -> Score -> Depth -> Position
   -> IO (Score, Maybe Move)
-getNodeScore !alpha !beta !depth !pos = do
-  moves <- getSortedMoves depth pos
+getNodeScore !alpha !beta !depth !pos
+  | depth == 0 = pure (quiesceSearch alpha beta pos, Nothing)
+  | otherwise = do
+  moves <- getSortedMoves pos
   let scoreState = findTraverse (getMoveScore beta depth pos)
                                 moves
   (!score, (!newAlpha, !bestMove)) <- runStateT scoreState
@@ -96,18 +96,11 @@ getMoveScore !beta !depth !pos !move =
 
 {-# INLINE  advanceState #-}
 advanceState :: Score -> Score -> Move -> NodeType -> SearchM (Maybe Score)
-advanceState beta score move nodeType =
+advanceState !beta !score !move !nodeType =
   case nodeType of
-    Cut -> Just beta    <$ modify' (second (const $ Just move))
     PV  -> Nothing      <$ put (score, Just move)
+    Cut -> Just beta    <$ modify' (second (const $ Just move))
     All -> pure Nothing
 
-
-{-# INLINE  getNodeType #-}
-getNodeType :: Score -> Score -> Score -> NodeType
-getNodeType alpha beta score
-  | score >= beta  = Cut
-  | score > alpha = PV
-  | otherwise     = All
 
 type SearchM = StateT (Score, Maybe Move) IO

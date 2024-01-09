@@ -38,10 +38,12 @@ library
       Models.Score
       Models.TranspositionTable
       MoveGen.MakeMove
+      MoveGen.PieceCaptures
       MoveGen.PieceMoves
       Parsers.Position
       Search.MoveOrdering
       Search.Perft
+      Search.Quiescence
       Search.Search
       Search.SearchOptions
       Utils.Functor

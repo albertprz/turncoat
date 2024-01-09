@@ -22,3 +22,11 @@ pattern PV, Cut, All :: NodeType
 pattern PV  = NodeType 0
 pattern Cut = NodeType 1
 pattern All = NodeType 2
+
+
+{-# INLINE  getNodeType #-}
+getNodeType :: Score -> Score -> Score -> NodeType
+getNodeType !alpha !beta !score
+  | score >= beta  = Cut
+  | score > alpha = PV
+  | otherwise     = All

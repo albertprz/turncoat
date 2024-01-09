@@ -15,22 +15,17 @@ boardScore !pieceTypeScore !pieceSquareTable !board =
     pieceScore !n = pieceTypeScore + pieceSquareTable !! n
 
 
-{-# INLINE  pawnScore #-}
 pawnScore :: Score
 pawnScore = 100
 
-{-# INLINE  knightScore #-}
 knightScore :: Score
 knightScore = 310
 
-{-# INLINE  bishopScore #-}
 bishopScore :: Score
 bishopScore = 320
 
-{-# INLINE  rookScore #-}
 rookScore :: Score
 rookScore = 500
 
-{-# INLINE  queenScore #-}
 queenScore :: Score
 queenScore = 900

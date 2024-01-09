@@ -74,7 +74,8 @@ cacheNodeScore !alpha !beta !depth !pos !zKey = do
 getNodeScore :: (?tTable :: TTable) => Score -> Score -> Depth -> Position
   -> IO (Score, Maybe Move)
 getNodeScore !alpha !beta !depth !pos
-  | depth == 0 = pure (quiesceSearch alpha beta pos, Nothing)
+  | depth == 0 = let !score = quiesceSearch alpha beta 0 pos
+                in pure (score, Nothing)
   | otherwise = do
   moves <- getSortedMoves pos
   let scoreState = findTraverse (getMoveScore beta depth pos)

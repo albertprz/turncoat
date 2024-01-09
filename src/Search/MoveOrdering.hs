@@ -20,8 +20,7 @@ getSortedMoves !pos = do
     where
       allMoves = allLegalMoves pos
 
-{-# INLINE  getSortedCaptures #-}
-getSortedCaptures :: Position -> [Move]
-getSortedCaptures !pos = allMoves
-  where
-    allMoves = allLegalCaptures pos
+{-# INLINE  getQuiesenceCaptures #-}
+getQuiesenceCaptures :: Position -> [Move]
+getQuiesenceCaptures !pos =
+  allLegalCaptures pos.enemy pos

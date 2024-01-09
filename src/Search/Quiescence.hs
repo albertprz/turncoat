@@ -13,26 +13,26 @@ import           Search.MoveOrdering
 
 
 {-# INLINE  quiesceSearch #-}
-quiesceSearch :: Score -> Score -> Position -> Score
-quiesceSearch !alpha !beta !pos =
-  if | standPat >= beta -> beta
-     | null moves       -> realAlpha
-     | otherwise        -> fromMaybe newAlpha score
+quiesceSearch :: Score -> Score -> Ply -> Position -> Score
+quiesceSearch !alpha !beta !ply !pos
+  | standPat >= beta = beta
+  | ply == 6         = standPat
+  | otherwise       = fromMaybe newAlpha score
   where
     (score, newAlpha) = runState scoreState realAlpha
-    scoreState = findTraverse (getMoveScore beta pos) moves
-    moves = getSortedCaptures pos
+    scoreState = findTraverse (getMoveScore beta ply pos) moves
+    moves = getQuiesenceCaptures pos
     realAlpha = max alpha standPat
     !standPat = evaluatePosition pos
 
 
 {-# INLINE  getMoveScore #-}
-getMoveScore :: Score -> Position -> Move -> State Score (Maybe Score)
-getMoveScore !beta !pos !move =
+getMoveScore :: Score -> Ply -> Position -> Move -> State Score (Maybe Score)
+getMoveScore !beta !ply !pos !move =
   do !alpha <- get
-     let score = - quiesceSearch (-beta) (-alpha)
+     let !score = - quiesceSearch (-beta) (-alpha) (ply + 1)
                                   (makeMove move pos)
-         nodeType = getNodeType alpha beta score
+         !nodeType = getNodeType alpha beta score
      advanceState beta score nodeType
 
 {-# INLINE  advanceState #-}

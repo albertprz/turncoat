@@ -16,6 +16,8 @@ instance Arbitrary NodeType where
 newtype Depth = Depth Word8
   deriving (Eq, Ord, Num, Enum, Storable, Arbitrary, Show)
 
+newtype Ply = Ply Word8
+  deriving (Eq, Ord, Num)
 
 {-# COMPLETE PV, Cut, All #-}
 pattern PV, Cut, All :: NodeType

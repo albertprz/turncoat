@@ -117,6 +117,16 @@ pieceAt n (Position {..}) = bisequence (piece, color')
            | testBit enemy n = Just $ reverseColor color
            | otherwise = Nothing
 
+{-# INLINE  maybeCapturedPieceAt #-}
+maybeCapturedPieceAt :: Square -> Position -> Maybe Piece
+maybeCapturedPieceAt n (Position {..})
+     | testBit pawns n = Just Pawn
+     | testBit knights n = Just Knight
+     | testBit bishops n = Just Bishop
+     | testBit rooks n = Just Rook
+     | testBit queens n = Just Queen
+     | otherwise = Nothing
+
 {-# INLINE  capturedPieceAt #-}
 capturedPieceAt :: Square -> Position -> Piece
 capturedPieceAt n (Position {..})

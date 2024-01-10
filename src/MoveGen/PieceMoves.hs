@@ -175,8 +175,8 @@ allLegalMoves pos@Position {..}
 allLegalMovesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
 allLegalMovesHelper allPieces king allKingMoves Position {..} f g =
 
-    foldBoardMoves   Pawn (g . pawnMoves allPieces player enemy enPassant color)                (unpinned&pawns)
-    $ foldBoardMoves   Pawn (g . filePinnedPawnMoves allPieces color)                filePinnedPawns
+    foldBoardMoves   Pawn (g . pawnMoves allPieces enemy enPassant color)                (unpinned&pawns)
+    $ foldBoardMoves   Pawn (g . pawnAdvances allPieces color . toBoard)                filePinnedPawns
     $ foldBoardMoves   Pawn (g . diagPinnedPawnMoves enemy color)                diagPinnedPawns
     $ foldBoardMoves   Pawn (g . antiDiagPinnedPawnMoves enemy color)                antiDiagPinnedPawns
     $ foldBoardMoves   Knight (f . knightMoves player)           (unpinned&knights)
@@ -197,20 +197,20 @@ allLegalMovesHelper allPieces king allKingMoves Position {..} f g =
 
 
 {-# INLINE  pawnMoves #-}
-pawnMoves :: Board -> Board -> Board -> Board -> Color -> Square -> Board
-pawnMoves allPieces player enemy enPassant color n =
-  ((pawnAdvances allPieces color board .\ enemy)
-  .| pawnAttacks color board & (enemy .| enPassant))
-  .\ player
+pawnMoves :: Board -> Board -> Board -> Color -> Square -> Board
+pawnMoves allPieces enemy enPassant color n =
+  pawnAdvances allPieces color board
+  .| pawnAttacks color board & (enemy .| enPassant)
   where
     board = toBoard n
 
-{-# INLINE  filePinnedPawnMoves #-}
-filePinnedPawnMoves :: Board -> Color -> Square -> Board
-filePinnedPawnMoves allPieces color n =
-  pawnAdvances allPieces color board .\ allPieces
+{-# INLINE  pawnAdvances #-}
+pawnAdvances :: Board -> Color -> Board -> Board
+pawnAdvances allPieces color board = advances .\ allPieces
   where
-    board = toBoard n
+    advances = case color of
+      White -> board << 8 .| ((rank_2 & board) << 8 .\ allPieces) << 8
+      Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) >> 8
 
 {-# INLINE  diagPinnedPawnMoves #-}
 diagPinnedPawnMoves :: Board -> Color -> Square -> Board
@@ -225,12 +225,6 @@ antiDiagPinnedPawnMoves enemy color n =
   pawnAntiDiagAttacks color board & enemy
   where
     board = toBoard n
-
-{-# INLINE  pawnAdvances #-}
-pawnAdvances :: Board -> Color -> Board -> Board
-pawnAdvances allPieces color board = case color of
-  White -> board << 8 .| ((rank_2 & board) << 8 .\ allPieces) << 8
-  Black -> board >> 8 .| ((rank_7 & board) >> 8 .\ allPieces) >> 8
 
 {-# INLINE  knightMoves #-}
 knightMoves :: Board -> Square -> Board

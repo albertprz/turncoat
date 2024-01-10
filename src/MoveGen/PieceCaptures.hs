@@ -9,6 +9,10 @@ import           Models.Position
 import           MoveGen.PieceMoves
 
 
+{-# INLINE  getAllCaptures #-}
+getAllCaptures :: Position -> [Move]
+getAllCaptures !pos =
+  allLegalCaptures pos.enemy pos
 
 {-# INLINE  allLegalCaptures #-}
 allLegalCaptures :: Board -> Position -> [Move]
@@ -16,18 +20,24 @@ allLegalCaptures target pos@Position {..}
 
   | allCheckers == 0      = genCaptures id id
   | ones allCheckers > 1 = allKingCaptures
+  | sliderCheckers /= 0   = genCaptures captureChecker pawnCaptureOrBlockChecker
   | otherwise            = genCaptures captureChecker pawnCaptureChecker
 
   where
     genCaptures = allLegalCapturesHelper target allPieces king allKingCaptures pos
     captureChecker board = board & allCheckers
     pawnCaptureChecker board = board & (allCheckers .| enPassantChecker)
+    pawnCaptureOrBlockChecker board = board & (allCheckers .| checkerRay .| enPassantChecker)
+    checkerRay = getKingQueenRay king checkerSquare
+      & queenAttacks allPieces kingSquare
+      & queenAttacks allPieces checkerSquare
+    checkerSquare = lsb allCheckers
     allKingCaptures = foldBoardSquares King (kingCaptures target) []
                                        kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
-    enPassantChecker = toEnum
-        (ones (allCheckers & pawns & (enPassant << 8 .| enPassant >> 8)))
-        * enPassant
+    enPassantChecker =
+      let checker = allCheckers & pawns
+      in enPassant & (checker << 8 .| checker >> 8)
     allPieces = player .| enemy
     kingSquare = lsb king
     king = player&kings
@@ -36,7 +46,8 @@ allLegalCaptures target pos@Position {..}
 allLegalCapturesHelper :: Board -> Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
 allLegalCapturesHelper target allPieces king allKingCaptures Position {..} f g =
 
-    foldBoardMoves   Pawn (g . pawnCaptures target enPassant color)                (unpinned&pawns)
+    foldBoardMoves   Pawn (g . pawnCapturesAndPromotions target allPieces enPassant color)                (unpinned&pawns)
+    $ foldBoardMoves   Pawn (g . pawnPromotions allPieces color . toBoard)                filePinnedPawns
     $ foldBoardMoves   Pawn (g . diagPinnedPawnMoves target color)                diagPinnedPawns
     $ foldBoardMoves   Pawn (g . antiDiagPinnedPawnMoves target color)                antiDiagPinnedPawns
     $ foldBoardMoves   Knight (f . knightCaptures target)           (unpinned&knights)
@@ -48,19 +59,35 @@ allLegalCapturesHelper target allPieces king allKingCaptures Position {..} f g =
     where
     unpinned = player .\ pinnedPieces
     pinnedPawns = pinnedPieces & pawns
+    filePinnedPawns = pinnedPawns & kingFile
     diagPinnedPawns = pinnedPawns & kingDiag
     antiDiagPinnedPawns = pinnedPawns & kingAntiDiag
+    kingFile = rankMovesVec !! kingSquare
     kingDiag = antiDiagMovesVec !! kingSquare
     kingAntiDiag = diagMovesVec !! kingSquare
     kingSquare = lsb king
 
-
-{-# INLINE  pawnCaptures #-}
-pawnCaptures :: Board -> Board -> Color -> Square -> Board
-pawnCaptures target enPassant color n =
-  pawnAttacks color board & (target .| enPassant)
+{-# INLINE  pawnCapturesAndPromotions #-}
+pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board
+pawnCapturesAndPromotions target allPieces enPassant color n =
+  pawnPromotions allPieces color board
+  .| pawnCaptures target enPassant color board
   where
     board = toBoard n
+
+{-# INLINE  pawnPromotions #-}
+pawnPromotions :: Board -> Color -> Board -> Board
+pawnPromotions allPieces color board =
+  promotions .\ allPieces
+  where
+    promotions = case color of
+      White -> (rank_7 & board) << 8
+      Black -> (rank_2 & board) >> 8
+
+{-# INLINE  pawnCaptures #-}
+pawnCaptures :: Board -> Board -> Color -> Board -> Board
+pawnCaptures target enPassant color board =
+  pawnAttacks color board & (target .| enPassant)
 
 {-# INLINE  knightCaptures #-}
 knightCaptures :: Board -> Square -> Board

@@ -26,7 +26,7 @@ instance Arbitrary Move where
   shrink = genericShrink
 
 newtype StorableMove = StorableMove Word32
-  deriving (Eq, Ord, Num, Generic, Storable)
+  deriving (Eq, Ord, Num, Bits, Generic, Storable)
 
 instance GStorable StorableMove
 
@@ -35,7 +35,7 @@ instance Hashable Move
 
 {-# INLINE  encodeMove #-}
 encodeMove :: Maybe Move -> StorableMove
-encodeMove Nothing = fromIntegral (toBoard 31)
+encodeMove Nothing = bit 31
 encodeMove (Just Move {..}) = StorableMove
   (fromIntegral start
   .|. (fromIntegral end << 8)
@@ -81,7 +81,7 @@ foldBoardSquares Pawn f moves start =
   foldlBoard moves foldFn id (f start)
   where
     foldFn xs end
-      | toBoard end & (rank_1 .| rank_8) /= 0 =
+      | testBit (rank_1 .| rank_8) end =
         Move Pawn (Just QueenProm) start end
         : Move Pawn (Just KnightProm) start end
         : Move Pawn (Just RookProm) start end

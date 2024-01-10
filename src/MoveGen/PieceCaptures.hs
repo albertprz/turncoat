@@ -3,6 +3,7 @@ module MoveGen.PieceCaptures where
 import           AppPrelude
 
 import           Constants.Boards
+import           Data.Bits
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -158,24 +159,24 @@ kingCaptures enemy n =
 {-# INLINE  bishopCaptures #-}
 bishopCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 bishopCaptures enemy allPieces pinnedPieces king n
-  | pinnedPieces & toBoard n == 0 = attacks
-  | otherwise                    = attacks & getKingBishopRay king n
+  | testBit pinnedPieces n = attacks & getKingBishopRay king n
+  | otherwise              = attacks
   where
     attacks = bishopCaptureAttacks allPieces n & enemy
 
 {-# INLINE  rookCaptures #-}
 rookCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 rookCaptures enemy allPieces pinnedPieces king n
-  | pinnedPieces & toBoard n == 0 = attacks
-  | otherwise                    = attacks & getKingRookRay king n
+  | testBit pinnedPieces n = attacks & getKingRookRay king n
+  | otherwise              = attacks
   where
     attacks = rookCaptureAttacks allPieces n & enemy
 
 {-# INLINE  queenCaptures #-}
 queenCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 queenCaptures enemy allPieces pinnedPieces king n
-  | pinnedPieces & toBoard n == 0 = attacks
-  | otherwise                    = attacks & getKingQueenRay king n
+  | testBit pinnedPieces n = attacks & getKingQueenRay king n
+  | otherwise              = attacks
   where
     attacks = queenCaptureAttacks allPieces n & enemy
 

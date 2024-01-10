@@ -42,11 +42,11 @@ newtype ZKey = ZKey Word64
 emptyTEntry :: StorableTEntry
 emptyTEntry = StorableTEntry {
   zobristKey = 0,
-  info = toBoard 63
+  info = bit 63
 }
 
 tTableSize :: Word64
-tTableSize = toBoard 28
+tTableSize = bit 26
 
 {-# INLINE  hashZKey #-}
 hashZKey :: ZKey -> Int

@@ -81,7 +81,7 @@ msb board = 65 * (zeros / 64) + 63 - zeros
 
 {-# INLINE  toBoard #-}
 toBoard :: Square -> Board
-toBoard n = 1 << n
+toBoard = bit
 
 {-# INLINE  toFile #-}
 toFile :: Square -> File

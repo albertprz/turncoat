@@ -10,7 +10,7 @@ import           Models.Piece
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove      (makeMove)
-import           MoveGen.PieceCaptures (allLegalCaptures)
+import           MoveGen.PieceCaptures (staticExchangeCaptures)
 
 
 {-# INLINE  evaluateCaptureExchange #-}
@@ -44,7 +44,7 @@ evaluateExchange !square !pos =
       maybe 0 promotionToScore promotion
 
     smallestAttackerMove =
-      headMay $ allLegalCaptures (toBoard square) pos
+      headMay $ staticExchangeCaptures square pos
 
 
 {-# INLINE  capturedPieceToScore #-}

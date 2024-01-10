@@ -41,6 +41,7 @@ library
       MoveGen.MakeMove
       MoveGen.PieceCaptures
       MoveGen.PieceMoves
+      MoveGen.PieceQuietMoves
       Parsers.Position
       Search.MoveOrdering
       Search.Perft

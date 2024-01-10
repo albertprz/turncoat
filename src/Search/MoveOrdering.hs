@@ -7,7 +7,7 @@ import           Models.Move
 import           Models.Position
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
-import           MoveGen.PieceCaptures     (getAllCaptures)
+import           MoveGen.PieceCaptures     (allLegalCaptures)
 import           MoveGen.PieceMoves        (allLegalMoves)
 
 
@@ -30,4 +30,4 @@ getSortedCaptures !pos =
   $ map addSee allCaptures
   where
     addSee !mv = (mv, evaluateCaptureExchange pos mv)
-    allCaptures = getAllCaptures pos
+    allCaptures = allLegalCaptures pos

@@ -46,7 +46,7 @@ emptyTEntry = StorableTEntry {
 }
 
 tTableSize :: Word64
-tTableSize = toBoard 26
+tTableSize = toBoard 28
 
 {-# INLINE  hashZKey #-}
 hashZKey :: ZKey -> Int

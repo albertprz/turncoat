@@ -22,7 +22,7 @@ getBestMove !depth !pos =
                         (initialAlpha, initialBeta)
 
 delta :: Score
-delta = 50
+delta = 10
 
 initialAlpha :: Score
 initialAlpha = minBound + 1

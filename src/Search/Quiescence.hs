@@ -15,13 +15,14 @@ import           Search.MoveOrdering
 {-# INLINE  quiesceSearch #-}
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
 quiesceSearch !alpha !beta !ply !pos
+  | ply == 8         = standPat
   | standPat >= beta = beta
-  | ply == 6         = standPat
   | otherwise       = fromMaybe newAlpha score
   where
     (score, newAlpha) = runState scoreState realAlpha
-    scoreState = findTraverse (getMoveScore beta ply pos) moves
-    moves = getQuiesenceCaptures pos
+    scoreState = findTraverse (getMoveScore beta ply pos) captures
+    captures | ply == 0   = getSortedWinCaptures pos
+             | otherwise = getAllCaptures pos
     realAlpha = max alpha standPat
     !standPat = evaluatePosition pos
 

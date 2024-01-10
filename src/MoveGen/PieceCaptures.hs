@@ -28,7 +28,7 @@ allLegalCaptures target pos@Position {..}
     enPassantChecker = toEnum
         (ones (allCheckers & pawns & (enPassant << 8 .| enPassant >> 8)))
         * enPassant
-    allPieces = player .| target
+    allPieces = player .| enemy
     kingSquare = lsb king
     king = player&kings
 
@@ -43,7 +43,8 @@ allLegalCapturesHelper target allPieces king allKingCaptures Position {..} f g =
     $ foldBoardMoves   Bishop (f . bishopCaptures target allPieces pinnedPieces king) (player&bishops)
     $ foldBoardMoves   Rook   (f . rookCaptures target allPieces pinnedPieces king)   (player&rooks)
     $ foldBoardMoves   Queen  (f . queenCaptures target allPieces pinnedPieces king)  (player&queens)
-      allKingCaptures
+    allKingCaptures
+
     where
     unpinned = player .\ pinnedPieces
     pinnedPawns = pinnedPieces & pawns

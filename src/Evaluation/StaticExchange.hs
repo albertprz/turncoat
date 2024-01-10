@@ -14,11 +14,11 @@ import           MoveGen.PieceCaptures (allLegalCaptures)
 
 
 {-# INLINE  evaluateCaptureExchange #-}
-evaluateCaptureExchange :: Move -> Position -> Score
-evaluateCaptureExchange  mv@Move {..} !pos =
+evaluateCaptureExchange :: Position -> Move -> Score
+evaluateCaptureExchange !pos mv@Move {..}  =
   pieceScore - evaluateExchange end (makeMove mv pos)
   where
-    pieceScore =
+    !pieceScore =
       capturedPieceToScore $ capturedPieceAt end pos
 
 
@@ -27,13 +27,18 @@ evaluateExchange :: Square -> Position -> Score
 evaluateExchange !square !pos =
   case smallestAttackerMove of
     Nothing -> 0
-    Just mv -> max 0 (pieceScore - evaluateExchange square
-                                                   (makeMove mv pos))
+    Just !mv ->
+      max 0 $! (pieceScore - evaluateExchange square
+                                              (newPos $! makeMove mv pos))
   where
+    newPos x@Position {..} = x
+      { enPassant = enPassant
+          & (toBoard square << 8 .| toBoard square >> 8)
+      }
     pieceScore =
       capturedPieceToScore $ capturedPieceAt square pos
 
-    smallestAttackerMove =
+    !smallestAttackerMove =
       headMay $ allLegalCaptures (toBoard square) pos
 
 

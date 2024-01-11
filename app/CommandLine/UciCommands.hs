@@ -7,16 +7,15 @@ import           Models.Move
 import           Models.Position
 import           Models.Score
 import qualified Models.TranspositionTable as TTable
-import           MoveGen.MakeMove          (makeMove)
-import           MoveGen.PieceMoves        (allLegalMoves)
+import           MoveGen.MakeMove        
+import           MoveGen.PieceMoves
 import           Search.Perft
 import           Search.Search
 import           Search.SearchOptions
 
-
 import           Control.Monad.State
-import           Data.Composition          ((.:))
-import           Data.Map                  (traverseWithKey)
+import           Data.Composition          
+import           Data.Map                 
 import           System.TimeIt
 
 
@@ -65,7 +64,7 @@ makeUnknownMove UnknownMove {..} pos =
   (`makeMove` pos) <$> mv
   where
   mv = find (\x -> x.start == start && x.end == end)
-            (allLegalMoves pos)
+            (allMoves pos)
 
 
 data PositionSpec = PositionSpec

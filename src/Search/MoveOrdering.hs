@@ -7,27 +7,30 @@ import           Models.Move
 import           Models.Position
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
-import           MoveGen.PieceCaptures     (allLegalCaptures)
-import           MoveGen.PieceMoves        (allLegalMoves)
+import           MoveGen.PieceCaptures     (allCaptures)
+import           MoveGen.PieceQuietMoves   (allQuietMoves)
 
 
 {-# INLINE  getSortedMoves #-}
 getSortedMoves :: (?tTable :: TTable) => Position -> IO [Move]
 getSortedMoves !pos = do
   ttMove <- TTable.lookupBestMove $ getZobristKey pos
-  pure (toList ttMove <> winCaptures <> allMoves)
+  pure (toList ttMove
+            <> winningCaptures
+            <> quietMoves
+            <> losingCaptures)
   where
-    (winCaptures, _) = getSortedCaptures pos
-    allMoves = allLegalMoves pos
+    (winningCaptures, losingCaptures) = getSortedCaptures pos
+    quietMoves                        = allQuietMoves pos
 
 
 {-# INLINE  getSortedCaptures #-}
 getSortedCaptures :: Position -> ([Move], [Move])
 getSortedCaptures !pos =
   bimapBoth (map fst)
-  $ partition ((> 0) . snd)
+  $ partition ((>= 0) . snd)
   $ sortOn (Down . snd)
-  $ map addSee allCaptures
+  $ map attachEval captures
   where
-    addSee !mv = (mv, evaluateCaptureExchange pos mv)
-    allCaptures = allLegalCaptures pos
+    attachEval !mv = (mv, evaluateCaptureExchange pos mv)
+    captures = allCaptures pos

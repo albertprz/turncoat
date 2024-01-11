@@ -39,6 +39,7 @@ library
       Models.Score
       Models.TranspositionTable
       MoveGen.MakeMove
+      MoveGen.PieceAttacks
       MoveGen.PieceCaptures
       MoveGen.PieceMoves
       MoveGen.PieceQuietMoves

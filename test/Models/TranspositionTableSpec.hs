@@ -4,11 +4,8 @@ import           AppPrelude
 
 import           Test.QuickCheck.Property
 
-import           Models.Move
 import           Models.TranspositionTable
-import           Models.TranspositionTable (emptyTEntry)
 import           Test.Hspec                (Spec, it, shouldBe)
-import           Test.Hspec.QuickCheck     (prop)
 import           Test.QuickCheck           (Args (maxSuccess), quickCheckWith,
                                             stdArgs)
 

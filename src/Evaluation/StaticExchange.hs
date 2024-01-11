@@ -15,36 +15,42 @@ import           MoveGen.PieceCaptures (staticExchangeCaptures)
 
 {-# INLINE  evaluateCaptureExchange #-}
 evaluateCaptureExchange :: Position -> Move -> Score
-evaluateCaptureExchange !pos mv@Move {..} =
-  promotionScore + pieceScore - evaluateExchange end (makeMove mv pos)
+evaluateCaptureExchange pos mv@Move {..} =
+  promotionScore + capturedPieceScore
+                 - evaluateExchange end (makeMove mv pos)
   where
-    pieceScore =
+    capturedPieceScore =
       maybe 0 capturedPieceToScore $ maybeCapturedPieceAt end pos
     promotionScore =
       maybe 0 promotionToScore promotion
 
+
 {-# INLINE  evaluateExchange #-}
 evaluateExchange :: Square -> Position -> Score
-evaluateExchange !square !pos =
-  case smallestAttackerMove of
-    Nothing -> 0
-    Just !mv ->
-      max 0 $! (promotionScore mv + pieceScore
-                - evaluateExchange square (newPos $! makeMove mv pos))
+evaluateExchange square pos =
+  maybe 0 (evaluateExchangeHelper square pos) smallestAttackerMove
   where
-    newPos x@Position {..} =
+    smallestAttackerMove =
+      headMay $ staticExchangeCaptures square pos
+
+
+{-# INLINE  evaluateExchangeHelper #-}
+evaluateExchangeHelper :: Square -> Position -> Move -> Score
+evaluateExchangeHelper square pos mv@Move {..} =
+    max 0 $! (relativeScore - evaluateExchange square newPos)
+  where
+    capturedPieceScore =
+      capturedPieceToScore $ capturedPieceAt square pos
+    promotionScore =
+      maybe 0 promotionToScore promotion
+    relativeScore =
+      capturedPieceScore + promotionScore
+    newPos = updateEnPassant $ makeMove mv pos
+    updateEnPassant x@Position {..} =
       let target = toBoard square & enemy & pawns
       in x {
         enPassant = enPassant & (target << 8 .| target >> 8)
       }
-    pieceScore =
-      capturedPieceToScore $ capturedPieceAt square pos
-
-    promotionScore Move {..} =
-      maybe 0 promotionToScore promotion
-
-    smallestAttackerMove =
-      headMay $ staticExchangeCaptures square pos
 
 
 {-# INLINE  capturedPieceToScore #-}
@@ -55,6 +61,7 @@ capturedPieceToScore = \case
   Bishop -> bishopScore
   Rook -> rookScore
   Queen -> queenScore
+
 
 {-# INLINE  promotionToScore #-}
 promotionToScore :: Promotion -> Score

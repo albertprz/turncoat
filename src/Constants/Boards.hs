@@ -49,7 +49,7 @@ infixl 8 &
 {-# INLINE  (.\) #-}
 infixl 8 .\
 (.\) :: Board -> Board -> Board
-(.\) x y = x & (!) y
+(.\) x y = x & (~) y
 
 {-# INLINE  (.|) #-}
 infixl 7 .|
@@ -61,9 +61,9 @@ infixl 7 ^
 (^) :: Board -> Board -> Board
 (^) = xor
 
-{-# INLINE  (!) #-}
-(!) :: Board -> Board
-(!) = complement
+{-# INLINE  (~) #-}
+(~) :: Board -> Board
+(~) = complement
 
 {-# INLINE  ones #-}
 ones :: Board -> Int

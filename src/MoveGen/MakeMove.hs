@@ -5,8 +5,8 @@ import           AppPrelude
 import           Constants.Boards
 import           Models.Move
 import           Models.Piece
-import           Models.Position    (Position (..))
-import qualified MoveGen.PieceMoves as MoveGen
+import           Models.Position      (Position (..))
+import qualified MoveGen.PieceAttacks as MoveGen
 
 
 {-# INLINE  makeMove #-}

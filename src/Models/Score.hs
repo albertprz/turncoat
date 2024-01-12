@@ -2,7 +2,7 @@ module Models.Score where
 
 import           AppPrelude
 import           Data.Int        (Int16)
-import           Test.QuickCheck (Arbitrary (..), chooseEnum)
+import           Test.QuickCheck (Arbitrary (..), elements)
 
 newtype Score = Score Int16
   deriving (Eq, Ord, Num, Enum, Bounded, Storable, Arbitrary, Show)
@@ -11,7 +11,7 @@ newtype NodeType = NodeType Word8
   deriving (Eq, Ord, Num, Enum, Storable, Show)
 
 instance Arbitrary NodeType where
-  arbitrary = chooseEnum (PV, All)
+  arbitrary = elements [PV, Cut, All]
 
 newtype Depth = Depth Word8
   deriving (Eq, Ord, Num, Enum, Storable, Arbitrary, Show)

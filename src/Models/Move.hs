@@ -8,8 +8,7 @@ import           Data.Bits
 import           Data.List                (iterate)
 import qualified Data.Vector.Storable     as Vector
 import           Foreign.Storable.Generic
-import           Test.QuickCheck          (Arbitrary (..), chooseInt,
-                                           genericShrink)
+import           Test.QuickCheck          (Arbitrary (..), chooseInt)
 
 
 data Move = Move {
@@ -23,7 +22,6 @@ instance Arbitrary Move where
   arbitrary = Move
     <$> arbitrary <*> arbitrary
     <*> chooseInt (0, 63) <*> chooseInt (0, 63)
-  shrink = genericShrink
 
 newtype StorableMove = StorableMove Word32
   deriving (Eq, Ord, Num, Bits, Generic, Storable)

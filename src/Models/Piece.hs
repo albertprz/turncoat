@@ -4,7 +4,7 @@ import           AppPrelude
 import           Data.Char                 (isUpper)
 import qualified Data.Char                 as Char
 import           Foreign.Storable.Generic
-import           Test.QuickCheck           (Arbitrary, chooseEnum)
+import           Test.QuickCheck           (Arbitrary, elements)
 import           Test.QuickCheck.Arbitrary (Arbitrary (..))
 
 
@@ -12,22 +12,24 @@ newtype Piece = Piece Word8
   deriving (Eq, Ord, Enum, Bounded, Generic)
 
 instance Arbitrary Piece where
-  arbitrary = chooseEnum (Pawn, King)
+  arbitrary =
+    elements [Pawn, Knight, Bishop, Rook, Queen]
 
 instance Hashable Piece
 instance GStorable Piece
 
 newtype Promotion = Promotion Word8
-  deriving (Eq, Ord, Enum, Bounded, Generic)
+  deriving (Eq, Ord, Enum, Generic)
 
 instance Arbitrary Promotion where
-  arbitrary = chooseEnum (KnightProm, QueenProm)
+  arbitrary =
+    elements [KnightProm, BishopProm, RookProm, QueenProm]
 
 instance Hashable Promotion
 instance GStorable Promotion
 
 newtype Color = Color Word8
-  deriving (Eq, Ord, Enum, Bounded)
+  deriving (Eq, Ord, Enum, Num, Real, Integral)
 
 data CastlingRights = KingSide | QueenSide
 

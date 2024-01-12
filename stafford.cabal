@@ -152,6 +152,7 @@ test-suite test
   main-is: Spec.hs
   other-modules:
       Models.TranspositionTableSpec
+      MoveGen.MakeMoveSpec
       Search.PerftSpec
       Paths_stafford
   hs-source-dirs:

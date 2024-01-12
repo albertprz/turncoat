@@ -9,13 +9,16 @@ import           Bookhound.Parsers.Number    (unsignedInt)
 import           Data.Char                   (digitToInt)
 
 import           Constants.Boards
+import           Evaluation.Evaluation       (evaluateMaterial)
 import           Models.Piece
 import           Models.Position
+import           Models.Score
 import           MoveGen.MakeMove
 
 
 positionFromFen :: Text -> Either [ParseError] Position
 positionFromFen = runParser positionFenParser
+
 
 positionFenParser :: Parser Position
 positionFenParser = do
@@ -34,7 +37,7 @@ positionFenParser = do
     <*> (colorP <* space)
     <*> (castlingP <* space)
     <*> (enPassantP <* space)
-    <*> (unsignedInt <* space)
+    <*> (ply <* space)
     <*> unsignedInt
   piecesP =
     map (mapMaybe (\(x, y) -> (x,) <$> y) . zip [0 ..] . fold . reverse)
@@ -49,8 +52,9 @@ positionFenParser = do
   emptySquaresN = (`replicate` Nothing) . digitToInt <$> oneOf ['1' .. '8']
   piece = pure . pure <$> mandatory (map charToPiece anyChar)
   lengthCheck xs = length xs == 8
+  ply = fromIntegral <$> unsignedInt
   mandatory = (=<<) (fromMaybe empty . map pure)
-  foldrFlipped f xs start = foldr f start xs
+  foldrFlipped f = flip $ foldr f
 
 
 squareParser :: Parser Square
@@ -58,3 +62,55 @@ squareParser = (+) <$> column <*> map (* 8) row
   where
     column = (\x -> x - fromEnum 'a') . fromEnum <$> oneOf ['a' .. 'h']
     row = (\x -> x - 1) . digitToInt <$> oneOf ['1' .. '8']
+
+
+-- For a new position:
+--   - Switch players twice to calculate attack & pins boards
+--   - Set the inital static evaluation
+newPosition :: Position -> Position
+newPosition = setInitialScore . switchPlayers . switchPlayers
+
+
+setInitialScore :: Position -> Position
+setInitialScore pos =
+  pos {materialScore = evaluateMaterial pos}
+
+
+includePiece :: (Square, (Piece, Color)) -> Position -> Position
+includePiece (square, (piece, pieceColor)) pos@Position {..} =
+  if pieceColor == color then
+    pos' { player = player .| board }
+  else
+    pos' { enemy = enemy .| board }
+  where
+  pos' = case piece of
+    Pawn   -> pos { pawns = pawns .| board }
+    Knight -> pos { knights = knights .| board }
+    Bishop -> pos { bishops = bishops .| board }
+    Rook   -> pos { rooks = rooks .| board }
+    Queen  -> pos { queens = queens .| board }
+    King   -> pos { kings = kings .| board }
+  board = toBoard square
+
+includeHalfMoveClock :: Ply -> Position -> Position
+includeHalfMoveClock halfMoveClock pos =
+  pos { halfMoveClock = halfMoveClock }
+
+includeColor :: Color -> Position -> Position
+includeColor color pos =
+  pos { color = color }
+
+includeCastling :: (CastlingRights, Color) -> Position -> Position
+includeCastling (castlingRights, castlingColor) pos@Position {..} =
+  pos { castling = castling .| row & (column .| file_E) }
+  where
+  row = case castlingColor of
+    White -> rank_1
+    Black -> rank_8
+  column = case castlingRights of
+    QueenSide -> file_A
+    KingSide  -> file_H
+
+includeEnPassant :: Square -> Position -> Position
+includeEnPassant square pos =
+  pos {enPassant = toBoard square}

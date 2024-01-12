@@ -10,9 +10,9 @@ import           Models.Position
 import           Models.Score
 
 
-{-# INLINE  evaluatePosition #-}
-evaluatePosition :: Position -> Score
-evaluatePosition Position {..} =
+{-# INLINE  evaluateMaterial #-}
+evaluateMaterial :: Position -> Score
+evaluateMaterial Position {..} =
   go color player - go (reverseColor color) enemy
   where
   go White !board =

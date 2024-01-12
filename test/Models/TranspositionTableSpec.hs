@@ -15,9 +15,9 @@ spec = do
 
   it "Encode / decode Table entries" $
     quickCheckWith stdArgs {maxSuccess = 1_000 }
-    \x -> (decodeTEntry . encodeTEntry) x
+    \tEntry -> (decodeTEntry . encodeTEntry) tEntry
          ===
-         Just x
+         Just tEntry
 
   it "Decode empty Table entry" $
      decodeTEntry emptyTEntry `shouldBe` Nothing

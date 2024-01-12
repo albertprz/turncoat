@@ -2,7 +2,6 @@ module Search.Quiescence (quiesceSearch) where
 
 import           AppPrelude
 
-import           Evaluation.Evaluation
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
@@ -16,16 +15,15 @@ import           Search.MoveOrdering
 {-# INLINE  quiesceSearch #-}
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
 quiesceSearch !alpha !beta !ply !pos
-  | ply == 8         = standPat
   | standPat >= beta = beta
   | otherwise       = fromMaybe newAlpha score
   where
     (score, newAlpha) = runState scoreState realAlpha
     scoreState = findTraverse (getMoveScore beta ply pos) captures
     realAlpha = max alpha standPat
-    captures  | ply <= 2   = fst $ getSortedCaptures pos
+    captures  | ply <= 1   = fst $ getSortedCaptures pos
               | otherwise = allCaptures pos
-    standPat             = evaluatePosition pos
+    standPat              = pos.materialScore
 
 
 {-# INLINE  getMoveScore #-}

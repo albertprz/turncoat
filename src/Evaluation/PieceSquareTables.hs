@@ -1,9 +1,42 @@
 module Evaluation.PieceSquareTables where
 
 import           AppPrelude
+import           Constants.Boards
 import           Data.List.Split      (chunksOf)
 import qualified Data.Vector.Storable as Vector
+import           Models.Piece
 import           Models.Score
+
+
+{-# INLINE  getSquareTableIndex #-}
+getSquareTableIndex :: Board -> Color -> Square
+getSquareTableIndex board color =
+  lsb board + 64 * fromIntegral color
+
+
+pawnSquareTable :: Vector Score
+pawnSquareTable =
+  whitePawnSquareTable <> blackPawnSquareTable
+
+knightSquareTable :: Vector Score
+knightSquareTable =
+  whiteKnightSquareTable <> blackKnightSquareTable
+
+bishopSquareTable :: Vector Score
+bishopSquareTable =
+  whiteBishopSquareTable <> blackBishopSquareTable
+
+rookSquareTable :: Vector Score
+rookSquareTable =
+  whiteRookSquareTable <> blackRookSquareTable
+
+queenSquareTable :: Vector Score
+queenSquareTable =
+  whiteQueenSquareTable <> blackQueenSquareTable
+
+kingSquareTable :: Vector Score
+kingSquareTable =
+  whiteKingSquareTable <> blackKingSquareTable
 
 
 blackPawnSquareTable :: Vector Score

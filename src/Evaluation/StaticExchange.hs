@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Evaluation.StaticExchange where
 
 import           AppPrelude
@@ -6,7 +5,6 @@ import           AppPrelude
 import           Constants.Boards
 import           Evaluation.BoardScore
 import           Models.Move
-import           Models.Piece
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove      (makeMove)
@@ -14,15 +12,22 @@ import           MoveGen.PieceCaptures (staticExchangeCaptures)
 
 
 {-# INLINE  evaluateCaptureExchange #-}
-evaluateCaptureExchange :: Position -> Move -> Score
-evaluateCaptureExchange pos mv@Move {..} =
-  promotionScore + capturedPieceScore
-                 - evaluateExchange end (makeMove mv pos)
+evaluateCaptureExchange :: Move -> Position -> Score
+evaluateCaptureExchange mv@Move {..} pos =
+  side * finalPos.materialScore - pos.materialScore
   where
-    capturedPieceScore =
-      maybe 0 capturedPieceToScore $ maybeCapturedPieceAt end pos
-    promotionScore =
-      maybe 0 promotionToScore promotion
+    !side | finalPos.color == pos.color =   1
+          | otherwise                  = - 1
+    !finalPos = iterateMaybe (toQuietPosition end)
+                             (makeMove mv pos)
+
+{-# INLINE  toQuietPosition #-}
+toQuietPosition :: Square -> Position -> Maybe Position
+toQuietPosition square pos =
+  (`makeMove` pos) <$> smallestAttackerMove
+  where
+    smallestAttackerMove =
+      headMay $ staticExchangeCaptures square pos
 
 
 {-# INLINE  evaluateExchange #-}
@@ -40,9 +45,9 @@ evaluateExchangeHelper square pos mv@Move {..} =
     max 0 $! (relativeScore - evaluateExchange square newPos)
   where
     capturedPieceScore =
-      capturedPieceToScore $ capturedPieceAt square pos
+      evaluateCapturedPiece $ capturedPieceAt square pos
     promotionScore =
-      maybe 0 promotionToScore promotion
+      maybe 0 evaluatePromotion promotion
     relativeScore =
       capturedPieceScore + promotionScore
     newPos = updateEnPassant $ makeMove mv pos
@@ -51,24 +56,3 @@ evaluateExchangeHelper square pos mv@Move {..} =
       in x {
         enPassant = enPassant & (target << 8 .| target >> 8)
       }
-
-
-{-# INLINE  capturedPieceToScore #-}
-capturedPieceToScore :: Piece -> Score
-capturedPieceToScore = \case
-  Pawn -> pawnScore
-  Knight -> knightScore
-  Bishop -> bishopScore
-  Rook -> rookScore
-  Queen -> queenScore
-
-
-{-# INLINE  promotionToScore #-}
-promotionToScore :: Promotion -> Score
-promotionToScore prom = score - pawnScore
-  where
-    score = case prom of
-      KnightProm -> knightScore
-      BishopProm -> bishopScore
-      RookProm   -> rookScore
-      QueenProm  -> queenScore

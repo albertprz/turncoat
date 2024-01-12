@@ -30,7 +30,7 @@ printDivide :: Depth -> CommandM ()
 printDivide = withPosition go
   where
     go = void
-         . traverseWithKey (\k v -> putStrLn (tshow k <> " => " <> tshow v))
+         . traverseWithKey (\k v -> putStrLn (tshow k <> ": " <> tshow v))
          .: divide
 
 printBestMove :: SearchOptions -> CommandM ()

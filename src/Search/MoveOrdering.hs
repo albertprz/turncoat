@@ -32,5 +32,5 @@ getSortedCaptures !pos =
   $ sortOn (Down . snd)
   $ map attachEval captures
   where
-    attachEval !mv = (mv, evaluateCaptureExchange pos mv)
+    attachEval !mv = (mv, evaluateCaptureExchange mv pos)
     captures = allCaptures pos

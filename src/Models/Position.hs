@@ -9,32 +9,35 @@ import           Data.List.Split           (chunksOf)
 import           Data.Maybe                (fromJust)
 import           Models.Move               (foldlBoard)
 import           Models.Piece
+import           Models.Score
 import           Models.TranspositionTable (ZKey (ZKey))
 
 
 data Position = Position {
-  color           :: Color,
-  halfMoveClock   :: Int,
-  attacked        :: Board,
-  castling        :: Board,
-  enPassant       :: Board,
-  leapingCheckers :: Board,
-  sliderCheckers  :: Board,
-  pinnedPieces    :: Board,
-  player          :: Board,
-  enemy           :: Board,
-  pawns           :: Board,
-  knights         :: Board,
-  bishops         :: Board,
-  rooks           :: Board,
-  queens          :: Board,
-  kings           :: Board
+    materialScore   :: Score
+  , color           :: Color
+  , halfMoveClock   :: Ply
+  , attacked        :: Board
+  , castling        :: Board
+  , enPassant       :: Board
+  , leapingCheckers :: Board
+  , sliderCheckers  :: Board
+  , pinnedPieces    :: Board
+  , player          :: Board
+  , enemy           :: Board
+  , pawns           :: Board
+  , knights         :: Board
+  , bishops         :: Board
+  , rooks           :: Board
+  , queens          :: Board
+  , kings           :: Board
 }
 
 
 startPosition :: Position
 startPosition = Position {
-  color = White
+    materialScore = 0
+  , color = White
   , halfMoveClock = 0
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
   , attacked = 0
@@ -54,7 +57,8 @@ startPosition = Position {
 
 emptyPosition :: Position
 emptyPosition = Position {
-  color = White
+    materialScore = 0
+  , color = White
   , halfMoveClock = 0
   , castling = 0
   , attacked = 0
@@ -135,46 +139,6 @@ capturedPieceAt n (Position {..})
      | testBit bishops n = Bishop
      | testBit rooks n = Rook
      | otherwise = Queen
-
-
-includePiece :: (Square, (Piece, Color)) -> Position -> Position
-includePiece (square, (piece, pieceColor)) pos@Position {..} =
-  if pieceColor == color then
-    pos' { player = player .| board }
-  else
-    pos' { enemy = enemy .| board }
-  where
-  pos' = case piece of
-    Pawn   -> pos { pawns = pawns .| board }
-    Knight -> pos { knights = knights .| board }
-    Bishop -> pos { bishops = bishops .| board }
-    Rook   -> pos { rooks = rooks .| board }
-    Queen  -> pos { queens = queens .| board }
-    King   -> pos { kings = kings .| board }
-  board = toBoard square
-
-includeHalfMoveClock :: Int -> Position -> Position
-includeHalfMoveClock halfMoveClock pos =
-  pos { halfMoveClock = halfMoveClock }
-
-includeColor :: Color -> Position -> Position
-includeColor color pos =
-  pos { color = color }
-
-includeCastling :: (CastlingRights, Color) -> Position -> Position
-includeCastling (castlingRights, castlingColor) pos@Position {..} =
-  pos { castling = castling .| row & (column .| file_E) }
-  where
-  row = case castlingColor of
-    White -> rank_1
-    Black -> rank_8
-  column = case castlingRights of
-    QueenSide -> file_A
-    KingSide  -> file_H
-
-includeEnPassant :: Square -> Position -> Position
-includeEnPassant square pos =
-  pos {enPassant = toBoard square}
 
 
 instance Show Position where

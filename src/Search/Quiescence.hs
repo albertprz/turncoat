@@ -8,7 +8,6 @@ import           MoveGen.MakeMove
 
 import           Control.Monad.State
 import           Models.Move
-import           MoveGen.PieceCaptures (allCaptures)
 import           Search.MoveOrdering
 
 
@@ -21,9 +20,8 @@ quiesceSearch !alpha !beta !ply !pos
     (score, newAlpha) = runState scoreState realAlpha
     scoreState = findTraverse (getMoveScore beta ply pos) captures
     realAlpha = max alpha standPat
-    captures  | ply <= 1   = fst $ getSortedCaptures pos
-              | otherwise = allCaptures pos
-    standPat              = pos.materialScore
+    captures  = fst $ getSortedCaptures pos
+    standPat  = pos.materialScore
 
 
 {-# INLINE  getMoveScore #-}

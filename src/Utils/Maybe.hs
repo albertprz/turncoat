@@ -28,11 +28,19 @@ partitionTraverseHelper acc _ [] =
   pure ([], acc)
 
 
+{-# INLINE  findTraverse2 #-}
+findTraverse2 :: Monad m => (a -> m (Maybe b)) -> [a] -> (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+findTraverse2 f xs g ys = do
+  result1 <- findTraverse f xs
+  maybe (findTraverse g ys) (pure . Just) result1
+
+
+
 {-# INLINE  findTraverse #-}
 findTraverse :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
-findTraverse f (x : xs) =
-  do result <- f x
-     maybe (findTraverse f xs) (pure . Just) result
+findTraverse f (x : xs) = do
+  result <- f x
+  maybe (findTraverse f xs) (pure . Just) result
 
 findTraverse _ [] =
   pure Nothing
@@ -40,6 +48,6 @@ findTraverse _ [] =
 
 {-# INLINE  iterateMaybe #-}
 iterateMaybe :: (a -> Maybe a) -> a -> a
-iterateMaybe !f = go
+iterateMaybe f = go
   where
-    go !x = maybe x go (f x)
+    go x = maybe x go (f x)

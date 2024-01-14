@@ -6,7 +6,7 @@ import           Test.QuickCheck.Property
 
 import           Constants.Boards
 import           Data.List.NonEmpty       (nonEmpty)
-import           Evaluation.Evaluation
+import           Evaluation.Material
 import           Models.Position
 import           MoveGen.MakeMove         (makeMove)
 import           MoveGen.PieceMoves

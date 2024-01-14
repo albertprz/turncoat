@@ -8,6 +8,12 @@ import           Models.Piece
 import           Models.Position
 
 
+{-# INLINE  isKingInCheck #-}
+isKingInCheck :: Position -> Bool
+isKingInCheck pos@Position {..} =
+  player&kings & allEnemyAttacks pos /= 0
+
+
 {-# INLINE  getLeapingCheckers #-}
 getLeapingCheckers :: Position -> Board
 getLeapingCheckers Position {..} =

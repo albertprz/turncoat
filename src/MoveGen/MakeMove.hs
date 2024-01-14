@@ -4,7 +4,7 @@ import           AppPrelude
 
 import           Constants.Boards
 import           Data.List.NonEmpty           (nonEmpty)
-import           Evaluation.BoardScore
+import           Evaluation.Material
 import           Evaluation.PieceSquareTables
 import           Models.Move
 import           Models.Piece
@@ -56,7 +56,7 @@ updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
 updatePlayerBoards start end endSquare pos@Position {..} =
   pos {
     materialScore = materialScore
-      + maybe 0 (evaluateCapturedPieceSquare color endSquare)
+      + maybe 0 (evaluateCapturedPiece color endSquare)
                 (maybeCapturedPieceAt endSquare pos),
     halfMoveClock = fromIntegral
       (1 - ones (enemy & end)) * (halfMoveClock + 1),

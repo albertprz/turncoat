@@ -9,7 +9,7 @@ import           Bookhound.Parsers.Number    (unsignedInt)
 import           Data.Char                   (digitToInt)
 
 import           Constants.Boards
-import           Evaluation.Evaluation       (evaluateMaterial)
+import           Evaluation.Material         (evaluateMaterial)
 import           Models.Piece
 import           Models.Position
 import           Models.Score

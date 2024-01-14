@@ -1,14 +1,14 @@
-module Evaluation.Evaluation where
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
+module Evaluation.Material where
 
 import           AppPrelude
 
 import           Constants.Boards
-import           Evaluation.BoardScore
 import           Evaluation.PieceSquareTables
+import           Models.Move
 import           Models.Piece
 import           Models.Position
 import           Models.Score
-
 
 {-# INLINE  evaluateMaterial #-}
 evaluateMaterial :: Position -> Score
@@ -29,3 +29,40 @@ evaluateMaterial Position {..} =
     + boardScore rookScore blackRookSquareTable (board & rooks)
     + boardScore queenScore blackQueenSquareTable (board & queens)
     + blackKingSquareTable !! lsb (board & kings)
+
+
+{-# INLINE  boardScore #-}
+boardScore :: Score -> Vector Score -> Board -> Score
+boardScore !pieceTypeScore !pieceSquareTable !board =
+  foldlBoard (Score 0) (+) pieceToScore board
+  where
+    pieceToScore !n = pieceTypeScore + pieceSquareTable !! n
+
+
+{-# INLINE  evaluateCapturedPiece #-}
+evaluateCapturedPiece ::  Color -> Square -> Piece -> Score
+evaluateCapturedPiece !color !n !piece =
+  case piece of
+    Pawn   -> pawnScore + pawnSquareTable !! idx
+    Knight -> knightScore + knightSquareTable !! idx
+    Bishop -> bishopScore + bishopSquareTable !! idx
+    Rook   -> rookScore + rookSquareTable !! idx
+    Queen  -> queenScore + queenSquareTable !! idx
+  where
+    idx = n + 64 * fromIntegral (reverseColor color)
+
+
+pawnScore :: Score
+pawnScore = 100
+
+knightScore :: Score
+knightScore = 310
+
+bishopScore :: Score
+bishopScore = 320
+
+rookScore :: Score
+rookScore = 500
+
+queenScore :: Score
+queenScore = 900

@@ -32,12 +32,14 @@ library
       Evaluation.PieceSquareTables
       Evaluation.StaticExchange
       Models.GameState
+      Models.KillersTable
       Models.Move
       Models.Piece
       Models.Position
       Models.Score
       Models.TranspositionTable
       MoveGen.MakeMove
+      MoveGen.MoveQueries
       MoveGen.PieceAttacks
       MoveGen.PieceCaptures
       MoveGen.PieceMoves

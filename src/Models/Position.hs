@@ -124,21 +124,24 @@ pieceAt n (Position {..}) = bisequence (piece, color')
 {-# INLINE  maybeCapturedPieceAt #-}
 maybeCapturedPieceAt :: Square -> Position -> Maybe Piece
 maybeCapturedPieceAt n (Position {..})
-     | testBit pawns n = Just Pawn
-     | testBit knights n = Just Knight
-     | testBit bishops n = Just Bishop
-     | testBit rooks n = Just Rook
-     | testBit queens n = Just Queen
-     | otherwise = Nothing
+  | testBit pawns n = Just Pawn
+  | testBit knights n = Just Knight
+  | testBit bishops n = Just Bishop
+  | testBit rooks n = Just Rook
+  | testBit queens n = Just Queen
+  | otherwise = Nothing
 
-{-# INLINE  capturedPieceAt #-}
-capturedPieceAt :: Square -> Position -> Piece
-capturedPieceAt n (Position {..})
-     | testBit pawns n = Pawn
-     | testBit knights n = Knight
-     | testBit bishops n = Bishop
-     | testBit rooks n = Rook
-     | otherwise = Queen
+
+{-# INLINE  isPieceAt #-}
+isPieceAt :: Piece -> Square -> Position -> Bool
+isPieceAt piece n Position {..} =
+  case piece of
+    Pawn   -> testBit pawns n
+    Knight -> testBit knights n
+    Bishop -> testBit bishops n
+    Rook   -> testBit rooks n
+    Queen  -> testBit queens n
+    King   -> testBit kings n
 
 
 instance Show Position where

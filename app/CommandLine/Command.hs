@@ -46,7 +46,7 @@ parseCommand = runParser command
   unknownMove = UnknownMove <$> squareParser <*> squareParser
   token = withTransform maybeBetweenSpacing
   stringToken = token . string
-  depth = (Depth . fromIntegral) <$> unsignedInt
+  depth = (Depth . fromIntegral) <$> satisfy (inRange 1 20) unsignedInt
 
 
 executeCommand :: Command -> CommandM ()

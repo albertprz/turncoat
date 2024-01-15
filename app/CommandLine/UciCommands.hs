@@ -7,6 +7,7 @@ import           Models.Move
 import           Models.Position
 import           Models.Score
 import qualified Models.TranspositionTable as TTable
+import qualified Models.KillersTable as KillersTable
 import           MoveGen.MakeMove        
 import           MoveGen.PieceMoves
 import           Search.Perft
@@ -36,15 +37,18 @@ printDivide = withPosition go
 printBestMove :: SearchOptions -> CommandM ()
 printBestMove opts = do
   tTable <- liftIO TTable.create
-  result <- withPosition (go tTable) opts.depth
+  killersTable <- liftIO KillersTable.create
+  result <- withPosition (go tTable killersTable) opts.depth
   liftIO $ TTable.clear tTable
+  liftIO $ KillersTable.clear killersTable
   pure result
   where
-    go tTable =
+    go tTable killersTable =
       ((putStrLn . foldMap (("bestmove " ++) . tshow)) <=< liftIO . timeIt)
       .: getBestMove
       where
-        ?tTable = tTable
+        ?tTable       = tTable
+        ?killersTable = killersTable
 
 
 setPosition :: PositionSpec -> CommandM ()

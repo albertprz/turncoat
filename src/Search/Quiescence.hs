@@ -13,7 +13,7 @@ import           Search.MoveOrdering
 
 {-# INLINE  quiesceSearch #-}
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
-quiesceSearch !alpha !beta !ply !pos
+quiesceSearch !alpha !beta !ply pos
   | standPat >= beta = beta
   | otherwise       = fromMaybe newAlpha score
   where
@@ -26,7 +26,7 @@ quiesceSearch !alpha !beta !ply !pos
 
 {-# INLINE  getMoveScore #-}
 getMoveScore :: Score -> Ply -> Position -> Move -> State Score (Maybe Score)
-getMoveScore !beta !ply !pos !move =
+getMoveScore !beta !ply pos move =
   do !alpha <- get
      let !score = - quiesceSearch (-beta) (-alpha) (ply + 1)
                                   (makeMove move pos)

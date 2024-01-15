@@ -1,32 +1,40 @@
 module Search.MoveOrdering where
 
-import           AppPrelude                hiding (union, (\\))
+import           AppPrelude                hiding (intersect, (\\))
 
 import           Evaluation.StaticExchange
+import           Models.KillersTable       (KillersTable)
+import qualified Models.KillersTable       as KillersTable
 import           Models.Move
 import           Models.Position
 import           Models.Score
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove          (makeMove)
-import           MoveGen.PieceAttacks      (isKingInCheck)
+import           MoveGen.MoveQueries       (isKingInCheck, isLegalQuietMove)
 import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
 
 
+
 {-# INLINE  getSortedMoves #-}
-getSortedMoves :: (?tTable :: TTable) => Depth -> Position -> IO ([Move], [Move])
-getSortedMoves depth pos = do
-  ttMove <- TTable.lookupBestMove $ getZobristKey pos
+getSortedMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
+  => Depth -> Ply -> Position -> IO ([Move], [Move])
+getSortedMoves !depth !ply pos = do
+  ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
+  killerMoves <- filter (andPred (`notElem` ttMove)
+                                (`isLegalQuietMove` pos))
+                  <$> KillersTable.lookupMoves ply
   let
-    bestMoves = toList ttMove <> winningCaptures
-    worstMoves = quietMoves <> losingCaptures
-    mainMoves = bestMoves <> take 4 worstMoves
-    reducedMoves = drop 4 worstMoves
-  if depth < 3 || isKingInCheck pos then
-    pure (mainMoves <> reducedMoves, [])
+    bestMoves = ttMove
+      <> filter (`notElem` ttMove)                  winningCaptures
+    worstMoves = killerMoves
+      <> filter (`notElem` (ttMove <> killerMoves)) quietMoves
+      <> filter (`notElem` ttMove)                  losingCaptures
+  if depth < 2 || isKingInCheck pos then
+    pure (bestMoves <> worstMoves, [])
   else
-    pure (mainMoves, reducedMoves)
+    pure (bestMoves, worstMoves)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves pos

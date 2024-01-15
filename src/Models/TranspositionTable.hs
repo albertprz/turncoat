@@ -39,12 +39,6 @@ newtype ZKey = ZKey Word64
   deriving (Eq, Show, Generic, Ord, Num, Hashable, Storable, Arbitrary)
 
 
-emptyTEntry :: StorableTEntry
-emptyTEntry = StorableTEntry {
-  zobristKey = 0,
-  info = bit 63
-}
-
 tTableSize :: Word64
 tTableSize = bit 26
 
@@ -83,7 +77,7 @@ decodeTEntry StorableTEntry {..}
 
 {-# INLINE  lookupEntry #-}
 lookupEntry :: (?tTable :: TTable) => ZKey -> IO (Maybe TEntry)
-lookupEntry zKey = do
+lookupEntry !zKey = do
   entry <- decodeTEntry <$> Vector.unsafeRead ?tTable (hashZKey zKey)
   pure (maybeFilter ((== zKey) . (.zobristKey)) entry)
 
@@ -110,9 +104,14 @@ lookupBestMove !zKey = do
 
 {-# INLINE  insert #-}
 insert :: (?tTable :: TTable) => ZKey -> TEntry -> IO ()
-insert zKey entry =
+insert !zKey !entry =
   Vector.unsafeWrite ?tTable (hashZKey zKey) (encodeTEntry entry)
 
+emptyTEntry :: StorableTEntry
+emptyTEntry = StorableTEntry {
+  zobristKey = 0,
+  info = bit 63
+}
 
 create :: IO TTable
 create = Vector.replicate (fromIntegral tTableSize) emptyTEntry

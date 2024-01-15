@@ -10,7 +10,7 @@ data SearchOptions = SearchOptions
 
 defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions {
-  depth = 9
+  depth = 12
 }
 
 

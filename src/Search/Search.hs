@@ -18,20 +18,19 @@ import           Control.Monad.State
 {-# INLINE  getBestMove #-}
 getBestMove :: (?tTable::TTable) => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth !pos =
-  lastEx <$> evalStateT (traverse (`search` pos) [1 .. depth])
+  lastEx <$> evalStateT (traverse (`aspirationSearch` pos) [0 .. depth])
                         (initialAlpha, initialBeta)
 
 
-{-# INLINE  search #-}
-search :: (?tTable::TTable) => Depth -> Position
-                          -> StateT (Score, Score) IO (Maybe Move)
-search !depth pos  = do
+{-# INLINE  aspirationSearch #-}
+aspirationSearch :: (?tTable::TTable) => Depth -> Position -> AspirationSearchM (Maybe Move)
+aspirationSearch !depth pos  = do
   (!alpha, !beta) <- get
   (!score, !mv) <- liftIO $ getNodeScore alpha beta depth pos
   case getNodeType alpha beta score of
-    PV  -> put (score - delta, score + delta) $> mv
-    Cut -> modify (second (+ delta))          *> search depth pos
-    All -> modify (first (\x -> x - delta))    *> search depth pos
+    PV  -> put (score - windowDelta, score + windowDelta) $> mv
+    Cut -> modify (second (+ windowDelta))       *> aspirationSearch depth pos
+    All -> modify (first (\x -> x - windowDelta)) *> aspirationSearch depth pos
 
 
 {-# INLINE  negamax #-}
@@ -81,20 +80,22 @@ getNodeScore !alpha !beta !depth pos
 {-# INLINE  getMovesScore #-}
 getMovesScore :: (?tTable::TTable) => Depth -> Score -> Position -> ([Move], [Move]) -> SearchM (Maybe Score)
 getMovesScore !depth !beta pos (mainMoves, reducedMoves) = do
-  mainMovesScore    <- mainMovesSearch
-  mainMovesAlpha    <- gets fst
-  reducedMovesScore <- maybe reducedMovesSearch (pure . Just)
-                                                mainMovesScore
-  reducedMovesAlpha <- gets fst
-  if reducedMovesAlpha > mainMovesAlpha then
+  mainSearchScore      <- mainMovesSearch
+  (mainSearchAlpha, _) <- get
+  reducedSearchScore <- if isJust mainSearchScore then
+                         pure Nothing
+                       else
+                         reducedMovesSearch mainSearchAlpha
+  if isJust reducedSearchScore then
     reducedMovesFullSearch
   else
-    pure reducedMovesScore
+    pure mainSearchScore
   where
-    mainMovesSearch        = movesSearch depth mainMoves
-    reducedMovesSearch     = movesSearch (depth - 1) reducedMoves
-    reducedMovesFullSearch = movesSearch depth reducedMoves
-    movesSearch depth'     = findTraverse (getMoveScore beta depth' pos)
+    mainMovesSearch          = movesSearch depth beta mainMoves
+    reducedMovesSearch alpha = movesSearch (depth - 1) (alpha + 1)
+                                                       reducedMoves
+    reducedMovesFullSearch   = movesSearch depth beta reducedMoves
+    movesSearch depth' beta' = findTraverse (getMoveScore beta' depth' pos)
 
 
 {-# INLINE  getMoveScore #-}
@@ -117,13 +118,15 @@ advanceState !beta !score !move !nodeType =
     All -> pure Nothing
 
 
-delta :: Score
-delta = 10
-
 initialAlpha :: Score
 initialAlpha = minBound + 1
 
 initialBeta :: Score
 initialBeta = maxBound - 1
 
-type SearchM = StateT (Score, Maybe Move) IO
+windowDelta :: Score
+windowDelta = 10
+
+
+type SearchM           = StateT (Score, Maybe Move) IO
+type AspirationSearchM = StateT (Score, Score) IO

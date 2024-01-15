@@ -21,8 +21,8 @@ getSortedMoves depth pos = do
   let
     bestMoves = toList ttMove <> winningCaptures
     worstMoves = quietMoves <> losingCaptures
-    mainMoves = bestMoves <> take 3 worstMoves
-    reducedMoves = drop 3 worstMoves
+    mainMoves = bestMoves <> take 4 worstMoves
+    reducedMoves = drop 4 worstMoves
   if depth < 3 || isKingInCheck pos then
     pure (mainMoves <> reducedMoves, [])
   else

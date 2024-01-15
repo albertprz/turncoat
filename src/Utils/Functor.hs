@@ -11,11 +11,23 @@ import           ClassyPrelude
 bimapBoth :: Bifunctor p => (a -> b) -> p a a -> p b b
 bimapBoth f = bimap f f
 
+{-# INLINE  first3 #-}
+first3 :: (a -> a') -> (a, b, c) -> (a', b, c)
+first3 f (x, y, z) = (f x, y, z)
+
+{-# INLINE  second3 #-}
+second3 :: (b -> b') -> (a, b, c) -> (a, b', c)
+second3 f (x, y, z) = (x, f y, z)
+
+{-# INLINE  third3 #-}
+third3 :: (c -> c') -> (a, b, c) -> (a, b, c')
+third3 f (x, y, z) = (x, y, f z)
+
 
 {-# INLINE  fst3 #-}
 fst3 :: (a, b, c) -> a
-fst3 (a, _, _) = a
+fst3 (x, _, _) = x
 
 {-# INLINE  fst4 #-}
 fst4 :: (a, b, c, d) -> a
-fst4 (a, _, _, _) = a
+fst4 (x, _, _, _) = x

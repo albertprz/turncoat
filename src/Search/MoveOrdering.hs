@@ -27,14 +27,15 @@ getSortedMoves !depth !ply pos = do
                   <$> KillersTable.lookupMoves ply
   let
     bestMoves = ttMove
-      <> filter (`notElem` ttMove)                  winningCaptures
-    worstMoves = killerMoves
+      <> filter (`notElem` ttMove) winningCaptures
+    worstMoves =
+      killerMoves
       <> filter (`notElem` (ttMove <> killerMoves)) quietMoves
       <> filter (`notElem` ttMove)                  losingCaptures
-  if depth < 2 || isKingInCheck pos then
-    pure (bestMoves <> worstMoves, [])
+  if depth >= 2 && not (isKingInCheck pos) then
+    pure (first (bestMoves <>) $ splitAt 4 worstMoves)
   else
-    pure (bestMoves, worstMoves)
+    pure (bestMoves <> worstMoves, [])
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves pos
@@ -57,4 +58,4 @@ getSortedQuietMoves pos =
   sortOn (Down . getMoveScore) quietMoves
   where
     getMoveScore mv = - (makeMove mv pos).materialScore
-    quietMoves       = allQuietMoves pos
+    quietMoves      = allQuietMoves pos

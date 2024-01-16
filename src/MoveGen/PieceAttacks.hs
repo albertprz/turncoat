@@ -13,8 +13,8 @@ getLeapingCheckers :: Position -> Board
 getLeapingCheckers Position {..} =
   player & checkers
   where
-    checkers = (pawns   & pawnAttacks   (reverseColor color) (enemy&kings))
-            .| (knights & knightAttacks (lsb (enemy&kings)))
+    checkers = pawns   & pawnAttacks   (reverseColor color) (enemy&kings)
+            .| knights & knightAttacks (lsb (enemy&kings))
 
 {-# INLINE  getSliderCheckers #-}
 getSliderCheckers :: Board -> Board -> Board -> Position -> Board

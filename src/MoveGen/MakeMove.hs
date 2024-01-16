@@ -3,14 +3,12 @@ module MoveGen.MakeMove where
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.List.NonEmpty           (nonEmpty)
 import           Evaluation.Material
 import           Evaluation.PieceSquareTables
 import           Models.Move
 import           Models.Piece
 import           Models.Position
 import qualified MoveGen.PieceAttacks         as MoveGen
-import           MoveGen.PieceMoves
 
 
 {-# INLINE  makeMove #-}
@@ -22,6 +20,12 @@ makeMove Move {..} =
   where
     startBoard = toBoard start
     endBoard = toBoard end
+
+
+{-# INLINE  makeNullMove #-}
+makeNullMove :: Position -> Position
+makeNullMove =
+  switchPlayers
 
 
 {-# INLINE  switchPlayers #-}
@@ -223,13 +227,3 @@ movePiece King _ start end pos@Position {..} =
     startIdx = getSquareTableIndex start color
     rookEndIdx = getSquareTableIndex rookEnd color
     rookStartIdx = getSquareTableIndex rookStart color
-
-applyMoves :: [Int] -> Position -> Position
-applyMoves = flip $ foldl' $ flip applyMoveIdx
-
-applyMoveIdx :: Int -> Position -> Position
-applyMoveIdx idx pos =
-  maybe pos (`makeMove` pos) chosenMove
-  where
-    chosenMove = (`index` (idx % length moves)) =<< moves
-    moves = map toList $ nonEmpty $ allMoves pos

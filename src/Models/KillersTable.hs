@@ -16,7 +16,7 @@ type KillersTable = IOVector StorableMove
 {-# INLINE  lookupMoves #-}
 lookupMoves :: (?killersTable :: KillersTable) => Ply -> IO [Move]
 lookupMoves !ply = do
-  !firstMove <- decodeMove <$> Vector.unsafeRead ?killersTable idx
+  !firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
   !secondMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 1)
   pure (catMaybes [firstMove, secondMove])
   where
@@ -37,7 +37,7 @@ insert !ply pos move = when (isQuietMove move pos) do
 
 
 create :: IO KillersTable
-create = Vector.replicate (fromIntegral (4 * (maxBound @Word8)))
+create = Vector.replicate (2 * (fromIntegral (maxBound @Ply) + 1))
                           (encodeMove Nothing)
 
 

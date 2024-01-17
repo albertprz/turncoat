@@ -10,6 +10,11 @@ import           Models.Position
 import           MoveGen.PieceAttacks
 
 
+-- Captures legal move generator:
+-- - Piece captures
+-- - En passant capture
+-- - Pawn promotions
+
 {-# INLINE  allCaptures #-}
 allCaptures :: Position -> [Move]
 allCaptures pos@Position {..}

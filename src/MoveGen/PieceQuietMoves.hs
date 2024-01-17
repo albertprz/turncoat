@@ -12,6 +12,9 @@ import           MoveGen.PieceAttacks
 import           MoveGen.PieceCaptures
 
 
+-- Quiet moves legal move generator:
+-- - Non capture moves except for pawn promotions
+
 {-# INLINE  allQuietMoves #-}
 allQuietMoves :: Position -> [Move]
 allQuietMoves pos@Position {..}

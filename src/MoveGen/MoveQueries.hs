@@ -16,9 +16,9 @@ isKingInCheck Position {..} =
   sliderCheckers .| leapingCheckers /= 0
 
 
-{-# INLINE  isKingInCheckDynamic #-}
-isKingInCheckDynamic :: Position -> Bool
-isKingInCheckDynamic pos@Position {..} =
+{-# INLINE  isEnemyKingInCheck #-}
+isEnemyKingInCheck :: Position -> Bool
+isEnemyKingInCheck pos@Position {..} =
   player & potentialCheckers /= 0
   where
     potentialCheckers =
@@ -46,7 +46,7 @@ isLegalQuietMove mv@Move {..} pos@Position {..} =
     && not (testBit allPieces end)
     && not (piece == King && abs (start - end) == 2)
     && isPieceAt piece start pos
-    && not (isKingInCheckDynamic $ quietMakeMove mv pos)
+    && not (isEnemyKingInCheck $ quietMakeMove mv pos)
   where
     allPieces = enemy .| player
 

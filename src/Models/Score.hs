@@ -10,7 +10,7 @@ newtype Score = Score Int16
   deriving (Eq, Ord, Num, Enum, Bounded, Storable, Arbitrary, Show)
 
 newtype Depth = Depth Word8
-  deriving (Eq, Ord, Num, Enum, Bounded, Storable, Arbitrary, Show)
+  deriving (Eq, Ord, Num, Enum, Bounded, Real, Integral, Storable, Arbitrary, Show)
 
 newtype Ply = Ply Word8
   deriving (Eq, Ord, Num, Enum, Bounded, Real, Integral)

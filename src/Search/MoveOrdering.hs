@@ -1,6 +1,6 @@
 module Search.MoveOrdering where
 
-import           AppPrelude                hiding (intersect, (\\))
+import           AppPrelude
 
 import           Evaluation.StaticExchange
 import           Models.KillersTable       (KillersTable)
@@ -16,6 +16,15 @@ import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
 
 
+-- Move Ordering:
+-- - Transposition table (PV / Refutation) move
+-- - Winning captures (SEE >= 0) (Ordered by SEE)
+-- - 2 Killer moves
+-- - Quiet moves (Ordered by Static Eval)
+-- - Losing captures (SEE < 0) (Ordered by SEE)
+
+-- Reduced moves (LMR):
+-- Late quiet moves and losing captures, except for checks
 
 {-# INLINE  getSortedMoves #-}
 getSortedMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
@@ -24,38 +33,59 @@ getSortedMoves !depth !ply pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
   killerMoves <- filter (andPred (`notElem` ttMove)
                                 (`isLegalQuietMove` pos))
-                  <$> KillersTable.lookupMoves ply
+                       <$> KillersTable.lookupMoves ply
   let
     bestMoves = ttMove
       <> filter (`notElem` ttMove) winningCaptures
-    worstMoves =
-      killerMoves
+    worstMoves = killerMoves
       <> filter (`notElem` (ttMove <> killerMoves)) quietMoves
       <> filter (`notElem` ttMove)                  losingCaptures
-  if depth >= 2 && not (isKingInCheck pos) then
-    pure (first (bestMoves <>) $ splitAt 4 worstMoves)
-  else
-    pure (bestMoves <> worstMoves, [])
+    (worstMovesChecks, worstMovesNoChecks) =
+      partition (isKingInCheck . (`makeMove` pos)) worstMoves
+
+  pure if depth >= 2 && not (isKingInCheck pos)
+    then first (\moves -> bestMoves <> moves <> worstMovesChecks)
+               (splitAt 4 worstMovesNoChecks)
+    else (bestMoves <> worstMoves, [])
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves pos
 
 
+{-# INLINE  getSortedFutilityMoves #-}
+getSortedFutilityMoves :: (?tTable::TTable) => Score -> Position -> IO [Move]
+getSortedFutilityMoves !threshold pos = do
+  ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
+  pure (ttMove
+    <> filter (`notElem` ttMove) captures
+    <> filter (`notElem` ttMove) checks)
+  where
+    captures = fst $ getSortedCapturesGreaterThan threshold pos
+    checks   = filter (isKingInCheck . (`makeMove` pos))
+                      (getSortedQuietMoves pos)
+
+
 {-# INLINE  getSortedCaptures #-}
 getSortedCaptures :: Position -> ([Move], [Move])
-getSortedCaptures pos =
+getSortedCaptures = getSortedCapturesGreaterThan 0
+
+
+{-# INLINE  getSortedCapturesGreaterThan #-}
+getSortedCapturesGreaterThan :: Score -> Position -> ([Move], [Move])
+getSortedCapturesGreaterThan !n pos =
   bimapBoth (map fst)
-  $ partition ((>= 0) . snd)
+  $ partition ((>= n) . snd)
   $ sortOn (Down . snd)
   $ map attachEval captures
   where
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
     captures = allCaptures pos
 
+
 {-# INLINE  getSortedQuietMoves #-}
 getSortedQuietMoves :: Position -> [Move]
 getSortedQuietMoves pos =
   sortOn (Down . getMoveScore) quietMoves
   where
-    getMoveScore mv = - (makeMove mv pos).materialScore
+    getMoveScore mv = -(makeMove mv pos).materialScore
     quietMoves      = allQuietMoves pos

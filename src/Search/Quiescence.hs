@@ -15,11 +15,11 @@ import           Search.MoveOrdering
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
 quiesceSearch !alpha !beta !ply pos
   | standPat >= beta = beta
-  | otherwise       = fromMaybe newAlpha score
+  | otherwise       = fromMaybe finalAlpha score
   where
-    (score, newAlpha) = runState scoreState realAlpha
+    (score, finalAlpha) = runState scoreState newAlpha
     scoreState = findTraverse (getMoveScore beta ply pos) captures
-    realAlpha = max alpha standPat
+    newAlpha = max alpha standPat
     captures  = fst $ getSortedCaptures pos
     standPat  = pos.materialScore
 

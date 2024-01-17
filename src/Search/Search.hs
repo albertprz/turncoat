@@ -25,7 +25,7 @@ import           MoveGen.MoveQueries
 getBestMove :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth pos =
-  lastEx <$> evalStateT (traverse (`aspirationSearch` pos) [0 .. depth])
+  lastEx <$> evalStateT (traverse (`aspirationSearch` pos) [1 .. depth])
                         (initialAlpha, initialBeta)
 
 
@@ -92,6 +92,7 @@ getNodeScore !alpha !beta !depth !ply pos
 
   | depth == 0 = pure (quiesceSearch alpha beta 0 pos, Nothing)
 
+
   | depth == 1 && not (isKingInCheck pos)
               && pos.materialScore <= threshold = do
       tacticalMoves <- getSortedFutilityMoves threshold pos
@@ -100,13 +101,13 @@ getNodeScore !alpha !beta !depth !ply pos
        else traverseMoves (tacticalMoves, [])
 
   | otherwise = do
-    !nullMoveScore <- getNullMoveScore beta depth ply pos
+    nullMoveScore <- getNullMoveScore beta depth ply pos
     if any (>= beta) nullMoveScore
       then pure (beta, Nothing)
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
-    !threshold = alpha - 2 * pawnScore
+    threshold = alpha - 2 * pawnScore
     traverseMoves moves =
       do (!score, (!newAlpha, !bestMove)) <-
            runStateT (getMovesScore beta depth ply pos moves)

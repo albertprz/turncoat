@@ -13,17 +13,15 @@ import           MoveGen.PieceCaptures (staticExchangeCaptures)
 {-# INLINE  evaluateCaptureExchange #-}
 evaluateCaptureExchange :: Move -> Position -> Score
 evaluateCaptureExchange mv@Move {..} pos =
-  side * finalPos.materialScore - pos.materialScore
-  where
-    !side | finalPos.color == pos.color =   1
-          | otherwise                  = - 1
-    !finalPos = iterateMaybe (toQuietPosition end)
-                             (makeMove mv pos)
+  evaluateExchange end (makeMove mv pos) - pos.materialScore
 
-{-# INLINE  toQuietPosition #-}
-toQuietPosition :: Square -> Position -> Maybe Position
-toQuietPosition square pos =
-  (`makeMove` pos) <$> smallestAttackerMove
+{-# INLINE  evaluateExchange #-}
+evaluateExchange :: Square -> Position -> Score
+evaluateExchange square pos =
+  case smallestAttackerMove of
+    Just mv -> -(max pos.materialScore
+                    (evaluateExchange square (makeMove mv pos)))
+    Nothing -> -pos.materialScore
   where
     smallestAttackerMove =
       headMay $ staticExchangeCaptures square pos

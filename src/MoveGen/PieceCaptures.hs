@@ -134,7 +134,7 @@ staticExchangeCaptures target pos@Position {..}
 staticExchangeCapturesHelper :: Square -> Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
 staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..} f g =
 
-    foldBoardMoves    Pawn   (g . pawnCaptures enemy enPassant color
+    foldBoardMoves    Pawn   (g . pawnCaptures targetBoard enPassant color
                                 . toBoard)
                              (unpinned&pawnAttackers)
 
@@ -163,11 +163,13 @@ staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..}
     allKingCaptures
 
     where
-    pawnAttackers = pawns & pawnAttacks color targetBoard
+    pawnAttackers = pawns & pawnAttacks (reverseColor color) targetBoard
     knightAttackers = knights & knightAttacks target
-    bishopAttackers = bishops & bishopAttacks allPieces target
-    rookAttackers = rooks & rookAttacks allPieces target
-    queenAttackers = queens & bishopAttackers .| rookAttackers
+    bishopAttackers = bishops & bishopRays
+    rookAttackers = rooks & rookRays
+    queenAttackers = queens & (bishopRays .| rookRays)
+    bishopRays = bishopAttacks allPieces target
+    rookRays = rookAttacks allPieces target
 
     targetBoard = toBoard target
     unpinned = player .\ pinnedPieces

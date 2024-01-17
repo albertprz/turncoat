@@ -35,18 +35,15 @@ getSortedMoves !depth !ply pos = do
                                 (`isLegalQuietMove` pos))
                        <$> KillersTable.lookupMoves ply
   let
-    bestMoves = ttMove
+    allMoves = ttMove
       <> filter (`notElem` ttMove) winningCaptures
-    worstMoves = killerMoves
+      <> killerMoves
       <> filter (`notElem` (ttMove <> killerMoves)) quietMoves
       <> filter (`notElem` ttMove)                  losingCaptures
-    (worstMovesChecks, worstMovesNoChecks) =
-      partition (isKingInCheck . (`makeMove` pos)) worstMoves
 
   pure if depth >= 2 && not (isKingInCheck pos)
-    then first (\moves -> bestMoves <> moves <> worstMovesChecks)
-               (splitAt 4 worstMovesNoChecks)
-    else (bestMoves <> worstMoves, [])
+    then splitAt 4 allMoves
+    else (allMoves, [])
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves pos

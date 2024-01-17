@@ -121,32 +121,34 @@ getNodeScore !alpha !beta !depth !ply pos
 getMovesScore :: (?killersTable :: KillersTable, ?tTable::TTable)
   => Score -> Depth -> Ply -> Position -> ([Move], [Move]) -> SearchM (Maybe Score)
 getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
-  mainSearchScore      <- mainMovesSearch
-  (mainSearchAlpha, _) <- get
-  reducedSearchScore   <- if isJust mainSearchScore
-                           then pure Nothing
-                           else reducedMovesSearch mainSearchAlpha
-  if isJust reducedSearchScore
-    then reducedMovesFullSearch
-    else pure mainSearchScore
+  mainSearchScore <- mainMovesSearch
+  maybe reducedMovesSearch (pure . Just) mainSearchScore
   where
-    mainMovesSearch          = movesSearch beta depth mainMoves
-    reducedMovesSearch alpha = movesSearch (alpha + 1)
-                                           (depth - 1)
-                                           reducedMoves
-    reducedMovesFullSearch   = movesSearch beta depth reducedMoves
-    movesSearch beta' depth' =
-      findTraverse (getMoveScore beta' depth' ply pos)
+    mainMovesSearch          = movesSearch depth       mainMoves
+    reducedMovesSearch       = movesSearch (depth - 1) reducedMoves
+    movesSearch lmrDepth =
+      findTraverse (getMoveScore beta depth lmrDepth ply pos)
 
 
 {-# INLINE  getMoveScore #-}
 getMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
-  => Score -> Depth -> Ply -> Position -> Move -> SearchM (Maybe Score)
-getMoveScore !beta !depth !ply pos move =
-  do !alpha   <- gets fst
+  => Score -> Depth -> Depth -> Ply -> Position -> Move -> SearchM (Maybe Score)
+getMoveScore !beta !depth !lmrDepth !ply pos move
+
+  | lmrDepth < depth && not (isCheckOrCapture move pos) = do
+     !alpha <- gets fst
+     let !betaWindow = alpha + 1
+     !score   <- negate <$> liftIO (negamax (-betaWindow) (-alpha)
+                                           (lmrDepth - 1)
+                                           (ply + 1) (makeMove move pos))
+     if score > alpha
+       then getMoveScore beta depth (lmrDepth + 1) ply pos move
+       else pure Nothing
+
+  | otherwise = do
+     !alpha <- gets fst
      !score   <- negate <$> liftIO (negamax (-beta) (-alpha) (depth - 1)
                                            (ply + 1) (makeMove move pos))
-
      let !nodeType = getNodeType alpha beta score
      advanceState beta score ply nodeType move pos
 

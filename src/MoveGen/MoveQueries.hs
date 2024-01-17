@@ -4,10 +4,49 @@ import           AppPrelude
 
 import           Constants.Boards
 import           Data.Bits            (Bits (testBit))
+import           Data.Composition
 import           Models.Move
 import           Models.Piece
 import           Models.Position
+import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
+
+
+{-# INLINE  isCheckMove #-}
+isCheckMove :: Move -> Position -> Bool
+isCheckMove move pos =
+  isKingInCheck $ makeMove move pos
+
+
+{-# INLINE  isCapture #-}
+isCapture :: Move -> Position -> Bool
+isCapture Move {..} Position {..} =
+  isJust promotion
+  || testBit (enemy .| enPassant) end
+
+
+{-# INLINE  isCheckOrCapture #-}
+isCheckOrCapture :: Move -> Position -> Bool
+isCheckOrCapture move pos =
+  isCheckMove move pos
+    || isCapture move pos
+
+
+{-# INLINE  isQuietMove #-}
+isQuietMove :: Move -> Position -> Bool
+isQuietMove = not .: isCapture
+
+
+{-# INLINE  isLegalQuietMove #-}
+isLegalQuietMove :: Move -> Position -> Bool
+isLegalQuietMove mv@Move {..} pos@Position {..} =
+  testBit player start
+    && not (testBit allPieces end)
+    && not (piece == King && abs (start - end) == 2)
+    && isPieceAt piece start pos
+    && not (isEnemyKingInCheck $ quietMakeMove mv pos)
+  where
+    allPieces = enemy .| player
 
 
 {-# INLINE  isKingInCheck #-}
@@ -31,24 +70,6 @@ isEnemyKingInCheck pos@Position {..} =
     bishopCheckerRays = getBishopCheckerRays pos
     rookCheckerRays = getRookCheckerRays pos
     queenCheckerRays = bishopCheckerRays .| rookCheckerRays
-
-{-# INLINE  isQuietMove #-}
-isQuietMove :: Move -> Position -> Bool
-isQuietMove Move {..} Position {..} =
-  isNothing promotion
-    && not (testBit (enemy .| enPassant) end)
-
-
-{-# INLINE  isLegalQuietMove #-}
-isLegalQuietMove :: Move -> Position -> Bool
-isLegalQuietMove mv@Move {..} pos@Position {..} =
-  testBit player start
-    && not (testBit allPieces end)
-    && not (piece == King && abs (start - end) == 2)
-    && isPieceAt piece start pos
-    && not (isEnemyKingInCheck $ quietMakeMove mv pos)
-  where
-    allPieces = enemy .| player
 
 
 {-# INLINE  quietMakeMove #-}

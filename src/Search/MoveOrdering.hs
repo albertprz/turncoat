@@ -11,7 +11,7 @@ import           Models.Score
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove          (makeMove)
-import           MoveGen.MoveQueries       (isKingInCheck, isLegalQuietMove)
+import           MoveGen.MoveQueries       (isKingInCheck)
 import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
 
@@ -31,16 +31,12 @@ getSortedMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
   => Depth -> Ply -> Position -> IO ([Move], [Move])
 getSortedMoves !depth !ply pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  killerMoves <- filter (andPred (`notElem` ttMove)
-                                (`isLegalQuietMove` pos))
-                       <$> KillersTable.lookupMoves ply
+  killerMoves <- KillersTable.lookupMoves ply
   let
+    (killers, otherQuietMoves) = partition (`elem` killerMoves) quietMoves
     allMoves = ttMove
-      <> filter (`notElem` ttMove) winningCaptures
-      <> killerMoves
-      <> filter (`notElem` (ttMove <> killerMoves)) quietMoves
-      <> filter (`notElem` ttMove)                  losingCaptures
-
+      <> filter (`notElem` ttMove)
+       (winningCaptures <> killers <> otherQuietMoves <> losingCaptures)
   pure if depth >= 2 && not (isKingInCheck pos)
     then splitAt 4 allMoves
     else (allMoves, [])
@@ -54,8 +50,8 @@ getSortedFutilityMoves :: (?tTable::TTable) => Score -> Position -> IO [Move]
 getSortedFutilityMoves !threshold pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
   pure (ttMove
-    <> filter (`notElem` ttMove) captures
-    <> filter (`notElem` ttMove) checks)
+    <> filter (`notElem` ttMove)
+              (captures <> checks))
   where
     captures = fst $ getSortedCapturesGreaterThan threshold pos
     checks   = filter (isKingInCheck . (`makeMove` pos))

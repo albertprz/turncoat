@@ -5,7 +5,7 @@ module Constants.Boards where
 import           AppPrelude           hiding (map)
 
 import           Data.Bits
-import           Data.Vector.Storable (foldl1, map)
+import           Data.Vector.Storable (foldl1, map, slice)
 import           System.IO.Unsafe     (unsafePerformIO)
 import           System.Random
 
@@ -261,23 +261,34 @@ southWestMovesVec :: Vector Board
 southWestMovesVec = snoc (map southWestMove squares) 0
 
 
+{-# NOINLINE pieceRngVec #-}
 pieceRngVec :: Vector Board
-pieceRngVec = genNRandoms 768
+pieceRngVec = unsafePerformIO
+  (slice 0 768 <$> genRandoms)
 
+
+{-# NOINLINE castlingRngVec #-}
 castlingRngVec :: Vector Board
-castlingRngVec = genNRandoms 16
+castlingRngVec = unsafePerformIO
+  (slice 768 16 <$> genRandoms)
 
+
+{-# NOINLINE enPassantRngVec #-}
 enPassantRngVec :: Vector Board
-enPassantRngVec = genNRandoms 8
+enPassantRngVec = unsafePerformIO
+  (slice 784 8 <$> genRandoms)
 
+
+{-# NOINLINE sideToMoveRng #-}
 sideToMoveRng :: Board
-sideToMoveRng = headEx $ genNRandoms 1
+sideToMoveRng = unsafePerformIO
+  ((!! 792) <$> genRandoms)
 
 
-genNRandoms :: Int -> Vector Board
-genNRandoms n = fromList
-  $ take n
-  $ unsafePerformIO (randoms <$> getStdGen)
+genRandoms :: IO (Vector Board)
+genRandoms = fromList
+  . take 1000 . randoms
+  <$> getStdGen
 
 
 -- Ranges

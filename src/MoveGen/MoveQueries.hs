@@ -37,18 +37,6 @@ isQuietMove :: Move -> Position -> Bool
 isQuietMove = not .: isCapture
 
 
-{-# INLINE  isLegalQuietMove #-}
-isLegalQuietMove :: Move -> Position -> Bool
-isLegalQuietMove mv@Move {..} pos@Position {..} =
-  testBit player start
-    && not (testBit allPieces end)
-    && not (piece == King && abs (start - end) == 2)
-    && isPieceAt piece start pos
-    && not (isEnemyKingInCheck $ quietMakeMove mv pos)
-  where
-    allPieces = enemy .| player
-
-
 {-# INLINE  isKingInCheck #-}
 isKingInCheck :: Position -> Bool
 isKingInCheck Position {..} =

@@ -16,6 +16,7 @@ import           Search.Quiescence
 import           Control.Monad.State
 import           Evaluation.Material
 import           MoveGen.MoveQueries
+import           MoveGen.PieceMoves
 
 
 -- Features:
@@ -92,7 +93,6 @@ getNodeScore !alpha !beta !depth !ply pos
 
   | depth == 0 = pure (quiesceSearch alpha beta 0 pos, Nothing)
 
-
   | depth == 1 && not (isKingInCheck pos)
               && pos.materialScore <= threshold = do
       tacticalMoves <- getSortedFutilityMoves threshold pos
@@ -159,7 +159,7 @@ getNullMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
 
-  | depth >= 3 && not (isKingInCheck pos) =
+  | depth >= 3 && not (isKingInCheck pos) && pos.materialScore >= beta =
     Just . negate <$> negamax (-beta) (-alpha) (depth - r - 1)
                               (ply + 1) (makeNullMove pos)
 

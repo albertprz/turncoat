@@ -99,7 +99,7 @@ lookupScore !alpha !beta !depth !zKey = do
 lookupBestMove :: (?tTable :: TTable) => ZKey -> IO (Maybe Move)
 lookupBestMove !zKey = do
   entry <- lookupEntry zKey
-  pure $! ((.bestMove) =<< entry)
+  pure ((.bestMove) =<< entry)
 
 
 {-# INLINE  insert #-}

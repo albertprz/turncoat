@@ -59,6 +59,10 @@ switchPlayers pos@Position {..} =
 updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
 updatePlayerBoards start end endSquare pos@Position {..} =
   pos {
+    previousPositions = getZobristKey pos
+      : if halfMoveClock == 0
+        then []
+        else previousPositions,
     materialScore = materialScore
       + maybe 0 (evaluateCapturedPiece color endSquare)
                 (maybeCapturedPieceAt endSquare pos),

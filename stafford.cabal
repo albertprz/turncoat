@@ -31,7 +31,6 @@ library
       Evaluation.Material
       Evaluation.PieceSquareTables
       Evaluation.StaticExchange
-      Models.GameState
       Models.KillersTable
       Models.Move
       Models.Piece

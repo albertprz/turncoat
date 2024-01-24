@@ -50,12 +50,15 @@ aspirationSearch !depth pos  = do
 {-# INLINE  negamax #-}
 negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Score -> Depth -> Ply -> Position -> IO Score
-negamax !alpha !beta !depth !ply pos = do
-    let !zKey = getZobristKey pos
+negamax !alpha !beta !depth !ply pos
+  | pos.halfMoveClock == 50 || isRepeatedPosition zKey pos = pure 0
+  | otherwise = do
     ttScore <- liftIO $ TTable.lookupScore alpha beta depth zKey
     case ttScore of
       Just !score -> pure score
       Nothing     -> cacheNodeScore alpha beta depth ply zKey pos
+   where
+     !zKey = getZobristKey pos
 
 
 {-# INLINE  cacheNodeScore #-}

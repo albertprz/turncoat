@@ -48,9 +48,7 @@ getSortedMoves !depth !ply pos = do
 getSortedFutilityMoves :: (?tTable::TTable) => Score -> Position -> IO [Move]
 getSortedFutilityMoves !threshold pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  pure (ttMove
-    <> filter (`notElem` ttMove)
-              (captures <> checks))
+  pure (ttMove <> filter (`notElem` ttMove) (captures <> checks))
   where
     captures = fst $ getSortedCapturesGreaterThan threshold pos
     checks   = filter (isKingInCheck . (`makeMove` pos))

@@ -14,23 +14,24 @@ import           Models.TranspositionTable (ZKey (ZKey))
 
 
 data Position = Position {
-    materialScore   :: Score
-  , color           :: Color
-  , halfMoveClock   :: Ply
-  , attacked        :: Board
-  , castling        :: Board
-  , enPassant       :: Board
-  , leapingCheckers :: Board
-  , sliderCheckers  :: Board
-  , pinnedPieces    :: Board
-  , player          :: Board
-  , enemy           :: Board
-  , pawns           :: Board
-  , knights         :: Board
-  , bishops         :: Board
-  , rooks           :: Board
-  , queens          :: Board
-  , kings           :: Board
+    materialScore     :: Score
+  , color             :: Color
+  , halfMoveClock     :: Ply
+  , previousPositions :: [ZKey]
+  , attacked          :: Board
+  , castling          :: Board
+  , enPassant         :: Board
+  , leapingCheckers   :: Board
+  , sliderCheckers    :: Board
+  , pinnedPieces      :: Board
+  , player            :: Board
+  , enemy             :: Board
+  , pawns             :: Board
+  , knights           :: Board
+  , bishops           :: Board
+  , rooks             :: Board
+  , queens            :: Board
+  , kings             :: Board
 }
 
 
@@ -39,6 +40,7 @@ startPosition = Position {
     materialScore = 0
   , color = White
   , halfMoveClock = 0
+  , previousPositions = []
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
   , attacked = 0
   , enPassant = 0
@@ -60,6 +62,7 @@ emptyPosition = Position {
     materialScore = 0
   , color = White
   , halfMoveClock = 0
+  , previousPositions = []
   , castling = 0
   , attacked = 0
   , enPassant = 0
@@ -143,6 +146,12 @@ isPieceAt piece n Position {..} =
     Queen  -> testBit queens n
     King   -> testBit kings n
 
+{-# INLINE  isRepeatedPosition #-}
+isRepeatedPosition :: ZKey -> Position -> Bool
+isRepeatedPosition zKey Position {..} =
+  length samePositions >= 2
+  where
+    samePositions = filter (== zKey) previousPositions
 
 instance Show Position where
   show pos =

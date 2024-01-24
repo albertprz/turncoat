@@ -3,20 +3,20 @@ module CommandLine.UciCommands where
 import           AppPrelude
 
 import           Constants.Boards
+import qualified Models.KillersTable       as KillersTable
 import           Models.Move
 import           Models.Position
 import           Models.Score
 import qualified Models.TranspositionTable as TTable
-import qualified Models.KillersTable as KillersTable
-import           MoveGen.MakeMove        
+import           MoveGen.MakeMove
 import           MoveGen.PieceMoves
 import           Search.Perft
 import           Search.Search
 import           Search.SearchOptions
 
 import           Control.Monad.State
-import           Data.Composition          
-import           Data.Map                 
+import           Data.Composition
+import           Data.Map
 import           System.TimeIt
 
 

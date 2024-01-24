@@ -12,22 +12,6 @@ maybeFilter predicate ma = do
     else Nothing
 
 
-{-# INLINE  partitionTraverse #-}
-partitionTraverse :: Monad m => (a -> m (Maybe b)) -> [a] -> m ([b], [a])
-partitionTraverse = partitionTraverseHelper []
-
-
-{-# INLINE  partitionTraverseHelper #-}
-partitionTraverseHelper :: Monad m => [a] -> (a -> m (Maybe b)) -> [a] -> m ([b], [a])
-partitionTraverseHelper acc f (x : xs) =
-  do result <- f x
-     (valid, nonValid) <- partitionTraverseHelper acc f xs
-     pure $ maybe (valid, x : nonValid) ((,nonValid) . (: valid)) result
-
-partitionTraverseHelper acc _ [] =
-  pure ([], acc)
-
-
 {-# INLINE  findTraverse #-}
 findTraverse :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
 findTraverse f (x : xs) = do
@@ -36,10 +20,3 @@ findTraverse f (x : xs) = do
 
 findTraverse _ [] =
   pure Nothing
-
-
-{-# INLINE  iterateMaybe #-}
-iterateMaybe :: (a -> Maybe a) -> a -> a
-iterateMaybe f = go
-  where
-    go x = maybe x go (f x)

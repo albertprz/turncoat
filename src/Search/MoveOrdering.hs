@@ -34,8 +34,7 @@ getSortedMoves !depth !ply pos = do
   killerMoves <- KillersTable.lookupMoves ply
   let
     (killers, otherQuietMoves) = partition (`elem` killerMoves) quietMoves
-    allMoves = ttMove
-      <> filter (`notElem` ttMove)
+    allMoves = ttMove <> filter (`notElem` ttMove)
        (winningCaptures <> killers <> otherQuietMoves <> losingCaptures)
   pure if depth >= 2 && not (isKingInCheck pos)
     then splitAt 4 allMoves

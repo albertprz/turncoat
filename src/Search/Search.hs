@@ -16,7 +16,6 @@ import           Search.Quiescence
 import           Control.Monad.State
 import           Evaluation.Material
 import           MoveGen.MoveQueries
-import           MoveGen.PieceMoves
 
 
 -- Features:
@@ -108,11 +107,16 @@ getNodeScore !alpha !beta !depth !ply pos
 
   where
     threshold = alpha - 2 * pawnScore
-    traverseMoves moves =
-      do (!score, (!newAlpha, !bestMove)) <-
-           runStateT (getMovesScore beta depth ply pos moves)
-                     (alpha, Nothing)
-         pure (fromMaybe newAlpha score, bestMove)
+    traverseMoves moves
+      | null (uncurry (<>) moves) =
+          if isKingInCheck pos
+             then pure (minBound, Nothing)
+             else pure (0, Nothing)
+      | otherwise =
+        do (!score, (!newAlpha, !bestMove)) <-
+             runStateT (getMovesScore beta depth ply pos moves)
+                       (alpha, Nothing)
+           pure (fromMaybe newAlpha score, bestMove)
 
 
 -- Features:

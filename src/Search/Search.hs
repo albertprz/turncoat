@@ -100,7 +100,7 @@ getNodeScore !alpha !beta !depth !ply pos
       tacticalMoves <- getSortedFutilityMoves threshold pos
       if null tacticalMoves
        then pure (pos.materialScore, Nothing)
-       else traverseMoves (tacticalMoves, [])
+       else traverseMoves (tacticalMoves, [], [], [])
 
   | otherwise = do
     nullMoveScore <- getNullMoveScore beta depth ply pos
@@ -111,9 +111,9 @@ getNodeScore !alpha !beta !depth !ply pos
   where
     threshold = alpha - 2 * pawnScore
     traverseMoves moves
-      | null (uncurry (<>) moves) =
+      | null $ tuple4Append moves =
           if isKingInCheck pos
-             then pure (minBound, Nothing)
+             then pure (minBound + 1, Nothing)
              else pure (0, Nothing)
       | otherwise =
         do (!score, (!newAlpha, !bestMove)) <-
@@ -127,13 +127,21 @@ getNodeScore !alpha !beta !depth !ply pos
 
 {-# INLINE  getMovesScore #-}
 getMovesScore :: (?killersTable :: KillersTable, ?tTable::TTable)
-  => Score -> Depth -> Ply -> Position -> ([Move], [Move]) -> SearchM (Maybe Score)
-getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
+  => Score -> Depth -> Ply -> Position -> ([Move], [Move], [Move], [Move])
+  -> SearchM (Maybe Score)
+getMovesScore !beta !depth !ply pos
+  (mainMoves, reducedMoves, reduced2Moves, reduced3Moves) = do
   mainSearchScore <- mainMovesSearch
-  maybe reducedMovesSearch (pure . Just) mainSearchScore
+  foldM accumulateScore mainSearchScore
+        [reducedMovesSearch, reduced2MovesSearch, reduced3MovesSearch]
   where
-    mainMovesSearch          = movesSearch depth       mainMoves
-    reducedMovesSearch       = movesSearch (depth - 1) reducedMoves
+    mainMovesSearch      = movesSearch depth       mainMoves
+    reducedMovesSearch   = movesSearch (depth - 1) reducedMoves
+    reduced2MovesSearch  = movesSearch (depth - 2) reduced2Moves
+    reduced3MovesSearch  = movesSearch (depth - 3) reduced3Moves
+
+    accumulateScore score searchFn =
+      maybe searchFn (pure . Just) score
     movesSearch lmrDepth =
       findTraverse (getMoveScore beta depth lmrDepth ply pos)
 

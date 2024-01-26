@@ -19,9 +19,9 @@ evaluateCaptureExchange mv@Move {..} pos =
 evaluateExchange :: Square -> Position -> Score
 evaluateExchange square pos =
   case smallestAttackerMove of
-    Just mv -> -(max pos.materialScore
+    Just mv -> - (max pos.materialScore
                     (evaluateExchange square (makeMove mv pos)))
-    Nothing -> -pos.materialScore
+    Nothing -> - pos.materialScore
   where
     smallestAttackerMove =
       headMay $ staticExchangeCaptures square pos

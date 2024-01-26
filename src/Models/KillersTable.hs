@@ -18,7 +18,7 @@ lookupMoves :: (?killersTable :: KillersTable) => Ply -> IO [Move]
 lookupMoves !ply = do
   !firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
   !secondMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 1)
-  pure (catMaybes [firstMove, secondMove])
+  pure $ catMaybes [firstMove, secondMove]
   where
     !idx = 2 * fromIntegral ply
 

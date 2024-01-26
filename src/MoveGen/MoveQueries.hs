@@ -12,10 +12,16 @@ import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 
 
+{-# INLINE  isCastlingMove #-}
+isCastlingMove :: Move -> Bool
+isCastlingMove Move {..} =
+  piece == King && abs (start - end) == 2
+
+
 {-# INLINE  isCheckMove #-}
 isCheckMove :: Move -> Position -> Bool
-isCheckMove move pos =
-  isKingInCheck $ makeMove move pos
+isCheckMove mv pos =
+  isKingInCheck $ makeMove mv pos
 
 
 {-# INLINE  isCapture #-}
@@ -27,9 +33,9 @@ isCapture Move {..} Position {..} =
 
 {-# INLINE  isCheckOrCapture #-}
 isCheckOrCapture :: Move -> Position -> Bool
-isCheckOrCapture move pos =
-  isCheckMove move pos
-    || isCapture move pos
+isCheckOrCapture mv pos =
+  isCheckMove mv pos
+    || isCapture mv pos
 
 
 {-# INLINE  isQuietMove #-}
@@ -58,3 +64,75 @@ isEnemyKingInCheck pos@Position {..} =
     bishopCheckerRays = getBishopCheckerRays pos
     rookCheckerRays = getRookCheckerRays pos
     queenCheckerRays = bishopCheckerRays .| rookCheckerRays
+
+
+{-# INLINE  isLegalQuietMove #-}
+isLegalQuietMove :: Move -> Position -> Bool
+isLegalQuietMove mv@Move {..} pos@Position {..} =
+  testBit player start
+    && not (testBit allPieces end)
+    && not (isCastlingMove mv)
+    && isPieceAt piece start pos
+    && isRayUnblocked allPieces mv
+    && not (isEnemyKingInCheck $ quietMakeMove mv pos)
+  where
+    allPieces = enemy .| player
+
+
+{-# INLINE  isRayUnblocked #-}
+isRayUnblocked :: Board -> Move -> Bool
+isRayUnblocked allPieces Move {..} =
+ piece `elem` [Knight, King]
+   || testBit (queenAttacks allPieces start) end
+
+
+{-# INLINE  quietMakeMove #-}
+quietMakeMove :: Move -> Position -> Position
+quietMakeMove Move {..} pos = newPos {
+    player = newPos.enemy,
+    enemy = newPos.player,
+    color = reverseColor newPos.color
+  }
+  where
+    newPos = quietMovePiece piece startBoard endBoard pos
+    startBoard = toBoard start
+    endBoard = toBoard end
+
+
+{-# INLINE  quietMovePiece #-}
+quietMovePiece :: Piece -> Board -> Board -> Position -> Position
+quietMovePiece Pawn start end pos@Position {..} =
+  pos {
+    pawns = (pawns ^ start) .| end,
+    player = (player ^ start) .| end
+  }
+
+quietMovePiece Knight start end pos@Position {..} =
+  pos {
+    knights = (knights ^ start) .| end,
+    player = (player ^ start) .| end
+  }
+
+quietMovePiece Bishop start end pos@Position {..} =
+  pos {
+    bishops = (bishops ^ start) .| end,
+    player = (player ^ start) .| end
+  }
+
+quietMovePiece Rook start end pos@Position {..} =
+  pos {
+    rooks = (rooks ^ start) .| end,
+    player = (player ^ start) .| end
+  }
+
+quietMovePiece Queen start end pos@Position {..} =
+  pos {
+    queens = (queens ^ start) .| end,
+    player = (player ^ start) .| end
+  }
+
+quietMovePiece King start end pos@Position {..} =
+  pos {
+    kings = (kings ^ start) .| end,
+    player = (player ^ start) .| end
+  }

@@ -11,7 +11,7 @@ import           Models.Score
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove          (makeMove)
-import           MoveGen.MoveQueries       (isKingInCheck)
+import           MoveGen.MoveQueries       (isKingInCheck, isLegalQuietMove)
 import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
 
@@ -23,28 +23,33 @@ import           MoveGen.PieceQuietMoves   (allQuietMoves)
 -- - Quiet moves (Ordered by Static Eval)
 -- - Losing captures (SEE < 0) (Ordered by SEE)
 
--- Reduced moves (LMR):
--- Late quiet moves and losing captures, except for checks
+-- Reduced moves:
+-- Late killers / quiet moves
 
 {-# INLINE  getSortedMoves #-}
 getSortedMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
   => Depth -> Ply -> Position -> IO ([Move], [Move], [Move], [Move])
 getSortedMoves !depth !ply pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  killerMoves <- KillersTable.lookupMoves ply
+  killerMoves <- filter (andPred (`isLegalQuietMove` pos)
+                                (`notElem` ttMove))
+                  <$> KillersTable.lookupMoves ply
   let
-    (killers, otherQuietMoves) = partition (`elem` killerMoves) quietMoves
-    allMoves = ttMove <> winningCaptures
-      <> killers <> otherQuietMoves <> losingCaptures
+    hashMoves = ttMove <> killerMoves
+    allMoves = ttMove
+      <> filter (`notElem` ttMove) winningCaptures
+      <> killerMoves
+      <> filter (`notElem` hashMoves) quietMoves
+      <> filter (`notElem` ttMove) losingCaptures
 
   pure if | depth >= 6 && notInCheck -> splitAt3 4 6 6 allMoves
-          | depth >= 4 && notInCheck -> splitAt2 4 6 allMoves
-          | depth >= 2 && notInCheck -> splitAt1 4 allMoves
+          | depth >= 4 && notInCheck -> splitAt2 4 6   allMoves
+          | depth >= 2 && notInCheck -> splitAt1 4     allMoves
           | otherwise                -> (allMoves, [], [], [])
   where
     notInCheck = not (isKingInCheck pos)
-    (winningCaptures, losingCaptures) = getSortedCaptures pos
-    quietMoves                        = getSortedQuietMoves pos
+    (winningCaptures, losingCaptures) = getSortedCaptures depth pos
+    quietMoves                        = getSortedQuietMoves depth pos
 
 
 {-# INLINE  getSortedFutilityMoves #-}
@@ -53,32 +58,35 @@ getSortedFutilityMoves !threshold pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
   pure (ttMove <> captures <> checks)
   where
-    captures = fst $ getSortedCapturesGreaterThan threshold pos
+    captures = fst $ getSortedCapturesGreaterThan threshold 0 pos
     checks   = filter (isKingInCheck . (`makeMove` pos))
-                      (getSortedQuietMoves pos)
+                      (allQuietMoves pos)
 
 
 {-# INLINE  getSortedCaptures #-}
-getSortedCaptures :: Position -> ([Move], [Move])
+getSortedCaptures :: Depth -> Position -> ([Move], [Move])
 getSortedCaptures = getSortedCapturesGreaterThan 0
 
 
 {-# INLINE  getSortedCapturesGreaterThan #-}
-getSortedCapturesGreaterThan :: Score -> Position -> ([Move], [Move])
-getSortedCapturesGreaterThan !n pos =
-  bimapBoth (map fst)
-  $ partition ((>= n) . snd)
-  $ sortOn (Down . snd)
-  $ map attachEval captures
+getSortedCapturesGreaterThan :: Score -> Depth -> Position -> ([Move], [Move])
+getSortedCapturesGreaterThan !threshold !depth pos
+  | depth >= 2 = bimapBoth (map fst)
+      $ partition ((>= threshold) . snd)
+      $ sortOn (Down . snd)
+      $ map attachEval captures
+  | otherwise = partition ((>= threshold) . (`evaluateCaptureExchange` pos))
+                          captures
   where
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
     captures = allCaptures pos
 
 
 {-# INLINE  getSortedQuietMoves #-}
-getSortedQuietMoves :: Position -> [Move]
-getSortedQuietMoves pos =
-  sortOn (Down . getMoveScore) quietMoves
+getSortedQuietMoves :: Depth -> Position -> [Move]
+getSortedQuietMoves !depth pos
+  | depth >= 2 = sortOn (Down . getMoveScore) quietMoves
+  | otherwise = quietMoves
   where
     getMoveScore mv = -(makeMove mv pos).materialScore
     quietMoves      = allQuietMoves pos

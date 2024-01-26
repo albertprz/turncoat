@@ -174,7 +174,7 @@ getNullMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
 
-  | depth >= 3 && not (isKingInCheck pos) && pos.materialScore >= beta =
+  | depth > r && not (isKingInCheck pos) && pos.materialScore >= beta =
     Just . negate <$> negamax (-beta) (-alpha) (depth - r - 1)
                               (ply + 1) (makeNullMove pos)
 

@@ -19,8 +19,9 @@ quiesceSearch !alpha !beta !ply pos
   where
     (score, finalAlpha) = runState scoreState newAlpha
     scoreState = findTraverse (getMoveScore beta ply pos) captures
+    captures = fst $ getSortedCaptures 0 pos
+
     newAlpha = max alpha standPat
-    captures  = fst $ getSortedCaptures pos
     standPat  = pos.materialScore
 
 

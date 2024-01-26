@@ -46,6 +46,7 @@ aspirationSearch !depth pos  = do
 
 -- Features:
 -- - Transposition table score caching
+-- - Check extensions
 
 {-# INLINE  negamax #-}
 negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
@@ -53,12 +54,15 @@ negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
 negamax !alpha !beta !depth !ply pos
   | pos.halfMoveClock == 50 || isRepeatedPosition zKey pos = pure 0
   | otherwise = do
-    ttScore <- liftIO $ TTable.lookupScore alpha beta depth zKey
+    ttScore <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
     case ttScore of
       Just !score -> pure score
-      Nothing     -> cacheNodeScore alpha beta depth ply zKey pos
+      Nothing     -> cacheNodeScore alpha beta extendedDepth ply zKey pos
    where
      !zKey = getZobristKey pos
+     !extendedDepth = if isKingInCheck pos
+        then depth + 1
+        else depth
 
 
 {-# INLINE  cacheNodeScore #-}

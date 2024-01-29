@@ -3,8 +3,9 @@ module MoveGen.MoveQueries where
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits            (Bits (testBit))
+import           Data.Bits                 (Bits (testBit))
 import           Data.Composition
+import           Evaluation.StaticExchange
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -28,7 +29,13 @@ isCheckMove mv pos =
 isCapture :: Move -> Position -> Bool
 isCapture Move {..} Position {..} =
   isJust promotion
-  || testBit (enemy .| enPassant) end
+    || testBit (enemy .| enPassant) end
+
+{-# INLINE  isWinningCapture #-}
+isWinningCapture :: Move -> Position -> Bool
+isWinningCapture mv pos =
+  isCapture mv pos
+    && evaluateCaptureExchange mv pos >= 0
 
 
 {-# INLINE  isCheckOrCapture #-}
@@ -36,6 +43,12 @@ isCheckOrCapture :: Move -> Position -> Bool
 isCheckOrCapture mv pos =
   isCheckMove mv pos
     || isCapture mv pos
+
+{-# INLINE  isCheckOrWinningCapture #-}
+isCheckOrWinningCapture :: Move -> Position -> Bool
+isCheckOrWinningCapture mv pos =
+  isCheckMove mv pos
+    || isWinningCapture mv pos
 
 
 {-# INLINE  isQuietMove #-}

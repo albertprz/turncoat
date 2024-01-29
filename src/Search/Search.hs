@@ -14,7 +14,6 @@ import           Search.MoveOrdering
 import           Search.Quiescence
 
 import           Control.Monad.State
-import           Evaluation.Material
 import           MoveGen.MoveQueries
 
 
@@ -52,7 +51,9 @@ aspirationSearch !depth pos  = do
 negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Score -> Depth -> Ply -> Position -> IO Score
 negamax !alpha !beta !depth !ply pos
+
   | pos.halfMoveClock == 50 || isRepeatedPosition zKey pos = pure 0
+
   | otherwise = do
     ttScore <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
     case ttScore of
@@ -89,7 +90,6 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
 
 -- Features:
 -- - Quiescence search
--- - Futility prunning
 -- - Null move prunning (R = 2)
 
 {-# INLINE  getNodeScore #-}
@@ -99,13 +99,6 @@ getNodeScore !alpha !beta !depth !ply pos
 
   | depth == 0 = pure (quiesceSearch alpha beta 0 pos, Nothing)
 
-  | depth == 1 && not (isKingInCheck pos)
-              && pos.materialScore <= threshold = do
-      tacticalMoves <- getSortedFutilityMoves threshold pos
-      if null tacticalMoves
-       then pure (pos.materialScore, Nothing)
-       else traverseMoves (tacticalMoves, [], [], [])
-
   | otherwise = do
     nullMoveScore <- getNullMoveScore beta depth ply pos
     if any (>= beta) nullMoveScore
@@ -113,11 +106,10 @@ getNodeScore !alpha !beta !depth !ply pos
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
-    threshold = alpha - 2 * pawnScore
     traverseMoves moves
-      | null $ tuple4Append moves =
+      | null $ uncurry (<>) moves =
           if isKingInCheck pos
-             then pure (minBound + 1, Nothing)
+             then pure (minBound, Nothing)
              else pure (0, Nothing)
       | otherwise =
         do (!score, (!newAlpha, !bestMove)) <-
@@ -131,21 +123,17 @@ getNodeScore !alpha !beta !depth !ply pos
 
 {-# INLINE  getMovesScore #-}
 getMovesScore :: (?killersTable :: KillersTable, ?tTable::TTable)
-  => Score -> Depth -> Ply -> Position -> ([Move], [Move], [Move], [Move])
+  => Score -> Depth -> Ply -> Position -> ([Move], [Move])
   -> SearchM (Maybe Score)
-getMovesScore !beta !depth !ply pos
-  (mainMoves, reducedMoves, reduced2Moves, reduced3Moves) = do
+getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
   mainSearchScore <- mainMovesSearch
-  foldM accumulateScore mainSearchScore
-        [reducedMovesSearch, reduced2MovesSearch, reduced3MovesSearch]
+  maybe reducedMovesSearch (pure . Just) mainSearchScore
   where
-    mainMovesSearch      = movesSearch depth       mainMoves
-    reducedMovesSearch   = movesSearch (depth - 1) reducedMoves
-    reduced2MovesSearch  = movesSearch (depth - 2) reduced2Moves
-    reduced3MovesSearch  = movesSearch (depth - 3) reduced3Moves
+    mainMovesSearch      = movesSearch depth
+                                       mainMoves
+    reducedMovesSearch   = movesSearch (max 1 (div depth 2))
+                                       reducedMoves
 
-    accumulateScore score searchFn =
-      maybe searchFn (pure . Just) score
     movesSearch lmrDepth =
       findTraverse (getMoveScore beta depth lmrDepth ply pos)
 
@@ -153,24 +141,24 @@ getMovesScore !beta !depth !ply pos
 {-# INLINE  getMoveScore #-}
 getMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Depth -> Depth -> Ply -> Position -> Move -> SearchM (Maybe Score)
-getMoveScore !beta !depth !lmrDepth !ply pos move
+getMoveScore !beta !depth !lmrDepth !ply pos mv
 
-  | lmrDepth < depth && not (isCheckOrCapture move pos) = do
+  | lmrDepth < depth && not (isCheckOrWinningCapture mv pos) = do
      !alpha <- gets fst
      let !betaWindow = alpha + 1
      !score   <- negate <$> liftIO (negamax (-betaWindow) (-alpha)
                                            (lmrDepth - 1)
-                                           (ply + 1) (makeMove move pos))
+                                           (ply + 1) (makeMove mv pos))
      if score > alpha
-       then getMoveScore beta depth (lmrDepth + 1) ply pos move
+       then getMoveScore beta depth depth ply pos mv
        else pure Nothing
 
   | otherwise = do
      !alpha <- gets fst
      !score   <- negate <$> liftIO (negamax (-beta) (-alpha) (depth - 1)
-                                           (ply + 1) (makeMove move pos))
+                                             (ply + 1) (makeMove mv pos))
      let !nodeType = getNodeType alpha beta score
-     advanceState beta score ply nodeType move pos
+     advanceState beta score ply nodeType mv pos
 
 
 {-# INLINE  getNullMoveScore #-}
@@ -192,12 +180,12 @@ getNullMoveScore !beta !depth !ply pos
 {-# INLINE  advanceState #-}
 advanceState :: (?killersTable :: KillersTable)
   => Score -> Score -> Ply -> NodeType -> Move -> Position -> SearchM (Maybe Score)
-advanceState !beta !score !ply !nodeType !move pos =
+advanceState !beta !score !ply !nodeType !mv pos =
   case nodeType of
-    PV  -> put (score, Just move)
+    PV  -> put (score, Just mv)
             $> Nothing
-    Cut -> modify' (second $ const $ Just move)
-            *> liftIO (KillersTable.insert ply pos move)
+    Cut -> modify' (second $ const $ Just mv)
+            *> liftIO (KillersTable.insert ply pos mv)
             $> Just beta
     All -> pure Nothing
 

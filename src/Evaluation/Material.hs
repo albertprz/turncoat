@@ -62,7 +62,7 @@ bishopScore :: Score
 bishopScore = 320
 
 rookScore :: Score
-rookScore = 500
+rookScore = 490
 
 queenScore :: Score
 queenScore = 900

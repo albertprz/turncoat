@@ -18,28 +18,43 @@ lookupMoves :: (?killersTable :: KillersTable) => Ply -> IO [Move]
 lookupMoves !ply = do
   !firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
   !secondMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 1)
-  pure $ catMaybes [firstMove, secondMove]
+  !thirdMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 2)
+  !fourthMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 3)
+  pure $ catMaybes [firstMove, secondMove, thirdMove, fourthMove]
   where
-    !idx = 2 * fromIntegral ply
+    !idx = killerSlots * fromIntegral ply
 
 
 {-# INLINE  insert #-}
 insert :: (?killersTable :: KillersTable) => Ply -> Position -> Move -> IO ()
-insert !ply pos move = when (isQuietMove move pos) do
-  !firstMove <- decodeMove <$> Vector.unsafeRead ?killersTable idx
-  let insertIdx = if all (== move) firstMove
-                    then idx
-                    else idx + 1
-  Vector.unsafeWrite ?killersTable insertIdx
-                                   (encodeMove $ Just move)
+insert !ply pos mv = when (isQuietMove mv pos) do
+  !firstMove <- Vector.unsafeRead ?killersTable idx
+  !secondMove <- Vector.unsafeRead ?killersTable (idx + 1)
+  !thirdMove <- Vector.unsafeRead ?killersTable (idx + 2)
+  let storedMoves = catMaybes [decodeMove firstMove,
+                               decodeMove secondMove,
+                               decodeMove thirdMove]
+  unless (mv `elem` storedMoves) do
+    Vector.unsafeWrite ?killersTable idx
+                                    (encodeMove $ Just mv)
+    Vector.unsafeWrite ?killersTable (idx + 1)
+                                     firstMove
+    Vector.unsafeWrite ?killersTable (idx + 2)
+                                     secondMove
+    Vector.unsafeWrite ?killersTable (idx + 3)
+                                     thirdMove
   where
-    !idx = 2 * fromIntegral ply
+    !idx = killerSlots * fromIntegral ply
 
 
 create :: IO KillersTable
-create = Vector.replicate (2 * (fromIntegral (maxBound @Ply) + 1))
+create = Vector.replicate (killerSlots * (fromIntegral (maxBound @Ply) + 1))
                           (encodeMove Nothing)
 
 
 clear ::  KillersTable -> IO ()
 clear = Vector.clear
+
+
+killerSlots :: Int
+killerSlots = 4

@@ -11,8 +11,7 @@ import           Models.Score
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove          (makeMove)
-import           MoveGen.MoveQueries       (isCheckOrCapture, isKingInCheck,
-                                            isLegalQuietMove)
+import           MoveGen.MoveQueries       (isKingInCheck, isLegalQuietMove)
 import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
 
@@ -37,32 +36,16 @@ getSortedMoves !depth !ply pos = do
                   <$> KillersTable.lookupMoves ply
   let
     hashMoves = ttMove <> killerMoves
-    betterMoves = ttMove
+    allMoves = ttMove
       <> filter (`notElem` ttMove) winningCaptures
       <> killerMoves
-    worseMoves =
-      filter (`notElem` hashMoves) quietMoves
+      <> filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
-  pure if notInCheck
-    then (betterMoves, worseMoves)
-    else (betterMoves <> worseMoves, [])
+  pure if notInCheck && depth >= 3
+    then splitAt 4 allMoves
+    else (allMoves, [])
   where
     notInCheck = not (isKingInCheck pos)
-    (winningCaptures, losingCaptures) = getSortedCaptures depth pos
-    quietMoves                        = getSortedQuietMoves depth pos
-
-
-{-# INLINE  getSortedFutilityMoves #-}
-getSortedFutilityMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
-  => Depth -> Ply -> Position -> IO [Move]
-getSortedFutilityMoves !depth !ply pos = do
-  ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  killerMoves <- filter (`isLegalQuietMove` pos)
-                  <$> KillersTable.lookupMoves ply
-  pure $ filter (`isCheckOrCapture` pos)
-         (ttMove <> filter (`notElem` ttMove)
-          (winningCaptures <> killerMoves <> quietMoves <> losingCaptures))
-  where
     (winningCaptures, losingCaptures) = getSortedCaptures depth pos
     quietMoves                        = getSortedQuietMoves depth pos
 

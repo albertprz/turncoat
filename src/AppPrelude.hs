@@ -1,10 +1,9 @@
 module AppPrelude (module ClassyPrelude, module Utils.Ord,
                    module Utils.Maybe, module Utils.Functor,
-                   module Utils.List, Vector, (!!)) where
+                   Vector, (!!)) where
 
 import           ClassyPrelude        hiding (Vector, mask, (/), (>>), (^))
 import           Utils.Functor
-import           Utils.List
 import           Utils.Maybe
 import           Utils.Ord
 

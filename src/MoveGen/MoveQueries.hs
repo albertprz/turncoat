@@ -13,6 +13,14 @@ import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 
 
+{-# INLINE  isCheckOrWinningCapture #-}
+isCheckOrWinningCapture :: Move -> Position -> Bool
+isCheckOrWinningCapture mv pos =
+  isCheckMove mv pos
+    || isPromotionPush mv
+    || isWinningCapture mv pos
+
+
 {-# INLINE  isCastlingMove #-}
 isCastlingMove :: Move -> Bool
 isCastlingMove Move {..} =
@@ -38,17 +46,10 @@ isWinningCapture mv pos =
     && evaluateCaptureExchange mv pos >= 0
 
 
-{-# INLINE  isCheckOrCapture #-}
-isCheckOrCapture :: Move -> Position -> Bool
-isCheckOrCapture mv pos =
-  isCheckMove mv pos
-    || isCapture mv pos
-
-{-# INLINE  isCheckOrWinningCapture #-}
-isCheckOrWinningCapture :: Move -> Position -> Bool
-isCheckOrWinningCapture mv pos =
-  isCheckMove mv pos
-    || isWinningCapture mv pos
+{-# INLINE  isPromotionPush #-}
+isPromotionPush :: Move -> Bool
+isPromotionPush Move{..} =
+  piece == Pawn && toRank end `elem` [2, 7]
 
 
 {-# INLINE  isQuietMove #-}

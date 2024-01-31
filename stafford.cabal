@@ -50,7 +50,6 @@ library
       Search.Search
       Search.SearchOptions
       Utils.Functor
-      Utils.List
       Utils.Maybe
       Utils.Ord
   other-modules:

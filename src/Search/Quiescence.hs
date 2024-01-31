@@ -26,11 +26,11 @@ quiesceSearch !alpha !beta !ply pos
 
 
 {-# INLINE  getMoveScore #-}
-getMoveScore :: Score -> Ply -> Position -> Move -> State Score (Maybe Score)
-getMoveScore !beta !ply pos move =
+getMoveScore :: Score -> Ply -> Position -> Int -> Move -> State Score (Maybe Score)
+getMoveScore !beta !ply pos _ mv =
   do !alpha <- get
      let !score = - quiesceSearch (-beta) (-alpha) (ply + 1)
-                                  (makeMove move pos)
+                                  (makeMove mv pos)
          !nodeType = getNodeType alpha beta score
      advanceState beta score nodeType
 

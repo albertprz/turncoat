@@ -14,6 +14,7 @@ import           Search.MoveOrdering
 import           Search.Quiescence
 
 import           Control.Monad.State
+import           GHC.Real                  ((/))
 import           MoveGen.MoveQueries
 
 
@@ -118,9 +119,6 @@ getNodeScore !alpha !beta !depth !ply pos
            pure (fromMaybe newAlpha score, bestMove)
 
 
--- Features:
--- - Late Move Reductions
-
 {-# INLINE  getMovesScore #-}
 getMovesScore :: (?killersTable :: KillersTable, ?tTable::TTable)
   => Score -> Depth -> Ply -> Position -> ([Move], [Move])
@@ -129,28 +127,29 @@ getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
   mainSearchScore <- mainMovesSearch
   maybe reducedMovesSearch (pure . Just) mainSearchScore
   where
-    mainMovesSearch      = movesSearch depth
-                                       mainMoves
-    reducedMovesSearch   = movesSearch (max 1 (div depth 2))
-                                       reducedMoves
+    mainMovesSearch      = movesSearch False mainMoves
+    reducedMovesSearch   = movesSearch True  reducedMoves
 
-    movesSearch lmrDepth =
-      findTraverse (getMoveScore beta depth lmrDepth ply pos)
+    movesSearch isReduced =
+      findTraverse (getMoveScore beta depth ply isReduced pos)
 
+
+-- Features:
+-- - Late Move Reductions
 
 {-# INLINE  getMoveScore #-}
 getMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
-  => Score -> Depth -> Depth -> Ply -> Position -> Move -> SearchM (Maybe Score)
-getMoveScore !beta !depth !lmrDepth !ply pos mv
+  => Score -> Depth -> Ply -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
+getMoveScore !beta !depth !ply !isReduced pos !mvIdx mv
 
-  | lmrDepth < depth && not (isCheckOrWinningCapture mv pos) = do
+  | isReduced && not (isCheckOrWinningCapture mv pos) = do
      !alpha <- gets fst
      let !betaWindow = alpha + 1
      !score   <- negate <$> liftIO (negamax (-betaWindow) (-alpha)
                                            (lmrDepth - 1)
                                            (ply + 1) (makeMove mv pos))
      if score > alpha
-       then getMoveScore beta depth depth ply pos mv
+       then getMoveScore beta depth ply False pos mvIdx mv
        else pure Nothing
 
   | otherwise = do
@@ -159,6 +158,13 @@ getMoveScore !beta !depth !lmrDepth !ply pos mv
                                              (ply + 1) (makeMove mv pos))
      let !nodeType = getNodeType alpha beta score
      advanceState beta score ply nodeType mv pos
+
+  where
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 10)
+    lmrDepth  = ceiling
+      (lmrFactor * (fromIntegral depth * 3 / 4)
+        + (1 - lmrFactor) * (fromIntegral depth - 1))
+
 
 
 {-# INLINE  getNullMoveScore #-}

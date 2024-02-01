@@ -13,6 +13,15 @@ import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 
 
+{-# INLINE  isEndgame #-}
+isEndgame :: Position -> Bool
+isEndgame Position {..} =
+  ones (player & allMinorPieces) < 3
+    || ones (enemy & allMinorPieces) < 3
+  where
+    allMinorPieces = bishops .| knights .| rooks .| queens
+
+
 {-# INLINE  isCheckOrWinningCapture #-}
 isCheckOrWinningCapture :: Move -> Position -> Bool
 isCheckOrWinningCapture mv pos =

@@ -31,9 +31,7 @@ getSortedMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
   => Depth -> Ply -> Position -> IO ([Move], [Move])
 getSortedMoves !depth !ply pos = do
   ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  killerMoves <- filter (andPred (`isLegalQuietMove` pos)
-                                (`notElem` ttMove))
-                  <$> KillersTable.lookupMoves ply
+  killerMoves <- filter (`notElem` ttMove) <$> getSortedKillers ply pos
   let
     hashMoves = ttMove <> killerMoves
     allMoves = ttMove
@@ -41,39 +39,33 @@ getSortedMoves !depth !ply pos = do
       <> killerMoves
       <> filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
-  pure if notInCheck && depth >= 3
-    then splitAt 4 allMoves
+  pure if notInCheck && depth >= 4
+    then splitAt 6 allMoves
     else (allMoves, [])
   where
     notInCheck = not (isKingInCheck pos)
-    (winningCaptures, losingCaptures) = getSortedCaptures depth pos
-    quietMoves                        = getSortedQuietMoves depth pos
+    (winningCaptures, losingCaptures) = getSortedCaptures pos
+    quietMoves                        = allQuietMoves     pos
+
+
+{-# INLINE  getSortedKillers #-}
+getSortedKillers :: (?killersTable::KillersTable)
+  => Ply -> Position -> IO [Move]
+getSortedKillers !ply pos
+  = sortOn (Down . getMoveScore) <$> killerMoves
+  where
+    getMoveScore mv = -(makeMove mv pos).materialScore
+    killerMoves     =
+      filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
 
 
 {-# INLINE  getSortedCaptures #-}
-getSortedCaptures :: Depth -> Position -> ([Move], [Move])
-getSortedCaptures = getSortedCapturesGreaterThan 0
-
-
-{-# INLINE  getSortedCapturesGreaterThan #-}
-getSortedCapturesGreaterThan :: Score -> Depth -> Position -> ([Move], [Move])
-getSortedCapturesGreaterThan !threshold !depth pos
-  | depth >= 2 = bimapBoth (map fst)
-      $ partition ((>= threshold) . snd)
+getSortedCaptures :: Position -> ([Move], [Move])
+getSortedCaptures pos
+  = bimapBoth (map fst)
+      $ partition ((>= 0) . snd)
       $ sortOn (Down . snd)
       $ map attachEval captures
-  | otherwise = partition ((>= threshold) . (`evaluateCaptureExchange` pos))
-                          captures
   where
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
-    captures = allCaptures pos
-
-
-{-# INLINE  getSortedQuietMoves #-}
-getSortedQuietMoves :: Depth -> Position -> [Move]
-getSortedQuietMoves !depth pos
-  | depth >= 2 = sortOn (Down . getMoveScore) quietMoves
-  | otherwise = quietMoves
-  where
-    getMoveScore mv = -(makeMove mv pos).materialScore
-    quietMoves      = allQuietMoves pos
+    captures      = allCaptures pos

@@ -15,9 +15,9 @@ import           Models.TranspositionTable (ZKey (ZKey))
 
 data Position = Position {
     materialScore     :: Score
-  , color             :: Color
   , halfMoveClock     :: Ply
   , previousPositions :: [ZKey]
+  , color             :: Color
   , attacked          :: Board
   , castling          :: Board
   , enPassant         :: Board

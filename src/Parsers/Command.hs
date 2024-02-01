@@ -1,4 +1,4 @@
-module CommandLine.Command where
+module Parsers.Command where
 
 import           AppPrelude
 
@@ -7,20 +7,12 @@ import           Bookhound.ParserCombinators
 
 import           Bookhound.Parsers.Number
 import           Bookhound.Parsers.Text
-import           CommandLine.UciCommands
+import           Models.Command
 import           Models.Position
 import           Models.Score
 import           Parsers.Position
-import           Search.SearchOptions
 
 import           Data.Monoid
-
-
-data Command
-  = SetPosition PositionSpec
-  | Perft Depth
-  | Divide Depth
-  | Search SearchOptions
 
 
 parseCommand :: Text -> Either [ParseError] Command
@@ -46,12 +38,4 @@ parseCommand = runParser command
   unknownMove = UnknownMove <$> squareParser <*> squareParser
   token = withTransform maybeBetweenSpacing
   stringToken = token . string
-  depth = (Depth . fromIntegral) <$> satisfy (inRange 1 20) unsignedInt
-
-
-executeCommand :: Command -> CommandM ()
-executeCommand = \case
-  SetPosition pos -> setPosition pos
-  Perft n -> printPerft n
-  Divide n -> printDivide n
-  Search opts -> printBestMove opts
+  depth = Depth . fromIntegral <$> satisfy (inRange 1 20) unsignedInt

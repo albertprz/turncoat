@@ -31,6 +31,7 @@ library
       Evaluation.Material
       Evaluation.PieceSquareTables
       Evaluation.StaticExchange
+      Models.Command
       Models.KillersTable
       Models.Move
       Models.Piece
@@ -43,12 +44,12 @@ library
       MoveGen.PieceCaptures
       MoveGen.PieceMoves
       MoveGen.PieceQuietMoves
+      Parsers.Command
       Parsers.Position
       Search.MoveOrdering
       Search.Perft
       Search.Quiescence
       Search.Search
-      Search.SearchOptions
       Utils.Functor
       Utils.Maybe
       Utils.Ord
@@ -100,7 +101,6 @@ library
 executable stafford
   main-is: Main.hs
   other-modules:
-      CommandLine.Command
       CommandLine.UciCommands
       Paths_stafford
   hs-source-dirs:

@@ -2,10 +2,12 @@ module Main where
 
 import           AppPrelude
 
-import           CommandLine.Command (executeCommand, parseCommand)
-import           Control.Monad.State (evalStateT)
-import           Data.Char           (isSpace)
-import           Models.Position     (startPosition)
+import           CommandLine.UciCommands (executeCommand)
+import           Control.Monad.State     (evalStateT)
+import           Models.Position         (startPosition)
+import           Parsers.Command         (parseCommand)
+
+import           Data.Char               (isSpace)
 
 
 main :: IO ()

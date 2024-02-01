@@ -205,7 +205,7 @@ initialBeta :: Score
 initialBeta = maxBound - 1
 
 windowDelta :: Score
-windowDelta = 10
+windowDelta = 20
 
 
 type SearchM           = StateT (Score, Maybe Move) IO

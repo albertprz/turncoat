@@ -26,7 +26,6 @@ perft = go 0
 {-# INLINE  divide #-}
 divide :: Depth -> Position -> Map Move Int
 divide !depth !pos
-  | depth == 0 = Map.empty
   | depth == 1 = Map.fromList $ toList ((,1) <$> moves)
   | otherwise = Map.fromList
   (second (perft (depth - 1)) . getResults <$> toList moves)

@@ -6,21 +6,10 @@ import           Models.Score
 
 
 data Command
-  = SetPosition PositionSpec
+  = Search SearchOptions
   | Perft Depth
   | Divide Depth
-  | Search SearchOptions
-
-
-data PositionSpec = PositionSpec
-  { initialPosition :: Position,
-    moves           :: [UnknownMove]
-  }
-
-data UnknownMove = UnknownMove
-  { start :: Square,
-    end   :: Square
-  }
+  | SetPosition PositionSpec
 
 
 data SearchOptions = SearchOptions
@@ -28,13 +17,19 @@ data SearchOptions = SearchOptions
   }
 
 
+data PositionSpec = PositionSpec
+  { initialPosition :: Position,
+    moves           :: [UnknownMove]
+  }
+
+
+data UnknownMove = UnknownMove
+  { start :: Square,
+    end   :: Square
+  }
+
+
 defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions {
   depth = 12
 }
-
-
-includeDepth :: Depth -> SearchOptions -> SearchOptions
-includeDepth depth opts = opts {
-  depth = depth
-  }

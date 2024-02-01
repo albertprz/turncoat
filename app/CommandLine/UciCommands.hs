@@ -22,9 +22,9 @@ import           System.TimeIt
 executeCommand :: Command -> CommandM ()
 executeCommand = \case
   Search opts     -> printBestMove opts
-  Perft n         -> printPerft n
-  Divide n        -> printDivide n
-  SetPosition pos -> setPosition pos
+  Perft n         -> printPerft    n
+  Divide n        -> printDivide   n
+  SetPosition pos -> setPosition   pos
 
 
 printBestMove :: SearchOptions -> CommandM ()

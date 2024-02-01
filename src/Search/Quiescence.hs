@@ -7,6 +7,7 @@ import           Models.Score
 import           MoveGen.MakeMove
 
 import           Control.Monad.State
+import           Evaluation.Evaluation (evaluatePosition)
 import           Models.Move
 import           Search.MoveOrdering
 
@@ -22,7 +23,7 @@ quiesceSearch !alpha !beta !ply pos
     captures = fst $ getSortedCaptures pos
 
     newAlpha = max alpha standPat
-    standPat  = pos.materialScore
+    standPat = evaluatePosition pos
 
 
 {-# INLINE  getMoveScore #-}

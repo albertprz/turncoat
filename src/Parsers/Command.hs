@@ -39,3 +39,9 @@ parseCommand = runParser command
   token = withTransform maybeBetweenSpacing
   stringToken = token . string
   depth = Depth . fromIntegral <$> satisfy (inRange 1 20) unsignedInt
+
+
+includeDepth :: Depth -> SearchOptions -> SearchOptions
+includeDepth depth opts = opts {
+  depth = depth
+  }

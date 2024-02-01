@@ -2,6 +2,7 @@ module Search.MoveOrdering where
 
 import           AppPrelude
 
+import           Evaluation.Evaluation     (evaluatePosition)
 import           Evaluation.StaticExchange
 import           Models.KillersTable       (KillersTable)
 import qualified Models.KillersTable       as KillersTable
@@ -54,7 +55,7 @@ getSortedKillers :: (?killersTable::KillersTable)
 getSortedKillers !ply pos
   = sortOn (Down . getMoveScore) <$> killerMoves
   where
-    getMoveScore mv = -(makeMove mv pos).materialScore
+    getMoveScore mv = - evaluatePosition (makeMove mv pos)
     killerMoves     =
       filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
 

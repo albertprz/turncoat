@@ -10,6 +10,7 @@ import           Models.Piece
 import           Models.Position
 import           Models.Score
 
+
 {-# INLINE  evaluateMaterial #-}
 evaluateMaterial :: Position -> Score
 evaluateMaterial Position {..} =

@@ -12,10 +12,10 @@ import           MoveGen.PieceAttacks
 evaluatePosition :: Position -> Score
 evaluatePosition pos@Position {..} =
   materialScore
-    + evaluatePieceThreats enemy  enemyAttacks  playerAttacks
     - evaluatePieceThreats player playerAttacks enemyAttacks
-    + evaluateKingSafety   player kings         enemyAttacks
-    - evaluateKingSafety   enemy  kings         playerAttacks
+    + evaluatePieceThreats enemy  enemyAttacks  playerAttacks
+    - evaluateKingSafety   player kings         enemyAttacks
+    + evaluateKingSafety   enemy  kings         playerAttacks
   where
     !playerAttacks  = allPlayerAttacks pos
     !enemyAttacks   = attacked
@@ -23,20 +23,23 @@ evaluatePosition pos@Position {..} =
 
 {-# INLINE  evaluatePieceThreats #-}
 evaluatePieceThreats :: Board -> Board -> Board -> Score
-evaluatePieceThreats enemy enemyAttacks playerAttacks =
+evaluatePieceThreats player playerAttacks enemyAttacks =
  threatFactor * fromIntegral threats
   where
-    !threats = ones (playerAttacks & enemy .\ enemyAttacks)
+    !threats = ones (enemyAttacks & player .\ playerAttacks)
 
 
 {-# INLINE  evaluateKingSafety #-}
 evaluateKingSafety :: Board -> Board -> Board -> Score
 evaluateKingSafety player kings enemyAttacks
   | kingMoves == 0 = 0
-  | otherwise = (kingSafetyFactor
-        * fromIntegral (ones kingUnsafeSquares))
-    `div` fromIntegral (ones kingMoves)
+  | otherwise = kingUnsafety + kingUnsafeArea
   where
+    kingUnsafety   = (kingSafetyFactor
+           * fromIntegral (ones kingUnsafeSquares))
+       `div` fromIntegral (ones kingMoves)
+    kingUnsafeArea = kingSquareSafetyFactor
+     * fromIntegral (ones kingUnsafeSquares)
     !kingMoves         = kingAttacks king .\ player
     !kingUnsafeSquares = kingMoves & enemyAttacks
     !king              = lsb (player & kings)
@@ -47,3 +50,6 @@ threatFactor = 20
 
 kingSafetyFactor :: Score
 kingSafetyFactor = 100
+
+kingSquareSafetyFactor :: Score
+kingSquareSafetyFactor = 20

@@ -40,7 +40,7 @@ getSortedMoves !depth !ply pos = do
       <> killerMoves
       <> filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
-  pure if notInCheck && depth >= 4
+  pure if notInCheck && depth >= 3
     then splitAt 6 allMoves
     else (allMoves, [])
   where

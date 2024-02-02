@@ -13,9 +13,11 @@ import           MoveGen.MakeMove
 import           Search.MoveOrdering
 import           Search.Quiescence
 
+import           Bookhound.Utils.List
 import           Control.Monad.State
 import           GHC.Real                  ((/))
 import           MoveGen.MoveQueries
+import           MoveGen.PieceMoves
 
 
 -- Features:
@@ -25,28 +27,15 @@ import           MoveGen.MoveQueries
 getBestMove :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth pos =
-  lastEx <$> evalStateT (traverse (`aspirationSearch` pos) [0 .. depth])
-                        (initialAlpha, initialBeta)
-
-
--- Features:
--- - Aspiration windows
-
-{-# INLINE  aspirationSearch #-}
-aspirationSearch :: (?killersTable :: KillersTable, ?tTable :: TTable)
-  => Depth -> Position -> AspirationSearchM (Maybe Move)
-aspirationSearch !depth pos  = do
-  (!alpha, !beta) <- get
-  (!score, !mv) <- liftIO $ getNodeScore alpha beta depth 0 pos
-  case getNodeType alpha beta score of
-    PV  -> put (score - windowDelta, score + windowDelta) $> mv
-    Cut -> modify (second (+ windowDelta))       *> aspirationSearch depth pos
-    All -> modify (first (\x -> x - windowDelta)) *> aspirationSearch depth pos
+  lastEx <$> traverse getNodeBestMove [0 .. depth]
+  where
+    getNodeBestMove d =
+      snd <$> getNodeScore initialAlpha initialBeta d 0 pos
 
 
 -- Features:
 -- - Transposition table score caching
--- - Check extensions
+-- - Search extensions
 
 {-# INLINE  negamax #-}
 negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
@@ -62,7 +51,9 @@ negamax !alpha !beta !depth !ply pos
       Nothing     -> cacheNodeScore alpha beta extendedDepth ply zKey pos
    where
      !zKey = getZobristKey pos
-     !extendedDepth = if isKingInCheck pos
+     !extendedDepth =
+       if ply < 40 && (isKingInCheck pos
+                       || not (hasMultiple $ allMoves pos))
         then depth + 1
         else depth
 
@@ -162,7 +153,7 @@ getMoveScore !beta !depth !ply !isReduced pos !mvIdx mv
   where
     lmrFactor = min @Double 1 (fromIntegral mvIdx / 10)
     lmrDepth  = ceiling
-      (lmrFactor * (fromIntegral depth * 3 / 4)
+      (lmrFactor * (fromIntegral depth * 2 / 3)
         + (1 - lmrFactor) * (fromIntegral depth - 1))
 
 
@@ -204,9 +195,5 @@ initialAlpha = minBound + 1
 initialBeta :: Score
 initialBeta = maxBound - 1
 
-windowDelta :: Score
-windowDelta = 20
-
 
 type SearchM           = StateT (Score, Maybe Move) IO
-type AspirationSearchM = StateT (Score, Score) IO

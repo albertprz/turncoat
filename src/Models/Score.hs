@@ -7,7 +7,7 @@ import           Test.QuickCheck (Arbitrary (..), elements)
 
 
 newtype Score = Score Int16
-  deriving (Eq, Ord, Num, Enum, Bounded, Storable, Arbitrary, Show)
+  deriving (Eq, Ord, Num, Real, Integral, Enum, Bounded, Storable, Arbitrary, Show)
 
 newtype Depth = Depth Word8
   deriving (Eq, Ord, Num, Enum, Bounded, Real, Integral, Storable, Arbitrary, Show)

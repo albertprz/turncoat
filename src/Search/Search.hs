@@ -52,10 +52,10 @@ negamax !alpha !beta !depth !ply pos
    where
      !zKey = getZobristKey pos
      !extendedDepth =
-       if ply < 40 && (isKingInCheck pos
-                       || not (hasMultiple $ allMoves pos))
+       if isKingInCheck pos || (ply < 40 && hasSingleMove)
         then depth + 1
         else depth
+     hasSingleMove = not (hasMultiple $ allMoves pos)
 
 
 {-# INLINE  cacheNodeScore #-}

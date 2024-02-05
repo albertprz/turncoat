@@ -16,6 +16,7 @@ getLeapingCheckers Position {..} =
     checkers = pawns   & pawnAttacks   (reverseColor color) (enemy&kings)
             .| knights & knightAttacks (lsb (enemy&kings))
 
+
 {-# INLINE  getSliderCheckers #-}
 getSliderCheckers :: Board -> Board -> Board -> Position -> Board
 getSliderCheckers bishopCheckerRays rookCheckerRays queenCheckerRays
@@ -26,20 +27,24 @@ getSliderCheckers bishopCheckerRays rookCheckerRays queenCheckerRays
             .| rookCheckerRays   & rooks
             .| queenCheckerRays  & queens
 
+
 {-# INLINE  getEnemyKingSliderRays #-}
 getEnemyKingSliderRays :: Position -> Board
 getEnemyKingSliderRays Position {..} =
   queenAttacks player (lsb (enemy&kings))
+
 
 {-# INLINE  getBishopCheckerRays #-}
 getBishopCheckerRays :: Position -> Board
 getBishopCheckerRays Position {..} =
   bishopAttacks (enemy .| player) (lsb (enemy&kings))
 
+
 {-# INLINE  getRookCheckerRays #-}
 getRookCheckerRays :: Position -> Board
 getRookCheckerRays Position {..} =
   rookAttacks (enemy .| player) (lsb (enemy&kings))
+
 
 {-# INLINE  getPinnedPieces #-}
 getPinnedPieces :: Board -> Board -> Board -> Position -> Board
@@ -61,6 +66,7 @@ getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
     attackers = sliderRays & player
     king = enemy & kings
     allPieces = player .| enemy
+
 
 {-# INLINE  getEnPassantPinnedPawns #-}
 getEnPassantPinnedPawns :: Position -> Board
@@ -94,6 +100,7 @@ getKingQueenRay king n
     diag = antiDiagMovesVec !! n
     antiDiag = diagMovesVec !! n
 
+
 {-# INLINE  getKingBishopRay #-}
 getKingBishopRay :: Board -> Square -> Board
 getKingBishopRay king n
@@ -103,6 +110,7 @@ getKingBishopRay king n
   where
     diag = antiDiagMovesVec !! n
     antiDiag = diagMovesVec !! n
+
 
 {-# INLINE  getKingRookRay #-}
 getKingRookRay :: Board -> Square -> Board
@@ -119,6 +127,7 @@ getKingRookRay king n
 allPlayerAttacks :: Position -> Board
 allPlayerAttacks pos@Position {..} =
   allAttacks player enemy color pos
+
 
 {-# INLINE  allEnemyAttacks #-}
 allEnemyAttacks :: Position -> Board
@@ -146,11 +155,13 @@ pawnAttacks color board = case color of
   White -> (board .\ file_A) << 7 .| (board .\ file_H) << 9
   Black -> (board .\ file_A) >> 9 .| (board .\ file_H) >> 7
 
+
 {-# INLINE  pawnDiagAttacks #-}
 pawnDiagAttacks :: Color -> Board -> Board
 pawnDiagAttacks color board = case color of
   White -> (board .\ file_H) << 9
   Black -> (board .\ file_A) >> 9
+
 
 {-# INLINE  pawnAntiDiagAttacks #-}
 pawnAntiDiagAttacks :: Color -> Board -> Board
@@ -158,13 +169,16 @@ pawnAntiDiagAttacks color board = case color of
   White -> (board .\ file_A) << 7
   Black -> (board .\ file_H) >> 7
 
+
 {-# INLINE  knightAttacks #-}
 knightAttacks :: Square -> Board
 knightAttacks n = knightMovesVec !! n
 
+
 {-# INLINE  kingAttacks #-}
 kingAttacks :: Square -> Board
 kingAttacks n = kingMovesVec !! n
+
 
 {-# INLINE  bishopAttacks #-}
 bishopAttacks :: Board -> Square -> Board
@@ -174,6 +188,7 @@ bishopAttacks allPieces n =
   .| sliding msb (southWestMovesVec !!) allPieces n
   .| sliding msb (southEastMovesVec !!) allPieces n
 
+
 {-# INLINE  rookAttacks #-}
 rookAttacks :: Board -> Square -> Board
 rookAttacks allPieces n =
@@ -181,6 +196,7 @@ rookAttacks allPieces n =
   .| sliding lsb (eastMovesVec !!) allPieces n
   .| sliding msb (westMovesVec !!) allPieces n
   .| sliding msb (southMovesVec !!) allPieces n
+
 
 {-# INLINE  queenAttacks #-}
 queenAttacks :: Board -> Square -> Board

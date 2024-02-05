@@ -57,13 +57,13 @@ pawnScore :: Score
 pawnScore = 100
 
 knightScore :: Score
-knightScore = 310
+knightScore = 325
 
 bishopScore :: Score
-bishopScore = 320
+bishopScore = 335
 
 rookScore :: Score
-rookScore = 490
+rookScore = 520
 
 queenScore :: Score
-queenScore = 900
+queenScore = 1000

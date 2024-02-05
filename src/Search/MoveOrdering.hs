@@ -40,20 +40,20 @@ getSortedMoves !depth !ply pos = do
       <> killerMoves
       <> filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
-  pure if notInCheck && depth >= 3
-    then splitAt 6 allMoves
+  pure if notInCheck && depth >= 2
+    then splitAt 4 allMoves
     else (allMoves, [])
   where
-    notInCheck = not (isKingInCheck pos)
-    (winningCaptures, losingCaptures) = getSortedCaptures pos
-    quietMoves                        = allQuietMoves     pos
+    notInCheck = not $ isKingInCheck pos
+    (winningCaptures, losingCaptures) = getSortedCaptures   pos
+    quietMoves                        = getSortedQuietMoves pos
 
 
 {-# INLINE  getSortedKillers #-}
 getSortedKillers :: (?killersTable::KillersTable)
   => Ply -> Position -> IO [Move]
-getSortedKillers !ply pos
-  = sortOn (Down . getMoveScore) <$> killerMoves
+getSortedKillers !ply pos =
+  sortOn (Down . getMoveScore) <$> killerMoves
   where
     getMoveScore mv = - evaluatePosition (makeMove mv pos)
     killerMoves     =
@@ -62,11 +62,26 @@ getSortedKillers !ply pos
 
 {-# INLINE  getSortedCaptures #-}
 getSortedCaptures :: Position -> ([Move], [Move])
-getSortedCaptures pos
-  = bimapBoth (map fst)
-      $ partition ((>= 0) . snd)
-      $ sortOn (Down . snd)
-      $ map attachEval captures
+getSortedCaptures pos =
+  bimapBoth (map fst)
+    $ partition ((>= 0) . snd)
+    $ sortOn (Down . snd)
+    $ map attachEval
+    $ allCaptures pos
   where
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
-    captures      = allCaptures pos
+
+
+{-# INLINE  getSortedQuietMoves #-}
+getSortedQuietMoves :: Position -> [Move]
+getSortedQuietMoves pos =
+  sortOn (Down . getMoveScore) $ allQuietMoves pos
+  where
+    getMoveScore mv = - evaluatePosition (makeMove mv pos)
+
+
+{-# INLINE  getWinningCaptures #-}
+getWinningCaptures :: Position -> [Move]
+getWinningCaptures pos =
+  filter ((>= 0) . (`evaluateCaptureExchange` pos))
+    $ allCaptures pos

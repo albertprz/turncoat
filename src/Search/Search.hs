@@ -55,7 +55,7 @@ negamax !alpha !beta !depth !ply pos
        if isKingInCheck pos || (ply < 40 && hasSingleMove)
         then depth + 1
         else depth
-     hasSingleMove = not (hasMultiple $ allMoves pos)
+     hasSingleMove = not $ hasMultiple $ allMoves pos
 
 
 {-# INLINE  cacheNodeScore #-}
@@ -117,10 +117,10 @@ getMovesScore :: (?killersTable :: KillersTable, ?tTable::TTable)
 getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
   mainSearchScore <- mainMovesSearch
   maybe reducedMovesSearch (pure . Just) mainSearchScore
-  where
-    mainMovesSearch      = movesSearch False mainMoves
-    reducedMovesSearch   = movesSearch True  reducedMoves
 
+  where
+    mainMovesSearch    = movesSearch False mainMoves
+    reducedMovesSearch = movesSearch True  reducedMoves
     movesSearch isReduced =
       findTraverse (getMoveScore beta depth ply isReduced pos)
 
@@ -135,27 +135,25 @@ getMoveScore !beta !depth !ply !isReduced pos !mvIdx mv
 
   | isReduced && not (isCheckOrWinningCapture mv pos) = do
      !alpha <- gets fst
-     let !betaWindow = alpha + 1
-     !score   <- negate <$> liftIO (negamax (-betaWindow) (-alpha)
-                                           (lmrDepth - 1)
-                                           (ply + 1) (makeMove mv pos))
+     !score <- getNegamaxScore alpha (alpha + 1) lmrDepth
      if score > alpha
        then getMoveScore beta depth ply False pos mvIdx mv
        else pure Nothing
 
   | otherwise = do
      !alpha <- gets fst
-     !score   <- negate <$> liftIO (negamax (-beta) (-alpha) (depth - 1)
-                                             (ply + 1) (makeMove mv pos))
+     !score <- getNegamaxScore alpha beta depth
      let !nodeType = getNodeType alpha beta score
      advanceState beta score ply nodeType mv pos
 
   where
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 10)
-    lmrDepth  = ceiling
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 16)
+    lmrDepth  = min (depth - 1) $ ceiling
       (lmrFactor * (fromIntegral depth * 2 / 3)
         + (1 - lmrFactor) * (fromIntegral depth - 1))
-
+    getNegamaxScore !alpha' !beta' !depth' =
+      negate <$> liftIO (negamax (-beta') (-alpha') (depth' - 1)
+                                 (ply + 1) (makeMove mv pos))
 
 
 {-# INLINE  getNullMoveScore #-}

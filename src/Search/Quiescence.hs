@@ -2,14 +2,15 @@ module Search.Quiescence (quiesceSearch) where
 
 import           AppPrelude
 
+import           Models.Move
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
 
-import           Control.Monad.State
-import           Evaluation.Evaluation (evaluatePosition)
-import           Models.Move
+import           Evaluation.Evaluation
 import           Search.MoveOrdering
+
+import           Control.Monad.State
 
 
 {-# INLINE  quiesceSearch #-}
@@ -20,10 +21,14 @@ quiesceSearch !alpha !beta !ply pos
   where
     (score, finalAlpha) = runState scoreState newAlpha
     scoreState = findTraverse (getMoveScore beta ply pos) captures
-    captures = fst $ getSortedCaptures pos
+    captures   = getWinningCaptures pos
 
     newAlpha = max alpha standPat
-    standPat = evaluatePosition pos
+    standPat
+      | outOfEvalBounds = pos.materialScore
+      | otherwise       = evaluatePosition pos
+    outOfEvalBounds = pos.materialScore < alpha - lazyEvalMargin
+                    || pos.materialScore > beta  + lazyEvalMargin
 
 
 {-# INLINE  getMoveScore #-}
@@ -43,3 +48,7 @@ advanceState !beta !score !nodeType =
     PV  -> Nothing          <$ put score
     Cut -> pure $ Just beta
     All -> pure Nothing
+
+
+lazyEvalMargin :: Score
+lazyEvalMargin = 500

@@ -35,7 +35,7 @@ evaluateMaterial Position {..} =
 {-# INLINE  boardScore #-}
 boardScore :: Score -> Vector Score -> Board -> Score
 boardScore !pieceTypeScore !pieceSquareTable !board =
-  foldlBoard (Score 0) (+) pieceToScore board
+  foldlBoard 0 (+) pieceToScore board
   where
     pieceToScore !n = pieceTypeScore + pieceSquareTable !! n
 
@@ -57,13 +57,13 @@ pawnScore :: Score
 pawnScore = 100
 
 knightScore :: Score
-knightScore = 325
+knightScore = 330
 
 bishopScore :: Score
-bishopScore = 335
+bishopScore = 340
 
 rookScore :: Score
-rookScore = 520
+rookScore = 510
 
 queenScore :: Score
 queenScore = 1000

@@ -4,11 +4,11 @@ import           AppPrelude
 
 import           Constants.Boards
 import           Evaluation.Material
-import           Evaluation.PieceSquareTables
+import           Evaluation.PieceTables
 import           Models.Move
 import           Models.Piece
 import           Models.Position
-import qualified MoveGen.PieceAttacks         as MoveGen
+import qualified MoveGen.PieceAttacks   as MoveGen
 
 
 {-# INLINE  makeMove #-}

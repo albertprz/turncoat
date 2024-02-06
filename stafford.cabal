@@ -30,7 +30,7 @@ library
       Constants.Boards
       Evaluation.Evaluation
       Evaluation.Material
-      Evaluation.PieceSquareTables
+      Evaluation.PieceTables
       Evaluation.StaticExchange
       Models.Command
       Models.KillersTable

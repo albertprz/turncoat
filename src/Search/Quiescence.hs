@@ -24,12 +24,7 @@ quiesceSearch !alpha !beta !ply pos
     captures   = getWinningCaptures pos
 
     newAlpha = max alpha standPat
-    standPat
-      | outOfEvalBounds = pos.materialScore
-      | otherwise       = evaluatePosition pos
-    outOfEvalBounds = pos.materialScore < alpha - lazyEvalMargin
-                    || pos.materialScore > beta  + lazyEvalMargin
-
+    standPat = evaluatePosition pos
 
 {-# INLINE  getMoveScore #-}
 getMoveScore :: Score -> Ply -> Position -> Int -> Move -> State Score (Maybe Score)
@@ -48,7 +43,3 @@ advanceState !beta !score !nodeType =
     PV  -> Nothing          <$ put score
     Cut -> pure $ Just beta
     All -> pure Nothing
-
-
-lazyEvalMargin :: Score
-lazyEvalMargin = 500

@@ -4,6 +4,8 @@ import           AppPrelude
 
 import           Constants.Boards
 import           Evaluation.Material
+import           Evaluation.PieceTables
+import           Models.Move
 import           Models.Position
 import           Models.Score
 import           MoveGen.PieceAttacks
@@ -19,9 +21,12 @@ evaluatePosition pos@Position {..} =
 
 {-# INLINE  evaluatePositionBonuses #-}
 evaluatePositionBonuses :: Position -> Score
-evaluatePositionBonuses Position {..} =
+evaluatePositionBonuses pos@Position {..} =
 
-    max 0 (onesScore (player & bishops) - 1) * bishopPairBonus
+    evaluatePieceMobility player enemy pos
+  - evaluatePieceMobility enemy player pos
+
+  + max 0 (onesScore (player & bishops) - 1) * bishopPairBonus
   - max 0 (onesScore (enemy  & bishops) - 1) * bishopPairBonus
 
 
@@ -60,6 +65,33 @@ evaluateKingSafety defender attackerAttacks kings
     !kingMoves         = kingAttacks king .\ defender
     !kingUnsafeSquares = kingMoves & attackerAttacks
     !king              = lsb (defender & kings)
+
+
+{-# INLINE  evaluatePieceMobility #-}
+evaluatePieceMobility :: Board -> Board -> Position -> Score
+evaluatePieceMobility player enemy
+    Position {knights, bishops, rooks, queens} =
+  knightsMobility + bishopsMobility + rooksMobility + queensMobility
+  where
+    !knightsMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore knightMobilityTable . knightAttacks)
+        (player & knights)
+    !bishopsMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore bishopMobilityTable . bishopAttacks allPieces)
+        (player & bishops)
+    !rooksMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore rookMobilityTable . rookAttacks allPieces)
+        (player & rooks)
+    !queensMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore queenMobilityTable . queenAttacks allPieces)
+        (player & queens)
+
+    getMobilityScore !table = (table !!) . ones . (.\ player)
+    !allPieces = player .| enemy
 
 
 {-# INLINE  evaluatePieceThreats #-}

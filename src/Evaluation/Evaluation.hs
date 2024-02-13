@@ -8,6 +8,7 @@ import           Evaluation.PieceTables
 import           Models.Move
 import           Models.Position
 import           Models.Score
+import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 
 
@@ -15,45 +16,68 @@ import           MoveGen.PieceAttacks
 evaluatePosition :: Position -> Score
 evaluatePosition pos@Position {..} =
   materialScore
-  + evaluatePositionBonuses pos
-  - evaluatePositionMaluses pos
+  + evaluatePositionHelper enemyPos.attacked pos
+  - evaluatePositionHelper pos.attacked      enemyPos
+  where
+    enemyPos = makeNullMove pos
+
+
+{-# INLINE  evaluatePositionHelper #-}
+evaluatePositionHelper :: Board -> Position -> Score
+evaluatePositionHelper playerAttacked pos =
+    evaluatePositionBonuses pos
+  - evaluatePositionMaluses playerAttacked pos
 
 
 {-# INLINE  evaluatePositionBonuses #-}
 evaluatePositionBonuses :: Position -> Score
 evaluatePositionBonuses pos@Position {..} =
-
     evaluatePieceMobility player enemy pos
-  - evaluatePieceMobility enemy player pos
-
   + max 0 (onesScore (player & bishops) - 1) * bishopPairBonus
-  - max 0 (onesScore (enemy  & bishops) - 1) * bishopPairBonus
+  -- evaluate Passed pawns
+  -- evaluate knight outposts
 
 
 {-# INLINE  evaluatePositionMaluses #-}
-evaluatePositionMaluses :: Position -> Score
-evaluatePositionMaluses pos@Position {..} =
-
-    evaluateKingSafety   player kings         enemyAttacks
-  - evaluateKingSafety   enemy  kings         playerAttacks
-
-  + evaluatePieceThreats player playerAttacks enemyAttacks pos
-  - evaluatePieceThreats enemy  enemyAttacks  playerAttacks pos
-
+evaluatePositionMaluses :: Board -> Position -> Score
+evaluatePositionMaluses playerAttacked pos@Position {..} =
+    evaluateKingSafety   player kings          attacked
+  + evaluatePieceThreats player playerAttacked attacked pos
   + evaluateDoubledPawns  (player & pawns)
-  - evaluateDoubledPawns  (enemy  & pawns)
-
   + evaluateIsolatedPawns (player & pawns)
-  - evaluateIsolatedPawns (enemy  & pawns)
 
+
+{-# INLINE  evaluatePieceMobility #-}
+evaluatePieceMobility :: Board -> Board -> Position -> Score
+evaluatePieceMobility player enemy
+    Position {knights, bishops, rooks, queens, pinnedPieces} =
+  knightsMobility + bishopsMobility + rooksMobility + queensMobility
   where
-    !playerAttacks  = allPlayerAttacks pos
-    !enemyAttacks   = attacked
+    !knightsMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore knightMobilityTable . knightAttacks)
+        (unpinned & knights)
+    !bishopsMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore bishopMobilityTable . bishopAttacks allPieces)
+        (unpinned & bishops)
+    !rooksMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore rookMobilityTable . rookAttacks allPieces)
+        (unpinned & rooks)
+    !queensMobility =
+      foldlBoard 0 (+)
+        (getMobilityScore queenMobilityTable . queenAttacks allPieces)
+        (unpinned & queens)
+
+    getMobilityScore !table = (table !!) . ones . (.\ player)
+    !unpinned = player .\ pinnedPieces
+    !allPieces = player .| enemy
 
 
 {-# INLINE  evaluateKingSafety #-}
 evaluateKingSafety :: Board -> Board -> Board -> Score
-evaluateKingSafety defender attackerAttacks kings
+evaluateKingSafety defender kings attackerAttacks
   | kingMoves == 0 = 0
   | otherwise = kingUnsafety + kingUnsafeArea
   where
@@ -67,37 +91,10 @@ evaluateKingSafety defender attackerAttacks kings
     !king              = lsb (defender & kings)
 
 
-{-# INLINE  evaluatePieceMobility #-}
-evaluatePieceMobility :: Board -> Board -> Position -> Score
-evaluatePieceMobility player enemy
-    Position {knights, bishops, rooks, queens} =
-  knightsMobility + bishopsMobility + rooksMobility + queensMobility
-  where
-    !knightsMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore knightMobilityTable . knightAttacks)
-        (player & knights)
-    !bishopsMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore bishopMobilityTable . bishopAttacks allPieces)
-        (player & bishops)
-    !rooksMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore rookMobilityTable . rookAttacks allPieces)
-        (player & rooks)
-    !queensMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore queenMobilityTable . queenAttacks allPieces)
-        (player & queens)
-
-    getMobilityScore !table = (table !!) . ones . (.\ player)
-    !allPieces = player .| enemy
-
-
 {-# INLINE  evaluatePieceThreats #-}
 evaluatePieceThreats :: Board -> Board -> Board -> Position -> Score
 evaluatePieceThreats defender defenderAttacks attackerAttacks Position {..} =
- pieceThreatMalus * threatenedScore `div` pawnScore
+ (pieceThreatMalus * threatenedScore) `div` pawnScore
   where
     !threatenedScore =
         onesScore (threatened & pawns)   * pawnScore

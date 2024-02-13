@@ -18,9 +18,7 @@ lookupMoves :: (?killersTable :: KillersTable) => Ply -> IO [Move]
 lookupMoves !ply = do
   !firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
   !secondMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 1)
-  !thirdMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 2)
-  !fourthMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 3)
-  pure $ catMaybes [firstMove, secondMove, thirdMove, fourthMove]
+  pure $ catMaybes [firstMove, secondMove]
   where
     !idx = killerSlots * fromIntegral ply
 
@@ -29,20 +27,11 @@ lookupMoves !ply = do
 insert :: (?killersTable :: KillersTable) => Ply -> Position -> Move -> IO ()
 insert !ply pos mv = when (isQuietMove mv pos) do
   !firstMove <- Vector.unsafeRead ?killersTable idx
-  !secondMove <- Vector.unsafeRead ?killersTable (idx + 1)
-  !thirdMove <- Vector.unsafeRead ?killersTable (idx + 2)
-  let storedMoves = catMaybes [decodeMove firstMove,
-                               decodeMove secondMove,
-                               decodeMove thirdMove]
-  unless (mv `elem` storedMoves) do
+  unless (mv `elem` decodeMove firstMove) do
     Vector.unsafeWrite ?killersTable idx
                                     (encodeMove $ Just mv)
     Vector.unsafeWrite ?killersTable (idx + 1)
                                      firstMove
-    Vector.unsafeWrite ?killersTable (idx + 2)
-                                     secondMove
-    Vector.unsafeWrite ?killersTable (idx + 3)
-                                     thirdMove
   where
     !idx = killerSlots * fromIntegral ply
 

@@ -24,8 +24,7 @@ makeMove Move {..} =
 
 {-# INLINE  makeNullMove #-}
 makeNullMove :: Position -> Position
-makeNullMove =
-  switchPlayers
+makeNullMove = switchPlayers
 
 
 {-# INLINE  switchPlayers #-}

@@ -59,7 +59,7 @@ negamax !alpha !beta !depth !ply pos
 
 
 {-# INLINE  cacheNodeScore #-}
-cacheNodeScore :: (?killersTable :: KillersTable, ?tTable:: TTable)
+cacheNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO Score
 cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
   (!score, !bestMove) <- getNodeScore alpha beta depth ply pos
@@ -98,23 +98,23 @@ getNodeScore !alpha !beta !depth !ply pos
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
-    traverseMoves moves
+    traverseMoves (moves, hasTTMove)
       | null $ uncurry (<>) moves =
           if isKingInCheck pos
              then pure (minBound, Nothing)
              else pure (       0, Nothing)
       | otherwise =
         do (!score, (!newAlpha, !bestMove)) <-
-             runStateT (getMovesScore beta depth ply pos moves)
+             runStateT (getMovesScore beta depth ply moves hasTTMove pos)
                        (alpha, Nothing)
            pure (fromMaybe newAlpha score, bestMove)
 
 
 {-# INLINE  getMovesScore #-}
-getMovesScore :: (?killersTable :: KillersTable, ?tTable::TTable)
-  => Score -> Depth -> Ply -> Position -> ([Move], [Move])
+getMovesScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
+  => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
-getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
+getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
   mainSearchScore <- mainMovesSearch
   maybe reducedMovesSearch (pure . Just) mainSearchScore
 
@@ -122,34 +122,43 @@ getMovesScore !beta !depth !ply pos (mainMoves, reducedMoves) = do
     mainMovesSearch    = movesSearch False mainMoves
     reducedMovesSearch = movesSearch True  reducedMoves
     movesSearch isReduced =
-      findTraverse (getMoveScore beta depth ply isReduced pos)
+      findTraverse (getMoveScore beta depth ply isReduced hasTTMove pos)
 
 
 -- Features:
 -- - Late Move Reductions
+-- - Principal Variation Search
 
 {-# INLINE  getMoveScore #-}
 getMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
-  => Score -> Depth -> Ply -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
-getMoveScore !beta !depth !ply !isReduced pos !mvIdx mv
+  => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
+getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
-  | isReduced && not (isCheckOrWinningCapture mv pos) = do
-     !alpha <- gets fst
-     !score <- getNegamaxScore alpha (alpha + 1) lmrDepth
-     if score > alpha
-       then getMoveScore beta depth ply False pos mvIdx mv
-       else pure Nothing
+  | isReduced && not (isCheckOrWinningCapture mv pos) =
+      nullWindowSearch lmrDepth
 
-  | otherwise = do
-     !alpha <- gets fst
-     !score <- getNegamaxScore alpha beta depth
-     let !nodeType = getNodeType alpha beta score
-     advanceState beta score ply nodeType mv pos
+  | hasTTMove && mvIdx > 0 =
+      nullWindowSearch depth
+
+  | otherwise = fullSearch
 
   where
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 16)
+    nullWindowSearch !depth' = do
+     !alpha <- gets fst
+     !score <- getNegamaxScore alpha (alpha + 1) depth'
+     if score > alpha
+       then fullSearch
+       else pure Nothing
+
+    fullSearch = do
+      !alpha <- gets fst
+      !score <- getNegamaxScore alpha beta depth
+      let !nodeType = getNodeType alpha beta score
+      advanceState beta score ply nodeType mv pos
+
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 30)
     lmrDepth  = min (depth - 1) $ ceiling
-      (lmrFactor * (fromIntegral depth * 2 / 3)
+      (lmrFactor * (fromIntegral depth * 4 / 5)
         + (1 - lmrFactor) * (fromIntegral depth - 1))
     getNegamaxScore !alpha' !beta' !depth' =
       negate <$> liftIO (negamax (-beta') (-alpha') (depth' - 1)

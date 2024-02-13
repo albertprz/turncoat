@@ -22,8 +22,8 @@ rookMobilityTable = Vector.fromList
 
 queenMobilityTable :: Vector Score
 queenMobilityTable = Vector.fromList
-  [-20, -13, -9, -6, -3, -1, 1, 3, 5, 6, 7, 8, 9, 10,
-   11, 12, 13, 14, 15, 16, 17, 17, 18, 18, 19, 19, 20, 20 ]
+  [-10, -7, -4, -2, -1, 0, 1, 2, 2, 3, 3, 4, 4, 5,
+   5, 6, 6, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10 ]
 
 
 blackPawnSquareTable :: Vector Score

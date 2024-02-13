@@ -2,6 +2,7 @@ module Search.MoveOrdering where
 
 import           AppPrelude
 
+import           Bookhound.Utils.List      (hasSome)
 import           Evaluation.Evaluation     (evaluatePosition)
 import           Evaluation.StaticExchange
 import           Models.KillersTable       (KillersTable)
@@ -12,9 +13,10 @@ import           Models.Score
 import           Models.TranspositionTable (TTable)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove          (makeMove)
-import           MoveGen.MoveQueries       (isKingInCheck, isLegalQuietMove)
+import           MoveGen.MoveQueries
 import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
+
 
 
 -- Move Ordering:
@@ -28,21 +30,21 @@ import           MoveGen.PieceQuietMoves   (allQuietMoves)
 -- Late killers / quiet moves
 
 {-# INLINE  getSortedMoves #-}
-getSortedMoves :: (?killersTable :: KillersTable, ?tTable::TTable)
-  => Depth -> Ply -> Position -> IO ([Move], [Move])
+getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable)
+  => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
-  ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
+  ttMove   <- toList <$> TTable.lookupBestMove (getZobristKey pos)
   killerMoves <- filter (`notElem` ttMove) <$> getSortedKillers ply pos
   let
     hashMoves = ttMove <> killerMoves
-    allMoves = ttMove
+    allTheMoves = ttMove
       <> filter (`notElem` ttMove) winningCaptures
       <> killerMoves
       <> filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
-  pure if notInCheck && depth >= 2
-    then splitAt 4 allMoves
-    else (allMoves, [])
+  pure if notInCheck && depth >= 3
+    then (splitAt 5 allTheMoves, hasSome ttMove)
+    else ((allTheMoves, []), hasSome ttMove)
   where
     notInCheck = not $ isKingInCheck pos
     (winningCaptures, losingCaptures) = getSortedCaptures   pos
@@ -50,7 +52,7 @@ getSortedMoves !depth !ply pos = do
 
 
 {-# INLINE  getSortedKillers #-}
-getSortedKillers :: (?killersTable::KillersTable)
+getSortedKillers :: (?killersTable :: KillersTable)
   => Ply -> Position -> IO [Move]
 getSortedKillers !ply pos =
   sortOn (Down . getMoveScore) <$> killerMoves

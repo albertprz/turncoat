@@ -31,7 +31,6 @@ instance GStorable StorableMove
 instance Hashable Move
 
 
-{-# INLINE  encodeMove #-}
 encodeMove :: Maybe Move -> StorableMove
 encodeMove Nothing = bit 31
 encodeMove (Just Move {..}) = StorableMove
@@ -44,7 +43,6 @@ encodeMove (Just Move {..}) = StorableMove
     Piece pieceN = piece
     Promotion promotionN = fromMaybe (Promotion 0) promotion
 
-{-# INLINE  decodeMove #-}
 decodeMove :: StorableMove -> Maybe Move
 decodeMove (StorableMove n)
   | testBit n 31 = Nothing

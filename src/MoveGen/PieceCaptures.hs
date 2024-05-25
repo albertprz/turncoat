@@ -178,6 +178,7 @@ staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..}
     kingSquare = lsb king
 
 
+{-# INLINE  pawnCapturesAndPromotions #-}
 pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board
 pawnCapturesAndPromotions enemy noPieces enPassant color n =
   pawnPromotions noPieces color board
@@ -185,6 +186,7 @@ pawnCapturesAndPromotions enemy noPieces enPassant color n =
   where
     board = toBoard n
 
+{-# INLINE  pawnPromotions #-}
 pawnPromotions :: Board -> Color -> Board -> Board
 pawnPromotions noPieces color board =
   promotions & noPieces
@@ -194,16 +196,19 @@ pawnPromotions noPieces color board =
       Black -> (board & rank_2) >> 8
 
 
+{-# INLINE  pawnCaptures #-}
 pawnCaptures :: Board -> Board -> Color -> Board -> Board
 pawnCaptures enemy enPassant color board =
   pawnAttacks color board & (enemy .| enPassant)
 
+{-# INLINE  diagPawnCaptures #-}
 diagPawnCaptures :: Board -> Color -> Square -> Board
 diagPawnCaptures enemy color n =
   pawnDiagAttacks color board & enemy
   where
     board = toBoard n
 
+{-# INLINE  antiDiagPawnCaptures #-}
 antiDiagPawnCaptures :: Board -> Color -> Square -> Board
 antiDiagPawnCaptures enemy color n =
   pawnAntiDiagAttacks color board & enemy
@@ -211,15 +216,18 @@ antiDiagPawnCaptures enemy color n =
     board = toBoard n
 
 
+{-# INLINE  knightCaptures #-}
 knightCaptures :: Board -> Square -> Board
 knightCaptures enemy n =
   knightAttacks n & enemy
 
+{-# INLINE  kingCaptures #-}
 kingCaptures :: Board -> Board -> Square -> Board
 kingCaptures enemy attacked n =
   (kingAttacks n & enemy)
   .\ attacked
 
+{-# INLINE  bishopCaptures #-}
 bishopCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 bishopCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingBishopRay king n
@@ -227,6 +235,7 @@ bishopCaptures enemy allPieces pinnedPieces king n
   where
     attacks = bishopAttacks allPieces n & enemy
 
+{-# INLINE  rookCaptures #-}
 rookCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 rookCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingRookRay king n
@@ -234,6 +243,7 @@ rookCaptures enemy allPieces pinnedPieces king n
   where
     attacks = rookAttacks allPieces n & enemy
 
+{-# INLINE  queenCaptures #-}
 queenCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 queenCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingQueenRay king n

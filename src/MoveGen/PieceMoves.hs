@@ -8,5 +8,6 @@ import           MoveGen.PieceCaptures
 import           MoveGen.PieceQuietMoves
 
 
+{-# INLINE  allMoves #-}
 allMoves :: Position -> [Move]
 allMoves = allCaptures <> allQuietMoves

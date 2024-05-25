@@ -12,7 +12,6 @@ import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 
 
-{-# INLINE  evaluatePosition #-}
 evaluatePosition :: Position -> Score
 evaluatePosition pos@Position {..} =
   materialScore
@@ -22,14 +21,12 @@ evaluatePosition pos@Position {..} =
     enemyPos = makeNullMove pos
 
 
-{-# INLINE  evaluatePositionHelper #-}
 evaluatePositionHelper :: Board -> Position -> Score
 evaluatePositionHelper playerAttacked pos =
     evaluatePositionBonuses pos
   - evaluatePositionMaluses playerAttacked pos
 
 
-{-# INLINE  evaluatePositionBonuses #-}
 evaluatePositionBonuses :: Position -> Score
 evaluatePositionBonuses pos =
     evaluatePieceMobility pos
@@ -38,7 +35,6 @@ evaluatePositionBonuses pos =
   -- evaluate knight outposts
 
 
-{-# INLINE  evaluatePositionMaluses #-}
 evaluatePositionMaluses :: Board -> Position -> Score
 evaluatePositionMaluses playerAttacked pos@Position {..} =
     evaluateKingSafety   player kings          attacked
@@ -47,7 +43,6 @@ evaluatePositionMaluses playerAttacked pos@Position {..} =
   + evaluateIsolatedPawns (player & pawns)
 
 
-{-# INLINE  evaluatePieceMobility #-}
 evaluatePieceMobility :: Position -> Score
 evaluatePieceMobility Position {..} =
   knightsMobility + bishopsMobility + rooksMobility + queensMobility
@@ -74,13 +69,11 @@ evaluatePieceMobility Position {..} =
     !allPieces = player .| enemy
 
 
-{-# INLINE  evaluateBishopPair #-}
 evaluateBishopPair :: Position -> Score
 evaluateBishopPair Position {..} =
    bishopPairBonus * max 0 (onesScore (player & bishops) - 1)
 
 
-{-# INLINE  evaluateKingSafety #-}
 evaluateKingSafety :: Board -> Board -> Board -> Score
 evaluateKingSafety defender kings attackerAttacks
   | kingMoves == 0 = 0
@@ -96,7 +89,6 @@ evaluateKingSafety defender kings attackerAttacks
     !king              = lsb (defender & kings)
 
 
-{-# INLINE  evaluatePieceThreats #-}
 evaluatePieceThreats :: Board -> Board -> Board -> Position -> Score
 evaluatePieceThreats defender defenderAttacks attackerAttacks Position {..} =
  (pieceThreatMalus * threatenedScore) `div` pawnScore
@@ -111,7 +103,6 @@ evaluatePieceThreats defender defenderAttacks attackerAttacks Position {..} =
       attackerAttacks & defender .\ defenderAttacks
 
 
-{-# INLINE  evaluateDoubledPawns #-}
 evaluateDoubledPawns :: Board -> Score
 evaluateDoubledPawns pawns =
   doubledPawnMalus * doubledPawnsCount
@@ -127,7 +118,6 @@ evaluateDoubledPawns pawns =
       + max 0 (onesScore (file_H & pawns) - 1)
 
 
-{-# INLINE  evaluateIsolatedPawns #-}
 evaluateIsolatedPawns :: Board -> Score
 evaluateIsolatedPawns pawns =
   isolatedPawnMalus * isolatedPawnsCount

@@ -13,7 +13,6 @@ import           MoveGen.MoveQueries          (isQuietMove)
 type KillersTable = IOVector StorableMove
 
 
-{-# INLINE  lookupMoves #-}
 lookupMoves :: (?killersTable :: KillersTable) => Ply -> IO [Move]
 lookupMoves !ply = do
   !firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
@@ -23,7 +22,6 @@ lookupMoves !ply = do
     !idx = killerSlots * fromIntegral ply
 
 
-{-# INLINE  insert #-}
 insert :: (?killersTable :: KillersTable) => Ply -> Position -> Move -> IO ()
 insert !ply pos mv = when (isQuietMove mv pos) do
   !firstMove <- Vector.unsafeRead ?killersTable idx

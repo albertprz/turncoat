@@ -23,7 +23,6 @@ import           MoveGen.PieceMoves
 -- Features:
 -- - Iterative deepening
 
-{-# INLINE  getBestMove #-}
 getBestMove :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth pos =
@@ -37,7 +36,6 @@ getBestMove !depth pos =
 -- - Transposition table score caching
 -- - Search extensions
 
-{-# INLINE  negamax #-}
 negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Score -> Depth -> Ply -> Position -> IO Score
 negamax !alpha !beta !depth !ply pos
@@ -58,7 +56,6 @@ negamax !alpha !beta !depth !ply pos
      hasSingleMove = not $ hasMultiple $ allMoves pos
 
 
-{-# INLINE  cacheNodeScore #-}
 cacheNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO Score
 cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
@@ -84,7 +81,6 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
 -- - Quiescence search
 -- - Null move prunning (R = 2)
 
-{-# INLINE  getNodeScore #-}
 getNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Score -> Depth -> Ply -> Position -> IO (Score, Maybe Move)
 getNodeScore !alpha !beta !depth !ply pos
@@ -110,7 +106,6 @@ getNodeScore !alpha !beta !depth !ply pos
            pure (fromMaybe newAlpha score, bestMove)
 
 
-{-# INLINE  getMovesScore #-}
 getMovesScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
@@ -129,7 +124,6 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
 -- - Late Move Reductions
 -- - Principal Variation Search
 
-{-# INLINE  getMoveScore #-}
 getMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
@@ -165,7 +159,6 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
                                  (ply + 1) (makeMove mv pos))
 
 
-{-# INLINE  getNullMoveScore #-}
 getNullMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
@@ -183,7 +176,6 @@ getNullMoveScore !beta !depth !ply pos
     !alpha = beta - 1
 
 
-{-# INLINE  advanceState #-}
 advanceState :: (?killersTable :: KillersTable)
   => Score -> Score -> Ply -> NodeType -> Move -> Position -> SearchM (Maybe Score)
 advanceState !beta !score !ply !nodeType !mv pos =

@@ -11,7 +11,6 @@ import           Models.Score
 import           MoveGen.PieceMoves
 
 
-{-# INLINE  perft #-}
 perft :: Depth -> Position -> Int
 perft = go 0
   where
@@ -23,7 +22,6 @@ perft = go 0
         moves = allMoves pos
 
 
-{-# INLINE  divide #-}
 divide :: Depth -> Position -> Map Move Int
 divide !depth !pos
   | depth == 1 = Map.fromList $ toList ((,1) <$> moves)

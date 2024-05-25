@@ -78,8 +78,9 @@ default-extensions:
 
 ghc-options:
 - -O2
-- -optc-O3
 - -funbox-strict-fields
+- -fspec-constr-count=24
+- -funfolding-use-threshold=32
 - -Wall
 - -Wcompat
 - -Wincomplete-record-updates

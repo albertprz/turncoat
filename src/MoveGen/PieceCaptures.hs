@@ -15,7 +15,6 @@ import           MoveGen.PieceAttacks
 -- - En passant capture
 -- - Pawn promotions
 
-{-# INLINE  allCaptures #-}
 allCaptures :: Position -> [Move]
 allCaptures pos@Position {..}
 
@@ -49,7 +48,6 @@ allCaptures pos@Position {..}
     king = player&kings
 
 
-{-# INLINE  allCapturesHelper #-}
 allCapturesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
 allCapturesHelper allPieces king allKingCaptures Position {..} f g =
 
@@ -96,7 +94,6 @@ allCapturesHelper allPieces king allKingCaptures Position {..} f g =
     noPieces = (~) allPieces
 
 
-{-# INLINE  staticExchangeCaptures #-}
 staticExchangeCaptures :: Square -> Position -> [Move]
 staticExchangeCaptures target pos@Position {..}
 
@@ -130,7 +127,6 @@ staticExchangeCaptures target pos@Position {..}
     king = player&kings
 
 
-{-# INLINE  staticExchangeCapturesHelper #-}
 staticExchangeCapturesHelper :: Square -> Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
 staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..} f g =
 
@@ -158,6 +154,7 @@ staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..}
                              (player&rookAttackers)
 
     $ foldBoardMoves  Queen  (f . queenCaptures targetBoard
+
                                     allPieces pinnedPieces king)
                              (player&queenAttackers)
     allKingCaptures
@@ -181,7 +178,6 @@ staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..}
     kingSquare = lsb king
 
 
-{-# INLINE  pawnCapturesAndPromotions #-}
 pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board
 pawnCapturesAndPromotions enemy noPieces enPassant color n =
   pawnPromotions noPieces color board
@@ -189,7 +185,6 @@ pawnCapturesAndPromotions enemy noPieces enPassant color n =
   where
     board = toBoard n
 
-{-# INLINE  pawnPromotions #-}
 pawnPromotions :: Board -> Color -> Board -> Board
 pawnPromotions noPieces color board =
   promotions & noPieces
@@ -199,19 +194,16 @@ pawnPromotions noPieces color board =
       Black -> (board & rank_2) >> 8
 
 
-{-# INLINE  pawnCaptures #-}
 pawnCaptures :: Board -> Board -> Color -> Board -> Board
 pawnCaptures enemy enPassant color board =
   pawnAttacks color board & (enemy .| enPassant)
 
-{-# INLINE  diagPawnCaptures #-}
 diagPawnCaptures :: Board -> Color -> Square -> Board
 diagPawnCaptures enemy color n =
   pawnDiagAttacks color board & enemy
   where
     board = toBoard n
 
-{-# INLINE  antiDiagPawnCaptures #-}
 antiDiagPawnCaptures :: Board -> Color -> Square -> Board
 antiDiagPawnCaptures enemy color n =
   pawnAntiDiagAttacks color board & enemy
@@ -219,18 +211,15 @@ antiDiagPawnCaptures enemy color n =
     board = toBoard n
 
 
-{-# INLINE  knightCaptures #-}
 knightCaptures :: Board -> Square -> Board
 knightCaptures enemy n =
   knightAttacks n & enemy
 
-{-# INLINE  kingCaptures #-}
 kingCaptures :: Board -> Board -> Square -> Board
 kingCaptures enemy attacked n =
   (kingAttacks n & enemy)
   .\ attacked
 
-{-# INLINE  bishopCaptures #-}
 bishopCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 bishopCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingBishopRay king n
@@ -238,7 +227,6 @@ bishopCaptures enemy allPieces pinnedPieces king n
   where
     attacks = bishopAttacks allPieces n & enemy
 
-{-# INLINE  rookCaptures #-}
 rookCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 rookCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingRookRay king n
@@ -246,7 +234,6 @@ rookCaptures enemy allPieces pinnedPieces king n
   where
     attacks = rookAttacks allPieces n & enemy
 
-{-# INLINE  queenCaptures #-}
 queenCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 queenCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingQueenRay king n

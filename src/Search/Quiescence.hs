@@ -8,12 +8,12 @@ import           Models.Score
 import           MoveGen.MakeMove
 
 import           Evaluation.Evaluation
-import           Search.MoveOrdering
 
 import           Control.Monad.State
+import           Evaluation.StaticExchange (evaluateCaptureExchange)
+import           MoveGen.PieceCaptures     (allCaptures)
 
 
-{-# INLINE  quiesceSearch #-}
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
 quiesceSearch !alpha !beta !ply pos
   | standPat >= beta = beta
@@ -26,7 +26,6 @@ quiesceSearch !alpha !beta !ply pos
     newAlpha = max alpha standPat
     standPat = evaluatePosition pos
 
-{-# INLINE  getMoveScore #-}
 getMoveScore :: Score -> Ply -> Position -> Int -> Move -> State Score (Maybe Score)
 getMoveScore !beta !ply pos _ mv =
   do !alpha <- get
@@ -36,10 +35,15 @@ getMoveScore !beta !ply pos _ mv =
      advanceState beta score nodeType
 
 
-{-# INLINE  advanceState #-}
 advanceState :: Score -> Score -> NodeType -> State Score (Maybe Score)
 advanceState !beta !score !nodeType =
   case nodeType of
     PV  -> Nothing          <$ put score
     Cut -> pure $ Just beta
     All -> pure Nothing
+
+
+getWinningCaptures :: Position -> [Move]
+getWinningCaptures pos =
+  filter ((>= 0) . (`evaluateCaptureExchange` pos))
+    $ allCaptures pos

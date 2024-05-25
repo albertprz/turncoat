@@ -29,7 +29,6 @@ import           MoveGen.PieceQuietMoves   (allQuietMoves)
 -- Reduced moves:
 -- Late killers / quiet moves
 
-{-# INLINE  getSortedMoves #-}
 getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable)
   => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
@@ -51,7 +50,6 @@ getSortedMoves !depth !ply pos = do
     quietMoves                        = getSortedQuietMoves pos
 
 
-{-# INLINE  getSortedKillers #-}
 getSortedKillers :: (?killersTable :: KillersTable)
   => Ply -> Position -> IO [Move]
 getSortedKillers !ply pos =
@@ -62,7 +60,6 @@ getSortedKillers !ply pos =
       filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
 
 
-{-# INLINE  getSortedCaptures #-}
 getSortedCaptures :: Position -> ([Move], [Move])
 getSortedCaptures pos =
   bimapBoth (map fst)
@@ -74,16 +71,8 @@ getSortedCaptures pos =
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
 
 
-{-# INLINE  getSortedQuietMoves #-}
 getSortedQuietMoves :: Position -> [Move]
 getSortedQuietMoves pos =
   sortOn (Down . getMoveScore) $ allQuietMoves pos
   where
     getMoveScore mv = - evaluatePosition (makeMove mv pos)
-
-
-{-# INLINE  getWinningCaptures #-}
-getWinningCaptures :: Position -> [Move]
-getWinningCaptures pos =
-  filter ((>= 0) . (`evaluateCaptureExchange` pos))
-    $ allCaptures pos

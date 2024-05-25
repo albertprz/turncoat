@@ -15,7 +15,6 @@ import           MoveGen.PieceCaptures
 -- Quiet moves legal move generator:
 -- - Non capture moves except for pawn promotions
 
-{-# INLINE  allQuietMoves #-}
 allQuietMoves :: Position -> [Move]
 allQuietMoves pos@Position {..}
 
@@ -39,7 +38,6 @@ allQuietMoves pos@Position {..}
     king = player&kings
 
 
-{-# INLINE  quietMovesHelper #-}
 quietMovesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board)
                  -> [Move]
 quietMovesHelper allPieces king allKingMoves Position {..} f =
@@ -74,7 +72,6 @@ quietMovesHelper allPieces king allKingMoves Position {..} f =
     noPieces = (~) allPieces
 
 
-{-# INLINE  pawnAdvances #-}
 pawnAdvances :: Board -> Color -> Board -> Board
 pawnAdvances noPieces color board = advances & noPieces
   where
@@ -86,13 +83,11 @@ pawnAdvances noPieces color board = advances & noPieces
            .| ((board & rank_7) >> 8 & noPieces) >> 8
 
 
-{-# INLINE  knightMoves #-}
 knightMoves :: Board -> Square -> Board
 knightMoves noPieces n =
   knightAttacks n & noPieces
 
 
-{-# INLINE  kingMoves #-}
 kingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
 kingMoves allPieces attacked castling rooks king n =
   (kingAttacks n
@@ -100,7 +95,6 @@ kingMoves allPieces attacked castling rooks king n =
   .\ (attacked .| allPieces)
 
 
-{-# INLINE  bishopMoves #-}
 bishopMoves :: Board -> Board -> Board -> Board -> Square -> Board
 bishopMoves noPieces allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingBishopRay king n
@@ -109,7 +103,6 @@ bishopMoves noPieces allPieces pinnedPieces king n
     attacks = bishopAttacks allPieces n & noPieces
 
 
-{-# INLINE  rookMoves #-}
 rookMoves :: Board -> Board -> Board -> Board -> Square -> Board
 rookMoves noPieces allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingRookRay king n
@@ -118,7 +111,6 @@ rookMoves noPieces allPieces pinnedPieces king n
     attacks = rookAttacks allPieces n & noPieces
 
 
-{-# INLINE  queenMoves #-}
 queenMoves :: Board -> Board -> Board -> Board -> Square -> Board
 queenMoves noPieces allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingQueenRay king n
@@ -126,7 +118,6 @@ queenMoves noPieces allPieces pinnedPieces king n
   where
     attacks = queenAttacks allPieces n & noPieces
 
-{-# INLINE  kingCastlingMoves #-}
 kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
 kingCastlingMoves allPieces attacked castling rooks king n =
 

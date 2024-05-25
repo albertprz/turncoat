@@ -31,9 +31,9 @@ evaluatePositionHelper playerAttacked pos =
 
 {-# INLINE  evaluatePositionBonuses #-}
 evaluatePositionBonuses :: Position -> Score
-evaluatePositionBonuses pos@Position {..} =
-    evaluatePieceMobility player enemy pos
-  + max 0 (onesScore (player & bishops) - 1) * bishopPairBonus
+evaluatePositionBonuses pos =
+    evaluatePieceMobility pos
+  + evaluateBishopPair pos
   -- evaluate Passed pawns
   -- evaluate knight outposts
 
@@ -48,9 +48,8 @@ evaluatePositionMaluses playerAttacked pos@Position {..} =
 
 
 {-# INLINE  evaluatePieceMobility #-}
-evaluatePieceMobility :: Board -> Board -> Position -> Score
-evaluatePieceMobility player enemy
-    Position {knights, bishops, rooks, queens, pinnedPieces} =
+evaluatePieceMobility :: Position -> Score
+evaluatePieceMobility Position {..} =
   knightsMobility + bishopsMobility + rooksMobility + queensMobility
   where
     !knightsMobility =
@@ -73,6 +72,12 @@ evaluatePieceMobility player enemy
     getMobilityScore !table = (table !!) . ones . (.\ player)
     !unpinned = player .\ pinnedPieces
     !allPieces = player .| enemy
+
+
+{-# INLINE  evaluateBishopPair #-}
+evaluateBishopPair :: Position -> Score
+evaluateBishopPair Position {..} =
+   bishopPairBonus * max 0 (onesScore (player & bishops) - 1)
 
 
 {-# INLINE  evaluateKingSafety #-}

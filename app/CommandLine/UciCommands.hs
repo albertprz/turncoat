@@ -1,4 +1,4 @@
-module CommandLine.UciCommands where
+module CommandLine.UciCommands (executeCommand) where
 
 import           AppPrelude
 
@@ -9,7 +9,6 @@ import           Models.Position
 import           Models.Score
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
-import           MoveGen.PieceMoves
 import           Search.Perft
 import           Search.Search
 

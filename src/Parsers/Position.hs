@@ -1,4 +1,4 @@
-module Parsers.Position where
+module Parsers.Position (positionFenParser, squareParser) where
 
 import           AppPrelude
 
@@ -14,10 +14,6 @@ import           Models.Piece
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
-
-
-positionFromFen :: Text -> Either [ParseError] Position
-positionFromFen = runParser positionFenParser
 
 
 positionFenParser :: Parser Position

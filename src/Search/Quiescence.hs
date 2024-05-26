@@ -10,7 +10,6 @@ import           MoveGen.MakeMove
 import           Evaluation.Evaluation
 
 import           Control.Monad.State
-import           Evaluation.StaticExchange (evaluateCaptureExchange)
 import           MoveGen.PieceCaptures     (allCaptures)
 
 
@@ -47,3 +46,4 @@ getWinningCaptures :: Position -> [Move]
 getWinningCaptures pos =
   filter ((>= 0) . (`evaluateCaptureExchange` pos))
     $ allCaptures pos
+

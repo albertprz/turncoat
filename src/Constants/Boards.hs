@@ -1,6 +1,7 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Constants.Boards where
+module Constants.Boards (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  boardContains, ones, lsb, msb, toBoard, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec,
+                         shortCastleSliding, longCastleSliding, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
 
 import           AppPrelude           hiding (map)
 
@@ -17,7 +18,6 @@ type Diagonal = Int
 type Rank = Int
 type File = Int
 type Diag = Int
-type AntiDiag = Int
 
 type Shift = forall a. Bits a => a -> Square -> a
 
@@ -31,12 +31,10 @@ infixl 9 >>
 (>>) :: Shift
 (>>) = unsafeShiftR
 
-{-# INLINE  (/) #-}
 infixl 7 /
 (/) :: Square -> Square -> Square
 (/) = div
 
-{-# INLINE  (%) #-}
 infixl 7 %
 (%) :: Square -> Square -> Square
 (%) = rem
@@ -91,7 +89,6 @@ toFile n = n % 8
 toRank :: Square -> Rank
 toRank n = n / 8
 
-{-# INLINE  boardContains #-}
 boardContains :: Board -> Board -> Board
 boardContains mustHave board =
   if board & mustHave /= 0

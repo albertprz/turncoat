@@ -79,8 +79,7 @@ default-extensions:
 ghc-options:
 - -O2
 - -funbox-strict-fields
-- -fspecialise-aggressively
-- -fexpose-all-unfoldings
+- -funfolding-use-threshold=32
 - -Wall
 - -Wcompat
 - -Wincomplete-record-updates

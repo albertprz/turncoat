@@ -12,12 +12,11 @@ import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           Search.MoveOrdering
 import           Search.Quiescence
+import           Search.Perft (allMoves)
 
-import           Bookhound.Utils.List
 import           Control.Monad.State
 import           GHC.Real                  ((/))
 import           MoveGen.MoveQueries
-import           MoveGen.PieceMoves
 
 
 -- Features:
@@ -53,7 +52,9 @@ negamax !alpha !beta !depth !ply pos
        if isKingInCheck pos || (ply < 40 && hasSingleMove)
         then depth + 1
         else depth
-     hasSingleMove = not $ hasMultiple $ allMoves pos
+     hasSingleMove = hasOne $ allMoves pos
+     hasOne [_] = True
+     hasOne _ = False
 
 
 cacheNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
@@ -195,4 +196,5 @@ initialBeta :: Score
 initialBeta = maxBound - 1
 
 
-type SearchM           = StateT (Score, Maybe Move) IO
+type SearchM = StateT (Score, Maybe Move) IO
+

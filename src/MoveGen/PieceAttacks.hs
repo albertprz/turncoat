@@ -1,4 +1,4 @@
-module MoveGen.PieceAttacks where
+module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, allPlayerAttacks, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks ) where
 
 import           AppPrelude
 
@@ -127,12 +127,7 @@ allPlayerAttacks pos@Position {..} =
   allAttacks player enemy color pos
 
 
-{-# INLINE  allEnemyAttacks #-}
-allEnemyAttacks :: Position -> Board
-allEnemyAttacks pos@Position {..} =
-  allAttacks enemy player (reverseColor color) pos
-
-
+{-# INLINE  allAttacks #-}
 allAttacks :: Board -> Board -> Color -> Position -> Board
 allAttacks player enemy color
   Position {pawns, knights, bishops, rooks, queens, kings} =

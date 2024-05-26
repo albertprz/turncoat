@@ -79,7 +79,6 @@ emptyPosition = Position {
   , kings = 0
 }
 
-{-# INLINE  getZobristKey #-}
 getZobristKey :: Position -> ZKey
 getZobristKey pos@Position {..} = ZKey
   (piecesHash ^ castlingHash ^ enPassantHash ^ sideToMoveHash)

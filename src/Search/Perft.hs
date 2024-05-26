@@ -1,14 +1,15 @@
-module Search.Perft where
+module Search.Perft (perft, divide, allMoves) where
 
 import           AppPrelude
 
 import           Models.Move
 import           Models.Position
 import           MoveGen.MakeMove
+import           MoveGen.PieceQuietMoves
+import           MoveGen.PieceCaptures
 
 import qualified Data.Map           as Map
 import           Models.Score
-import           MoveGen.PieceMoves
 
 
 perft :: Depth -> Position -> Int
@@ -30,3 +31,6 @@ divide !depth !pos
   where
     getResults !mv = (mv, makeMove mv pos)
     moves = allMoves pos
+
+allMoves :: Position -> [Move]
+allMoves = allCaptures <> allQuietMoves

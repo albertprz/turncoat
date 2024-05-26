@@ -1,4 +1,4 @@
-module Evaluation.Evaluation where
+module Evaluation.Evaluation (evaluateCaptureExchange, evaluatePosition) where
 
 import           AppPrelude
 
@@ -10,6 +10,19 @@ import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
+import           MoveGen.PieceCaptures
+
+
+evaluateCaptureExchange :: Move -> Position -> Score
+evaluateCaptureExchange initialMv@Move {..} initialPos =
+  evaluateExchange end (makeMove initialMv initialPos)
+    - initialPos.materialScore
+  where
+    evaluateExchange !square pos =
+      case headMay $ staticExchangeCaptures square pos of
+        Just mv -> - (max pos.materialScore
+                        (evaluateExchange square (makeMove mv pos)))
+        Nothing -> - pos.materialScore
 
 
 evaluatePosition :: Position -> Score

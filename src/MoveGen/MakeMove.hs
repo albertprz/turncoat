@@ -1,4 +1,4 @@
-module MoveGen.MakeMove where
+module MoveGen.MakeMove (makeMove, makeNullMove, switchPlayers) where
 
 import           AppPrelude
 
@@ -11,7 +11,6 @@ import           Models.Position
 import qualified MoveGen.PieceAttacks   as MoveGen
 
 
-{-# INLINE  makeMove #-}
 makeMove :: Move -> Position -> Position
 makeMove Move {..} =
   switchPlayers
@@ -22,12 +21,10 @@ makeMove Move {..} =
     endBoard = toBoard end
 
 
-{-# INLINE  makeNullMove #-}
 makeNullMove :: Position -> Position
 makeNullMove = switchPlayers
 
 
-{-# INLINE  switchPlayers #-}
 switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
@@ -54,7 +51,6 @@ switchPlayers pos@Position {..} =
       | otherwise = MoveGen.getEnPassantPinnedPawns pos
 
 
-{-# INLINE  updatePlayerBoards #-}
 updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
 updatePlayerBoards start end endSquare pos@Position {..} =
   pos {
@@ -77,7 +73,6 @@ updatePlayerBoards start end endSquare pos@Position {..} =
   }
 
 
-{-# INLINE  movePiece #-}
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
 movePiece Pawn Nothing start end pos@Position {..} =
   pos {

@@ -1,4 +1,4 @@
-module Models.Move where
+module Models.Move  where
 
 import           AppPrelude
 import           Constants.Boards
@@ -70,6 +70,7 @@ foldBoard = foldlBoard 0 (.|)
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
 foldBoardMoves piece f board moves =
   foldlBoard moves (foldBoardSquares piece f) id board
+  
 
 {-# INLINE  foldBoardSquares #-}
 foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
@@ -90,6 +91,7 @@ foldBoardSquares piece f moves start =
   foldlBoard moves (flip cons) mapFn (f start)
   where
     mapFn = Move piece Nothing start
+    
 
 {-# INLINE  foldlBoard #-}
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a

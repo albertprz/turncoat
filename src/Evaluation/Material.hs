@@ -11,7 +11,6 @@ import           Models.Position
 import           Models.Score
 
 
-{-# INLINE  evaluateMaterial #-}
 evaluateMaterial :: Position -> Score
 evaluateMaterial Position {..} =
   go color player - go (reverseColor color) enemy
@@ -32,7 +31,6 @@ evaluateMaterial Position {..} =
     + blackKingSquareTable !! lsb (board & kings)
 
 
-{-# INLINE  boardScore #-}
 boardScore :: Score -> Vector Score -> Board -> Score
 boardScore !pieceTypeScore !pieceSquareTable !board =
   foldlBoard 0 (+) pieceToScore board
@@ -40,7 +38,6 @@ boardScore !pieceTypeScore !pieceSquareTable !board =
     pieceToScore !n = pieceTypeScore + pieceSquareTable !! n
 
 
-{-# INLINE  evaluateCapturedPiece #-}
 evaluateCapturedPiece ::  Color -> Square -> Piece -> Score
 evaluateCapturedPiece !color !n !piece =
   case piece of

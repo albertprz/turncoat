@@ -56,6 +56,7 @@ pattern White = Color 0
 pattern Black = Color 1
 
 
+{-# INLINE  reverseColor #-}
 reverseColor :: Color -> Color
 reverseColor (Color color) =
   Color (1 - color)

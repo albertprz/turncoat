@@ -9,7 +9,6 @@ import           Data.List.NonEmpty       (nonEmpty)
 import           Evaluation.Material
 import           Models.Position
 import           MoveGen.MakeMove         (makeMove)
-import           MoveGen.PieceMoves
 import           Test.Hspec
 import           Test.QuickCheck
 

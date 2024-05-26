@@ -1,4 +1,4 @@
-module Parsers.Command where
+module Parsers.Command (parseCommand) where
 
 import           AppPrelude
 

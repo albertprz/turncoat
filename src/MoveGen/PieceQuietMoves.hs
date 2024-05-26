@@ -1,4 +1,4 @@
-module MoveGen.PieceQuietMoves where
+module MoveGen.PieceQuietMoves (allQuietMoves) where
 
 
 import           AppPrelude
@@ -102,21 +102,6 @@ bishopMoves noPieces allPieces pinnedPieces king n
   where
     attacks = bishopAttacks allPieces n & noPieces
 
-
-rookMoves :: Board -> Board -> Board -> Board -> Square -> Board
-rookMoves noPieces allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingRookRay king n
-  | otherwise              = attacks
-  where
-    attacks = rookAttacks allPieces n & noPieces
-
-
-queenMoves :: Board -> Board -> Board -> Board -> Square -> Board
-queenMoves noPieces allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingQueenRay king n
-  | otherwise              = attacks
-  where
-    attacks = queenAttacks allPieces n & noPieces
 
 kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
 kingCastlingMoves allPieces attacked castling rooks king n =

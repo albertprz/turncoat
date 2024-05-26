@@ -1,10 +1,9 @@
-module Search.MoveOrdering where
+module Search.MoveOrdering (getSortedMoves ) where
 
 import           AppPrelude
 
 import           Bookhound.Utils.List      (hasSome)
-import           Evaluation.Evaluation     (evaluatePosition)
-import           Evaluation.StaticExchange
+import           Evaluation.Evaluation
 import           Models.KillersTable       (KillersTable)
 import qualified Models.KillersTable       as KillersTable
 import           Models.Move
@@ -62,7 +61,7 @@ getSortedKillers !ply pos =
 
 getSortedCaptures :: Position -> ([Move], [Move])
 getSortedCaptures pos =
-  bimapBoth (map fst)
+  bimap (map fst) (map fst)
     $ partition ((>= 0) . snd)
     $ sortOn (Down . snd)
     $ map attachEval

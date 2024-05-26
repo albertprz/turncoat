@@ -1,11 +1,11 @@
-module MoveGen.MoveQueries where
+module MoveGen.MoveQueries (isEndgame, isLegalQuietMove,  isCheckOrWinningCapture, isQuietMove, isKingInCheck) where
 
 import           AppPrelude
 
 import           Constants.Boards
 import           Data.Bits                 (Bits (testBit))
 import           Data.Composition
-import           Evaluation.StaticExchange
+import           Evaluation.Evaluation
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -71,7 +71,6 @@ isKingInCheck Position {..} =
   sliderCheckers .| leapingCheckers /= 0
 
 
-{-# INLINE  isEnemyKingInCheck #-}
 isEnemyKingInCheck :: Position -> Bool
 isEnemyKingInCheck pos@Position {..} =
   player & potentialCheckers /= 0
@@ -108,7 +107,6 @@ isRayUnblocked allPieces Move {..} =
    || testBit (queenAttacks allPieces start) end
 
 
-{-# INLINE  quietMakeMove #-}
 quietMakeMove :: Move -> Position -> Position
 quietMakeMove Move {..} pos = newPos {
     player = newPos.enemy,
@@ -121,7 +119,6 @@ quietMakeMove Move {..} pos = newPos {
     endBoard = toBoard end
 
 
-{-# INLINE  quietMovePiece #-}
 quietMovePiece :: Piece -> Board -> Board -> Position -> Position
 quietMovePiece Pawn start end pos@Position {..} =
   pos {

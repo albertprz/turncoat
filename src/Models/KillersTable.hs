@@ -14,24 +14,24 @@ type KillersTable = IOVector StorableMove
 
 
 lookupMoves :: (?killersTable :: KillersTable) => Ply -> IO [Move]
-lookupMoves !ply = do
-  !firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
-  !secondMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 1)
+lookupMoves ply = do
+  firstMove  <- decodeMove <$> Vector.unsafeRead ?killersTable idx
+  secondMove <- decodeMove <$> Vector.unsafeRead ?killersTable (idx + 1)
   pure $ catMaybes [firstMove, secondMove]
   where
-    !idx = killerSlots * fromIntegral ply
+    idx = killerSlots * fromIntegral ply
 
 
 insert :: (?killersTable :: KillersTable) => Ply -> Position -> Move -> IO ()
-insert !ply pos mv = when (isQuietMove mv pos) do
-  !firstMove <- Vector.unsafeRead ?killersTable idx
+insert ply pos mv = when (isQuietMove mv pos) do
+  firstMove <- Vector.unsafeRead ?killersTable idx
   unless (mv `elem` decodeMove firstMove) do
     Vector.unsafeWrite ?killersTable idx
                                     (encodeMove $ Just mv)
     Vector.unsafeWrite ?killersTable (idx + 1)
                                      firstMove
   where
-    !idx = killerSlots * fromIntegral ply
+    idx = killerSlots * fromIntegral ply
 
 
 create :: IO KillersTable

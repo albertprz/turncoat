@@ -1,4 +1,4 @@
-module Models.Move  where
+module Models.Move (Move(..), StorableMove(..), encodeMove, decodeMove, foldBoard, foldBoardMoves, foldBoardSquares, foldlBoard, showBoard) where
 
 import           AppPrelude
 import           Constants.Boards
@@ -46,7 +46,7 @@ encodeMove (Just Move {..}) = StorableMove
 decodeMove :: StorableMove -> Maybe Move
 decodeMove (StorableMove n)
   | testBit n 31 = Nothing
-  | otherwise = Just Move {
+  | otherwise = Just $! Move {
       start = start,
       end = end,
       piece = piece,
@@ -70,12 +70,12 @@ foldBoard = foldlBoard 0 (.|)
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
 foldBoardMoves piece f board moves =
   foldlBoard moves (foldBoardSquares piece f) id board
-  
+
 
 {-# INLINE  foldBoardSquares #-}
 foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
-foldBoardSquares Pawn f moves start =
-  foldlBoard moves foldFn id (f start)
+foldBoardSquares Pawn f moves !start =
+  foldlBoard moves foldFn id $! f start
   where
     foldFn xs end
       | testBit (rank_1 .| rank_8) end =
@@ -91,19 +91,19 @@ foldBoardSquares piece f moves start =
   foldlBoard moves (flip cons) mapFn (f start)
   where
     mapFn = Move piece Nothing start
-    
+
 
 {-# INLINE  foldlBoard #-}
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a
 foldlBoard = go 0
   where
-    go  _ !acc  _       _      0     = acc
-    go !i !acc !foldFn !mapFn !board = go (i' + 1) acc' foldFn mapFn board'
+    go  _ acc  _       _      0     = acc
+    go !i !acc foldFn mapFn board = go (i' + 1) acc' foldFn mapFn board'
       where
-        !acc'    = foldFn acc $! mapFn i'
-        !i'      = i + current
-        !board'  = (board >> current) >> 1
-        !current = lsb board
+        acc'    = foldFn acc $! mapFn i'
+        i'      = i + current
+        board'  = (board >> current) >> 1
+        current = lsb board
 
 showBoard :: Board -> String
 showBoard board = unlines $ map showBin

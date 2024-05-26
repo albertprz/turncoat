@@ -50,14 +50,12 @@ encodeTEntry :: TEntry -> StorableTEntry
 encodeTEntry TEntry {..} = StorableTEntry {
   zobristKey = zobristKey,
   info = fromIntegral bestMoveN
-    .|. fromIntegral (fromIntegral scoreN :: Word16) << 32
-    .|. fromIntegral depthN << 48
+    .|. fromIntegral (fromIntegral score :: Word16) << 32
+    .|. fromIntegral depth << 48
     .|. fromIntegral nodeTypeN << 56
 }
   where
     StorableMove bestMoveN = encodeMove bestMove
-    Score scoreN = score
-    Depth depthN = depth
     NodeType nodeTypeN = nodeType
 
 decodeTEntry :: StorableTEntry -> Maybe TEntry

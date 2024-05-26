@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module Evaluation.Material where
+module Evaluation.Material (evaluateMaterial, evaluateCapturedPiece, pawnScore, knightScore, bishopScore, rookScore, queenScore) where
 
 import           AppPrelude
 

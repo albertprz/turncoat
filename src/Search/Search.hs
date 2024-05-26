@@ -11,8 +11,8 @@ import           Models.TranspositionTable (TEntry (..), TTable, ZKey)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           Search.MoveOrdering
+import           Search.Perft              (allMoves)
 import           Search.Quiescence
-import           Search.Perft (allMoves)
 
 import           Control.Monad.State
 import           GHC.Real                  ((/))
@@ -47,14 +47,14 @@ negamax !alpha !beta !depth !ply pos
       Just !score -> pure score
       Nothing     -> cacheNodeScore alpha beta extendedDepth ply zKey pos
    where
-     !zKey = getZobristKey pos
-     !extendedDepth =
+     zKey = getZobristKey pos
+     extendedDepth =
        if isKingInCheck pos || (ply < 40 && hasSingleMove)
         then depth + 1
         else depth
      hasSingleMove = hasOne $ allMoves pos
      hasOne [_] = True
-     hasOne _ = False
+     hasOne _   = False
 
 
 cacheNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
@@ -95,16 +95,18 @@ getNodeScore !alpha !beta !depth !ply pos
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
-    traverseMoves (moves, hasTTMove)
+    traverseMoves (!moves, !hasTTMove)
       | null $ uncurry (<>) moves =
           if isKingInCheck pos
              then pure (minBound, Nothing)
              else pure (       0, Nothing)
       | otherwise =
-        do (!score, (!newAlpha, !bestMove)) <-
-             runStateT (getMovesScore beta depth ply moves hasTTMove pos)
-                       (alpha, Nothing)
-           pure (fromMaybe newAlpha score, bestMove)
+        do
+          let !movesScore = getMovesScore beta depth ply moves hasTTMove pos
+          (!score, (!newAlpha, !bestMove)) <-
+            runStateT movesScore (alpha, Nothing)
+          let !newScore = fromMaybe newAlpha score
+          pure (newScore, bestMove)
 
 
 getMovesScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
@@ -149,7 +151,8 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
       !alpha <- gets fst
       !score <- getNegamaxScore alpha beta depth
       let !nodeType = getNodeType alpha beta score
-      advanceState beta score ply nodeType mv pos
+      !newScore <- advanceState beta score ply nodeType mv pos
+      pure newScore
 
     lmrFactor = min @Double 1 (fromIntegral mvIdx / 30)
     lmrDepth  = min (depth - 1) $ ceiling
@@ -197,4 +200,3 @@ initialBeta = maxBound - 1
 
 
 type SearchM = StateT (Score, Maybe Move) IO
-

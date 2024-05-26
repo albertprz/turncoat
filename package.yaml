@@ -85,6 +85,8 @@ ghc-options:
 - -Wincomplete-record-updates
 - -Wincomplete-uni-patterns
 - -Wredundant-constraints
+- -finfo-table-map
+- -fdistinct-constructor-tables
 
 library:
   source-dirs: src
@@ -108,5 +110,6 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+
     dependencies:
     - stafford

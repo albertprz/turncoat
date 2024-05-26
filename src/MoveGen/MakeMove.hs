@@ -54,10 +54,7 @@ switchPlayers pos@Position {..} =
 updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
 updatePlayerBoards start end endSquare pos@Position {..} =
   pos {
-    previousPositions = getZobristKey pos
-      : if halfMoveClock == 0
-        then []
-        else previousPositions,
+    previousPositions = getZobristKey pos : previous,
     materialScore = materialScore
       + maybe 0 (evaluateCapturedPiece color endSquare)
                 (maybeCapturedPieceAt endSquare pos),
@@ -71,6 +68,10 @@ updatePlayerBoards start end endSquare pos@Position {..} =
     rooks = rooks .\ end,
     queens = queens .\ end
   }
+  where
+    !previous = if halfMoveClock == 0
+        then []
+        else previousPositions
 
 
 movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
@@ -107,8 +108,8 @@ movePiece Pawn (Just KnightProm) start end pos@Position {..} =
     enPassant = 0
   }
   where
-    endIdx = lsb end + 64 * fromIntegral color
-    startIdx = lsb start + 64 * fromIntegral color
+    !endIdx = lsb end + 64 * fromIntegral color
+    !startIdx = lsb start + 64 * fromIntegral color
 
 movePiece Pawn (Just BishopProm) start end pos@Position {..} =
   pos {
@@ -216,10 +217,10 @@ movePiece King _ start end pos@Position {..} =
     enPassant = 0
   }
   where
-    rookStart = shortCastle << 1 .| longCastle >> 2
-    rookEnd = shortCastle >> 1 .| longCastle << 1
-    shortCastle = (start << 2) & end
-    longCastle = (start >> 2) & end
+    !rookStart = shortCastle << 1 .| longCastle >> 2
+    !rookEnd = shortCastle >> 1 .| longCastle << 1
+    !shortCastle = (start << 2) & end
+    !longCastle = (start >> 2) & end
     kingRank = fileMovesVec !! lsb start
     endIdx = getSquareTableIndex end color
     startIdx = getSquareTableIndex start color

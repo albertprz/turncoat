@@ -21,76 +21,64 @@ type Diag = Int
 
 type Shift = forall a. Bits a => a -> Square -> a
 
-{-# INLINE  (<<) #-}
 infixl 9 <<
 (<<) :: Shift
-(<<) = unsafeShiftL
+(<<) !x !y = unsafeShiftL x y
 
-{-# INLINE  (>>) #-}
 infixl 9 >>
 (>>) :: Shift
-(>>) = unsafeShiftR
+(>>) !x !y = unsafeShiftR x y
 
 infixl 7 /
 (/) :: Square -> Square -> Square
-(/) = div
+(/) !x !y = div x y
 
 infixl 7 %
 (%) :: Square -> Square -> Square
-(%) = rem
+(%) !x !y = rem x y
 
-{-# INLINE  (&) #-}
 infixl 8 &
 (&) :: Board -> Board -> Board
-(&) = (.&.)
+(&) !x !y = (.&.) x y
 
-{-# INLINE  (.\) #-}
 infixl 8 .\
 (.\) :: Board -> Board -> Board
-(.\) x y = x & (~) y
+(.\) !x !y = x & (~) y
 
-{-# INLINE  (.|) #-}
 infixl 7 .|
 (.|) :: Board -> Board -> Board
-(.|) = (.|.)
+(.|) !x !y = (.|.) x y
 
-{-# INLINE  (^) #-}
 infixl 7 ^
 (^) :: Board -> Board -> Board
-(^) = xor
+(^) !x !y = xor x y
 
-{-# INLINE  (~) #-}
+infixl 9 ~
 (~) :: Board -> Board
-(~) = complement
+(~) !x = complement x
 
-{-# INLINE  ones #-}
 ones :: Board -> Int
-ones = popCount
+ones !x = popCount x
 
-{-# INLINE  lsb #-}
 lsb :: Board -> Square
-lsb = countTrailingZeros
+lsb !x = countTrailingZeros x
 
-{-# INLINE  msb #-}
 msb :: Board -> Square
-msb board = 65 * (zeros / 64) + 63 - zeros
+msb !board = 65 * (zeros / 64) + 63 - zeros
   where
     !zeros = countLeadingZeros board
 
-{-# INLINE  toBoard #-}
 toBoard :: Square -> Board
-toBoard = bit
+toBoard !x = bit x
 
-{-# INLINE  toFile #-}
 toFile :: Square -> File
-toFile n = n % 8
+toFile !n = n % 8
 
-{-# INLINE  toRank #-}
 toRank :: Square -> Rank
-toRank n = n / 8
+toRank !n = n / 8
 
 boardContains :: Board -> Board -> Board
-boardContains mustHave board =
+boardContains !mustHave !board =
   if board & mustHave /= 0
     then board
     else 0

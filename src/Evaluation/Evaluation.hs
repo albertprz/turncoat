@@ -50,7 +50,7 @@ evaluatePositionBonuses pos =
 
 evaluatePositionMaluses :: Board -> Position -> Score
 evaluatePositionMaluses playerAttacked pos@Position {..} =
-    evaluateKingSafety   player kings          attacked
+  evaluateKingSafety   player kings          attacked
   + evaluatePieceThreats player playerAttacked attacked pos
   + evaluateDoubledPawns  (player & pawns)
   + evaluateIsolatedPawns (player & pawns)
@@ -60,26 +60,26 @@ evaluatePieceMobility :: Position -> Score
 evaluatePieceMobility Position {..} =
   knightsMobility + bishopsMobility + rooksMobility + queensMobility
   where
-    !knightsMobility =
+    knightsMobility =
       foldlBoard 0 (+)
         (getMobilityScore knightMobilityTable . knightAttacks)
         (unpinned & knights)
-    !bishopsMobility =
+    bishopsMobility =
       foldlBoard 0 (+)
         (getMobilityScore bishopMobilityTable . bishopAttacks allPieces)
         (unpinned & bishops)
-    !rooksMobility =
+    rooksMobility =
       foldlBoard 0 (+)
         (getMobilityScore rookMobilityTable . rookAttacks allPieces)
         (unpinned & rooks)
-    !queensMobility =
+    queensMobility =
       foldlBoard 0 (+)
         (getMobilityScore queenMobilityTable . queenAttacks allPieces)
         (unpinned & queens)
 
     getMobilityScore !table = (table !!) . ones . (.\ player)
-    !unpinned = player .\ pinnedPieces
-    !allPieces = player .| enemy
+    unpinned = player .\ pinnedPieces
+    allPieces = player .| enemy
 
 
 evaluateBishopPair :: Position -> Score
@@ -97,22 +97,22 @@ evaluateKingSafety defender kings attackerAttacks
        `div` onesScore kingMoves
     kingUnsafeArea = kingSafetySquareMalus
            * onesScore kingUnsafeSquares
-    !kingMoves         = kingAttacks king .\ defender
-    !kingUnsafeSquares = kingMoves & attackerAttacks
-    !king              = lsb (defender & kings)
+    kingMoves         = kingAttacks king .\ defender
+    kingUnsafeSquares = kingMoves & attackerAttacks
+    !king             = lsb (defender & kings)
 
 
 evaluatePieceThreats :: Board -> Board -> Board -> Position -> Score
 evaluatePieceThreats defender defenderAttacks attackerAttacks Position {..} =
  (pieceThreatMalus * threatenedScore) `div` pawnScore
   where
-    !threatenedScore =
+    threatenedScore =
         onesScore (threatened & pawns)   * pawnScore
       + onesScore (threatened & knights) * knightScore
       + onesScore (threatened & bishops) * bishopScore
       + onesScore (threatened & rooks)   * rookScore
       + onesScore (threatened & queens)  * queenScore
-    !threatened     =
+    threatened     =
       attackerAttacks & defender .\ defenderAttacks
 
 
@@ -120,7 +120,7 @@ evaluateDoubledPawns :: Board -> Score
 evaluateDoubledPawns pawns =
   doubledPawnMalus * doubledPawnsCount
   where
-    !doubledPawnsCount =
+    doubledPawnsCount =
         max 0 (onesScore (file_A & pawns) - 1)
       + max 0 (onesScore (file_B & pawns) - 1)
       + max 0 (onesScore (file_C & pawns) - 1)
@@ -135,7 +135,7 @@ evaluateIsolatedPawns :: Board -> Score
 evaluateIsolatedPawns pawns =
   isolatedPawnMalus * isolatedPawnsCount
   where
-    !isolatedPawnsCount =
+    isolatedPawnsCount =
       onesScore (file_B & pawns)
         * (1 - min 1 (onesScore (pawns & (file_A .| file_C))))
       + onesScore (file_C & pawns)
@@ -150,7 +150,6 @@ evaluateIsolatedPawns pawns =
         * (1 - min 1 (onesScore (pawns & (file_F .| file_H))))
 
 
-{-# INLINE  onesScore #-}
 onesScore :: Board -> Score
 onesScore = fromIntegral . ones
 

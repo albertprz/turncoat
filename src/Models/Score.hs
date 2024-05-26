@@ -6,14 +6,9 @@ import           Data.Int        (Int16)
 import           Test.QuickCheck (Arbitrary (..), elements)
 
 
-newtype Score = Score Int16
-  deriving (Eq, Ord, Num, Real, Integral, Enum, Bounded, Storable, Arbitrary, Show)
-
-newtype Depth = Depth Word8
-  deriving (Eq, Ord, Num, Enum, Bounded, Real, Integral, Storable, Arbitrary, Show)
-
-newtype Ply = Ply Word8
-  deriving (Eq, Ord, Num, Enum, Bounded, Real, Integral)
+type Score = Int16
+type Depth = Word8
+type Ply = Word8
 
 
 newtype NodeType = NodeType Word8

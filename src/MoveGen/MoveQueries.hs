@@ -3,7 +3,7 @@ module MoveGen.MoveQueries (isEndgame, isLegalQuietMove,  isCheckOrWinningCaptur
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits                 (Bits (testBit))
+import           Data.Bits             (Bits (testBit))
 import           Data.Composition
 import           Evaluation.Evaluation
 import           Models.Move
@@ -13,7 +13,6 @@ import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 
 
-{-# INLINE  isEndgame #-}
 isEndgame :: Position -> Bool
 isEndgame Position {..} =
   ones (player & allMinorPieces) < 3
@@ -22,7 +21,6 @@ isEndgame Position {..} =
     allMinorPieces = bishops .| knights .| rooks .| queens
 
 
-{-# INLINE  isCheckOrWinningCapture #-}
 isCheckOrWinningCapture :: Move -> Position -> Bool
 isCheckOrWinningCapture mv pos =
   isCheckMove mv pos
@@ -30,42 +28,35 @@ isCheckOrWinningCapture mv pos =
     || isWinningCapture mv pos
 
 
-{-# INLINE  isCastlingMove #-}
 isCastlingMove :: Move -> Bool
 isCastlingMove Move {..} =
   piece == King && abs (start - end) == 2
 
 
-{-# INLINE  isCheckMove #-}
 isCheckMove :: Move -> Position -> Bool
 isCheckMove mv pos =
   isKingInCheck $ makeMove mv pos
 
 
-{-# INLINE  isCapture #-}
 isCapture :: Move -> Position -> Bool
 isCapture Move {..} Position {..} =
   isJust promotion
     || testBit (enemy .| enPassant) end
 
-{-# INLINE  isWinningCapture #-}
 isWinningCapture :: Move -> Position -> Bool
 isWinningCapture mv pos =
   isCapture mv pos
     && evaluateCaptureExchange mv pos >= 0
 
-{-# INLINE  isPromotionPush #-}
 isPromotionPush :: Move -> Bool
 isPromotionPush Move{..} =
   piece == Pawn && toRank end `elem` [2, 7]
 
 
-{-# INLINE  isQuietMove #-}
 isQuietMove :: Move -> Position -> Bool
 isQuietMove = not .: isCapture
 
 
-{-# INLINE  isKingInCheck #-}
 isKingInCheck :: Position -> Bool
 isKingInCheck Position {..} =
   sliderCheckers .| leapingCheckers /= 0
@@ -87,7 +78,6 @@ isEnemyKingInCheck pos@Position {..} =
     queenCheckerRays = bishopCheckerRays .| rookCheckerRays
 
 
-{-# INLINE  isLegalQuietMove #-}
 isLegalQuietMove :: Move -> Position -> Bool
 isLegalQuietMove mv@Move {..} pos@Position {..} =
   testBit player start
@@ -100,7 +90,6 @@ isLegalQuietMove mv@Move {..} pos@Position {..} =
     allPieces = enemy .| player
 
 
-{-# INLINE  isRayUnblocked #-}
 isRayUnblocked :: Board -> Move -> Bool
 isRayUnblocked allPieces Move {..} =
  piece `elem` [Knight, King]

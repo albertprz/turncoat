@@ -1,14 +1,16 @@
-module AppPrelude (module ClassyPrelude, Vector, (!!), inRange, maybeFilter, findTraverse) where
+module AppPrelude (module ClassyPrelude, Vector, (!!), inRange, maybeFilter, findTraverse, elem, notElem) where
 
-import           ClassyPrelude        hiding (Vector, mask, (/), (>>), (^))
+import           ClassyPrelude        hiding (Vector, elem, mask, notElem, (/),
+                                       (>>), (^))
 
+import           Data.Foldable        (elem, notElem)
 import           Data.Vector.Storable (Vector)
 
 
 {-# INLINE  (!!) #-}
 infixl 9 !!
 (!!) :: Storable a => Vector a -> Int -> a
-(!!) = unsafeIndex
+(!!) !x !y = unsafeIndex x y
 
 {-# INLINE  inRange #-}
 inRange :: Int -> Int -> Int -> Bool
@@ -24,10 +26,10 @@ maybeFilter predicate ma = do
 
 {-# INLINE  findTraverse #-}
 findTraverse :: Monad m => (Int -> a -> m (Maybe b)) -> [a] -> m (Maybe b)
-findTraverse = go 0
+findTraverse !f = go 0
   where
-    go !i f (x : xs) = do
+    go !i (x : xs) = do
       result <- f i x
-      maybe (go (i + 1) f xs) (pure . Just) result
-    go _ _ [] =
+      maybe (go (i + 1) xs) (pure . Just) result
+    go _ [] =
       pure Nothing

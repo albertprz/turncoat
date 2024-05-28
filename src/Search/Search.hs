@@ -47,8 +47,8 @@ negamax !alpha !beta !depth !ply pos
       Just !score -> pure score
       Nothing     -> cacheNodeScore alpha beta extendedDepth ply zKey pos
    where
-     zKey = getZobristKey pos
-     extendedDepth =
+     !zKey = getZobristKey pos
+     !extendedDepth =
        if isKingInCheck pos || (ply < 40 && hasSingleMove)
         then depth + 1
         else depth
@@ -154,13 +154,16 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
       !newScore <- advanceState beta score ply nodeType mv pos
       pure newScore
 
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 30)
-    lmrDepth  = min (depth - 1) $ ceiling
+    !lmrFactor = min @Double 1 (fromIntegral mvIdx / 30)
+    !lmrDepth  = min (depth - 1) $ ceiling
       (lmrFactor * (fromIntegral depth * 4 / 5)
         + (1 - lmrFactor) * (fromIntegral depth - 1))
-    getNegamaxScore !alpha' !beta' !depth' =
-      negate <$> liftIO (negamax (-beta') (-alpha') (depth' - 1)
-                                 (ply + 1) (makeMove mv pos))
+
+    getNegamaxScore !alpha' !beta' !depth' = liftIO do
+      !score <- negamax (-beta') (-alpha') (depth' - 1)
+                                 (ply + 1) (makeMove mv pos)
+      pure $! negate score
+
 
 
 getNullMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
@@ -182,7 +185,7 @@ getNullMoveScore !beta !depth !ply pos
 
 advanceState :: (?killersTable :: KillersTable)
   => Score -> Score -> Ply -> NodeType -> Move -> Position -> SearchM (Maybe Score)
-advanceState !beta !score !ply !nodeType !mv pos =
+advanceState !beta !score !ply nodeType !mv pos =
   case nodeType of
     PV  -> put (score, Just mv)
             $> Nothing

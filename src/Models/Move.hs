@@ -13,10 +13,12 @@ import           Test.QuickCheck          (Arbitrary (..), chooseInt)
 
 data Move = Move {
   piece     :: Piece,
-  promotion :: Maybe Promotion,
+  promotion :: Promotion,
   start     :: Square,
   end       :: Square
 } deriving (Eq, Ord, Generic)
+
+instance Hashable Move
 
 instance Arbitrary Move where
   arbitrary = Move
@@ -28,7 +30,6 @@ newtype StorableMove = StorableMove Word32
 
 instance GStorable StorableMove
 
-instance Hashable Move
 
 
 encodeMove :: Maybe Move -> StorableMove
@@ -41,7 +42,7 @@ encodeMove (Just Move {..}) = StorableMove
   )
   where
     Piece pieceN = piece
-    Promotion promotionN = fromMaybe (Promotion 0) promotion
+    Promotion promotionN = promotion
 
 decodeMove :: StorableMove -> Maybe Move
 decodeMove (StorableMove n)
@@ -50,9 +51,7 @@ decodeMove (StorableMove n)
       start = start,
       end = end,
       piece = piece,
-      promotion = if promotion /= Promotion 0
-        then Just promotion
-        else Nothing
+      promotion = promotion
     }
     where
       start = fromIntegral n .&. 63
@@ -68,37 +67,37 @@ foldBoard = foldlBoard 0 (.|)
 
 {-# INLINE  foldBoardMoves #-}
 foldBoardMoves :: Piece -> (Square -> Board) -> Board -> [Move] -> [Move]
-foldBoardMoves piece f board moves =
+foldBoardMoves !piece !f !board moves =
   foldlBoard moves (foldBoardSquares piece f) id board
 
 
 {-# INLINE  foldBoardSquares #-}
 foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
-foldBoardSquares Pawn f moves !start =
+foldBoardSquares Pawn !f moves !start =
   foldlBoard moves foldFn id $! f start
   where
     foldFn xs end
       | testBit (rank_1 .| rank_8) end =
-        Move Pawn (Just QueenProm) start end
-        : Move Pawn (Just KnightProm) start end
-        : Move Pawn (Just RookProm) start end
-        : Move Pawn (Just BishopProm) start end
+        Move Pawn QueenProm start end
+        : Move Pawn KnightProm start end
+        : Move Pawn RookProm start end
+        : Move Pawn BishopProm start end
         : xs
       | otherwise =
-        Move Pawn Nothing start end : xs
+        Move Pawn NoProm start end : xs
 
-foldBoardSquares piece f moves start =
+foldBoardSquares piece !f moves !start =
   foldlBoard moves (flip cons) mapFn (f start)
   where
-    mapFn = Move piece Nothing start
+    mapFn = Move piece NoProm start
 
 
 {-# INLINE  foldlBoard #-}
 foldlBoard :: a -> (a -> b -> a) -> (Square -> b) -> Board -> a
-foldlBoard = go 0
+foldlBoard !initial !foldFn !mapFn = go 0 initial
   where
-    go  _ acc  _       _      0     = acc
-    go !i !acc foldFn mapFn board = go (i' + 1) acc' foldFn mapFn board'
+    go  _ acc  0     = acc
+    go !i !acc board = go (i' + 1) acc' board'
       where
         acc'    = foldFn acc $! mapFn i'
         i'      = i + current
@@ -125,4 +124,4 @@ instance Show Move where
   show (Move {..}) =
     showSquare start
     <> showSquare end
-    <> foldMap show promotion
+    <> show promotion

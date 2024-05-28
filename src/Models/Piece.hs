@@ -44,7 +44,8 @@ pattern Queen  = Piece 4
 pattern King   = Piece 5
 
 {-# COMPLETE  KnightProm, BishopProm, RookProm, QueenProm #-}
-pattern KnightProm, BishopProm, RookProm, QueenProm :: Promotion
+pattern NoProm, KnightProm, BishopProm, RookProm, QueenProm :: Promotion
+pattern NoProm     = Promotion 0
 pattern KnightProm = Promotion 1
 pattern BishopProm = Promotion 2
 pattern RookProm   = Promotion 3
@@ -116,6 +117,7 @@ instance Show Piece where
 
 instance Show Promotion where
   show = \case
+    NoProm -> mempty
     KnightProm -> "n"
     BishopProm -> "b"
     RookProm -> "r"

@@ -2,7 +2,6 @@ module Search.MoveOrdering (getSortedMoves ) where
 
 import           AppPrelude
 
-import           Bookhound.Utils.List      (hasSome)
 import           Evaluation.Evaluation
 import           Models.KillersTable       (KillersTable)
 import qualified Models.KillersTable       as KillersTable
@@ -44,16 +43,17 @@ getSortedMoves !depth !ply pos = do
     then (splitAt 5 allTheMoves, hasSome ttMove)
     else ((allTheMoves, []), hasSome ttMove)
   where
-    (!winningCaptures, !losingCaptures) = getSortedCaptures pos
-    quietMoves                          = getSortedQuietMoves pos
+    (winningCaptures, losingCaptures) = getSortedCaptures pos
+    quietMoves                        = getSortedQuietMoves pos
+    hasSome [] = False
+    hasSome _  = True
 
 
 getSortedKillers :: (?killersTable :: KillersTable)
   => Ply -> Position -> IO [Move]
 getSortedKillers !ply pos =
-  sortOn (Down . getMoveScore) <$> killerMoves
+  sortMoves pos <$> killerMoves
   where
-    getMoveScore mv = - evaluatePosition (makeMove mv pos)
     killerMoves     =
       filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
 
@@ -71,6 +71,11 @@ getSortedCaptures pos =
 
 getSortedQuietMoves :: Position -> [Move]
 getSortedQuietMoves pos =
-  sortOn (Down . getMoveScore) $ allQuietMoves pos
+  sortMoves pos $ allQuietMoves pos
+
+
+sortMoves :: Position -> [Move] -> [Move]
+sortMoves pos =
+  sortOn (Down . getMoveScore)
   where
     getMoveScore mv = - evaluatePosition (makeMove mv pos)

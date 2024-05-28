@@ -49,7 +49,7 @@ allCaptures pos@Position {..}
 
 
 allCapturesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
-allCapturesHelper allPieces king allKingCaptures Position {..} f g =
+allCapturesHelper allPieces king allKingCaptures Position {..} !f !g =
 
     foldBoardMoves     Pawn   (g . pawnCapturesAndPromotions
                                      enemy noPieces enPassant color)

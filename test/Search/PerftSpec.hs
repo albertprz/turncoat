@@ -9,6 +9,7 @@ import           Test.Hspec
 import           Models.Position
 import           Parsers.Position
 import           Search.Perft
+import Bookhound.Parser
 
 spec :: Spec
 spec = do
@@ -56,4 +57,4 @@ extraPos4 = position
   "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"
 
 position :: Text -> Position
-position = fromJust . hush . positionFromFen
+position = fromJust . hush . runParser positionFenParser

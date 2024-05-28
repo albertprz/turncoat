@@ -40,7 +40,7 @@ isCheckMove mv pos =
 
 isCapture :: Move -> Position -> Bool
 isCapture Move {..} Position {..} =
-  isJust promotion
+  promotion /= NoProm
     || testBit (enemy .| enPassant) end
 
 isWinningCapture :: Move -> Position -> Bool

@@ -151,7 +151,7 @@ evaluateIsolatedPawns pawns =
 
 
 onesScore :: Board -> Score
-onesScore = fromIntegral . ones
+onesScore !x = fromIntegral $! ones x
 
 
 bishopPairBonus :: Score

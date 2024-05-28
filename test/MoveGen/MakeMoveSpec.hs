@@ -3,14 +3,13 @@ module MoveGen.MakeMoveSpec where
 import           AppPrelude
 
 import           Test.QuickCheck.Property
-
-import           Constants.Boards
 import           Data.List.NonEmpty       (nonEmpty)
 import           Evaluation.Material
 import           Models.Position
 import           MoveGen.MakeMove         (makeMove)
 import           Test.Hspec
 import           Test.QuickCheck
+import Search.Perft
 
 
 spec :: Spec
@@ -31,7 +30,7 @@ applyMoveIdx :: Int -> Position -> Position
 applyMoveIdx idx pos =
   maybe pos (`makeMove` pos) chosenMove
   where
-    chosenMove = (`index` (idx % length moves)) =<< moves
+    chosenMove = (`index` (idx `mod` length moves)) =<< moves
     moves = map toList $ nonEmpty $ allMoves pos
 
 

@@ -85,20 +85,20 @@ getZobristKey pos@Position {..} = ZKey
   (piecesHash ^ castlingHash ^ enPassantHash ^ sideToMoveHash)
   where
 
-    piecesHash =
+    !piecesHash =
       foldlBoard 0 (^) getPieceHash (player .| enemy)
 
-    castlingHash = castlingRngVec !! idx
+    !castlingHash = castlingRngVec !! idx
       where
       idx =   inBoard file_A + 2 * inBoard file_H
         + 4 * inBoard rank_1 + 8 * inBoard rank_8
       inBoard x = fromIntegral $ min 1 (castling & x)
 
-    enPassantHash = min 1 enPassant * enPassantRngVec !! idx
+    !enPassantHash = min 1 enPassant * enPassantRngVec !! idx
       where
         idx = toFile (lsb enPassant)
 
-    sideToMoveHash = fromIntegral colorN * sideToMoveRng
+    !sideToMoveHash = fromIntegral colorN * sideToMoveRng
       where
         Color colorN = color
 

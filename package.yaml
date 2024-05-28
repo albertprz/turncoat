@@ -79,14 +79,14 @@ default-extensions:
 ghc-options:
 - -O2
 - -funbox-strict-fields
-- -funfolding-use-threshold=32
 - -Wall
 - -Wcompat
 - -Wincomplete-record-updates
 - -Wincomplete-uni-patterns
 - -Wredundant-constraints
-- -finfo-table-map
-- -fdistinct-constructor-tables
+# - -Wall-missed-specialisations
+# - -finfo-table-map
+# - -fdistinct-constructor-tables
 
 library:
   source-dirs: src

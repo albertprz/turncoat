@@ -40,7 +40,7 @@ allQuietMoves pos@Position {..}
 
 quietMovesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board)
                  -> [Move]
-quietMovesHelper allPieces king allKingMoves Position {..} f =
+quietMovesHelper allPieces king allKingMoves Position {..} !f =
 
     foldBoardMoves     Pawn   (f . pawnAdvances noPieces color
                                  . toBoard)

@@ -1,4 +1,4 @@
-module CommandLine.UciCommands (executeCommand) where
+module CommandLine.UciCommands where
 
 import           AppPrelude
 
@@ -14,7 +14,7 @@ import           Search.Search
 
 import           Control.Monad.State
 import           Data.Composition
-import           Data.Map
+import           Data.Map (traverseWithKey)
 import           System.TimeIt
 
 
@@ -46,9 +46,11 @@ printBestMove opts = do
 printPerft :: Depth -> CommandM ()
 printPerft = withPosition go
   where
-    go = putStrLn
-         . tshow
+    go = (=<<) putStrLn
+         . map tshow
+         . timeItpure
          .: perft
+
 
 printDivide :: Depth -> CommandM ()
 printDivide = withPosition go
@@ -78,5 +80,10 @@ makeUnknownMove UnknownMove {..} pos =
   where
   mv = find (\x -> x.start == start && x.end == end)
             (allMoves pos)
+       
+timeItpure :: MonadIO m => a -> m a
+timeItpure x = timeIt do
+  !result <- pure x
+  pure result
 
 type CommandM = StateT Position IO

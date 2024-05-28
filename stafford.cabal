@@ -75,7 +75,7 @@ library
       TypeFamilyDependencies
       DataKinds
       ImplicitParams
-  ghc-options: -O2 -funbox-strict-fields -funfolding-use-threshold=32 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -finfo-table-map -fdistinct-constructor-tables
+  ghc-options: -O2 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       QuickCheck
     , base ==4.*
@@ -123,7 +123,7 @@ executable stafford
       TypeFamilyDependencies
       DataKinds
       ImplicitParams
-  ghc-options: -O2 -funbox-strict-fields -funfolding-use-threshold=32 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -finfo-table-map -fdistinct-constructor-tables -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , base ==4.*
@@ -175,7 +175,7 @@ test-suite test
       TypeFamilyDependencies
       DataKinds
       ImplicitParams
-  ghc-options: -O2 -funbox-strict-fields -funfolding-use-threshold=32 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -finfo-table-map -fdistinct-constructor-tables -Wno-type-defaults
+  ghc-options: -O2 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wno-type-defaults
   build-tool-depends:
       hspec-discover:hspec-discover
   build-depends:

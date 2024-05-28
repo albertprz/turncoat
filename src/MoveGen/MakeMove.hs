@@ -17,8 +17,8 @@ makeMove Move {..} =
   . movePiece piece promotion startBoard endBoard
   . updatePlayerBoards startBoard endBoard end
   where
-    startBoard = toBoard start
-    endBoard = toBoard end
+    !startBoard = toBoard start
+    !endBoard = toBoard end
 
 
 makeNullMove :: Position -> Position
@@ -54,7 +54,10 @@ switchPlayers pos@Position {..} =
 updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
 updatePlayerBoards start end endSquare pos@Position {..} =
   pos {
-    previousPositions = getZobristKey pos : previous,
+    previousPositions = getZobristKey pos
+      : if halfMoveClock == 0
+        then []
+        else previousPositions,
     materialScore = materialScore
       + maybe 0 (evaluateCapturedPiece color endSquare)
                 (maybeCapturedPieceAt endSquare pos),
@@ -68,14 +71,10 @@ updatePlayerBoards start end endSquare pos@Position {..} =
     rooks = rooks .\ end,
     queens = queens .\ end
   }
-  where
-    !previous = if halfMoveClock == 0
-        then []
-        else previousPositions
 
 
-movePiece :: Piece -> Maybe Promotion -> Board -> Board -> Position -> Position
-movePiece Pawn Nothing start end pos@Position {..} =
+movePiece :: Piece -> Promotion -> Board -> Board -> Position -> Position
+movePiece Pawn NoProm start end pos@Position {..} =
   pos {
     materialScore = materialScore
       + pawnSquareTable !! endIdx
@@ -97,7 +96,7 @@ movePiece Pawn Nothing start end pos@Position {..} =
     enPassantIdx =
       getSquareTableIndex enPassantCapture (reverseColor color)
 
-movePiece Pawn (Just KnightProm) start end pos@Position {..} =
+movePiece Pawn KnightProm start end pos@Position {..} =
   pos {
     materialScore = materialScore
       + (knightScore + knightSquareTable !! endIdx)
@@ -111,7 +110,7 @@ movePiece Pawn (Just KnightProm) start end pos@Position {..} =
     !endIdx = lsb end + 64 * fromIntegral color
     !startIdx = lsb start + 64 * fromIntegral color
 
-movePiece Pawn (Just BishopProm) start end pos@Position {..} =
+movePiece Pawn BishopProm start end pos@Position {..} =
   pos {
     materialScore = materialScore
       + (bishopScore + bishopSquareTable !! endIdx)
@@ -125,7 +124,7 @@ movePiece Pawn (Just BishopProm) start end pos@Position {..} =
     endIdx = getSquareTableIndex end color
     startIdx = getSquareTableIndex start color
 
-movePiece Pawn (Just RookProm) start end pos@Position {..} =
+movePiece Pawn RookProm !start !end pos@Position {..} =
   pos {
     materialScore = materialScore
       + (rookScore + rookSquareTable !! endIdx)
@@ -139,7 +138,7 @@ movePiece Pawn (Just RookProm) start end pos@Position {..} =
     endIdx = getSquareTableIndex end color
     startIdx = getSquareTableIndex start color
 
-movePiece Pawn (Just QueenProm) start end pos@Position {..} =
+movePiece Pawn QueenProm start end pos@Position {..} =
   pos {
     materialScore = materialScore
       + (queenScore + queenSquareTable !! endIdx)

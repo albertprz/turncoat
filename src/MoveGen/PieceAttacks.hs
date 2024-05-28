@@ -42,7 +42,7 @@ getRookCheckerRays Position {..} =
 
 
 getPinnedPieces :: Board -> Board -> Board -> Position -> Board
-getPinnedPieces bishopCheckerRays rookCheckerRays sliderRays Position {..} =
+getPinnedPieces !bishopCheckerRays !rookCheckerRays !sliderRays Position {..} =
   enemy &
   (foldBoard bishopPins (attackers & bishops)
   .| foldBoard rookPins (attackers & rooks)

@@ -88,18 +88,12 @@ evaluateBishopPair Position {..} =
 
 
 evaluateKingSafety :: Board -> Board -> Board -> Score
-evaluateKingSafety defender kings attackerAttacks
-  | kingMoves == 0 = 0
-  | otherwise = kingUnsafety + kingUnsafeArea
+evaluateKingSafety defender kings attackerAttacks =
+  kingSafetySquareMalus * onesScore kingUnsafeSquares
   where
-    kingUnsafety   = (kingSafetyMalus
-           * onesScore kingUnsafeSquares)
-       `div` onesScore kingMoves
-    kingUnsafeArea = kingSafetySquareMalus
-           * onesScore kingUnsafeSquares
     kingMoves         = kingAttacks king .\ defender
     kingUnsafeSquares = kingMoves & attackerAttacks
-    !king             = lsb (defender & kings)
+    king             = lsb (defender & kings)
 
 
 evaluatePieceThreats :: Board -> Board -> Board -> Position -> Score
@@ -107,8 +101,7 @@ evaluatePieceThreats defender defenderAttacks attackerAttacks Position {..} =
  (pieceThreatMalus * threatenedScore) `div` pawnScore
   where
     threatenedScore =
-        onesScore (threatened & pawns)   * pawnScore
-      + onesScore (threatened & knights) * knightScore
+        onesScore (threatened & knights) * knightScore
       + onesScore (threatened & bishops) * bishopScore
       + onesScore (threatened & rooks)   * rookScore
       + onesScore (threatened & queens)  * queenScore
@@ -155,16 +148,13 @@ onesScore !x = fromIntegral $! ones x
 
 
 bishopPairBonus :: Score
-bishopPairBonus = 40
-
-kingSafetyMalus :: Score
-kingSafetyMalus = 100
+bishopPairBonus = 50
 
 kingSafetySquareMalus :: Score
-kingSafetySquareMalus = 20
+kingSafetySquareMalus = 40
 
 pieceThreatMalus :: Score
-pieceThreatMalus = 10
+pieceThreatMalus = 20
 
 doubledPawnMalus :: Score
 doubledPawnMalus = 25

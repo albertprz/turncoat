@@ -4,7 +4,7 @@ module MoveGen.PieceQuietMoves (allQuietMoves) where
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits
+import           Data.Bits             (testBit)
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -46,18 +46,18 @@ quietMovesHelper allPieces king allKingMoves Position {..} !f =
                                  . toBoard)
                               (unpinned&pawns .| filePinnedPawns)
 
-    $ foldBoardMoves   Knight (f . knightMoves noPieces)
+    $ foldBoardMoves   Knight (f . knightCaptures noPieces)
                               (unpinned&knights)
 
     $ foldBoardMoves   Bishop (f . bishopMoves noPieces
                                      allPieces pinnedPieces king)
                               (player&bishops)
 
-    $ foldBoardMoves   Rook   (f . rookCaptures noPieces
+    $ foldBoardMoves   Rook   (f . rookMoves noPieces
                                      allPieces pinnedPieces king)
                               (player&rooks)
 
-    $ foldBoardMoves   Queen  (f . queenCaptures noPieces
+    $ foldBoardMoves   Queen  (f . queenMoves noPieces
                                      allPieces pinnedPieces king)
                               (player&queens)
 
@@ -82,10 +82,26 @@ pawnAdvances noPieces color board = advances & noPieces
       Black -> (board .\ rank_2) >> 8
            .| ((board & rank_7) >> 8 & noPieces) >> 8
 
+bishopMoves :: Board -> Board -> Board -> Board -> Square -> Board
+bishopMoves noPieces allPieces pinnedPieces king n
+  | testBit pinnedPieces n = attacks & getKingBishopRay king n
+  | otherwise              = attacks
+  where
+    attacks = bishopAttacks allPieces n & noPieces
 
-knightMoves :: Board -> Square -> Board
-knightMoves noPieces n =
-  knightAttacks n & noPieces
+rookMoves :: Board -> Board -> Board -> Board -> Square -> Board
+rookMoves noPieces allPieces pinnedPieces king n
+  | testBit pinnedPieces n = attacks & getKingRookRay king n
+  | otherwise              = attacks
+  where
+    attacks = rookAttacks allPieces n & noPieces
+
+queenMoves :: Board -> Board -> Board -> Board -> Square -> Board
+queenMoves noPieces allPieces pinnedPieces king n
+  | testBit pinnedPieces n = attacks & getKingQueenRay king n
+  | otherwise              = attacks
+  where
+    attacks = queenAttacks allPieces n & noPieces
 
 
 kingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
@@ -93,14 +109,6 @@ kingMoves allPieces attacked castling rooks king n =
   (kingAttacks n
   .| kingCastlingMoves allPieces attacked castling rooks king n)
   .\ (attacked .| allPieces)
-
-
-bishopMoves :: Board -> Board -> Board -> Board -> Square -> Board
-bishopMoves noPieces allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingBishopRay king n
-  | otherwise              = attacks
-  where
-    attacks = bishopAttacks allPieces n & noPieces
 
 
 kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board

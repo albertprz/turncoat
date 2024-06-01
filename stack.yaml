@@ -7,5 +7,4 @@ extra-deps:
 - bookhound-0.2.2
 
 # build:
-#   library-profiling: true
 #   executable-profiling: true

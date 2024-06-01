@@ -3,30 +3,24 @@ module Models.Piece where
 import           AppPrelude
 import           Data.Char                 (isUpper)
 import qualified Data.Char                 as Char
-import           Foreign.Storable.Generic
 import           Test.QuickCheck           (Arbitrary, elements)
 import           Test.QuickCheck.Arbitrary (Arbitrary (..))
 
 
 newtype Piece = Piece Word8
-  deriving (Eq, Ord, Enum, Bounded, Generic)
+  deriving (Eq, Ord, Enum, Bounded, Hashable, Storable)
 
 instance Arbitrary Piece where
   arbitrary =
     elements [Pawn, Knight, Bishop, Rook, Queen]
 
-instance Hashable Piece
-instance GStorable Piece
 
 newtype Promotion = Promotion Word8
-  deriving (Eq, Ord, Enum, Generic)
+  deriving (Eq, Ord, Enum, Hashable, Storable)
 
 instance Arbitrary Promotion where
   arbitrary =
     elements [KnightProm, BishopProm, RookProm, QueenProm]
-
-instance Hashable Promotion
-instance GStorable Promotion
 
 newtype Color = Color Word8
   deriving (Eq, Ord, Enum, Num, Real, Integral)
@@ -57,7 +51,6 @@ pattern White = Color 0
 pattern Black = Color 1
 
 
-{-# INLINE  reverseColor #-}
 reverseColor :: Color -> Color
 reverseColor (Color color) =
   Color (1 - color)

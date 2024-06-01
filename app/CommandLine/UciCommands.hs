@@ -48,7 +48,7 @@ printPerft = withPosition go
   where
     go = (=<<) putStrLn
          . map tshow
-         . timeItpure
+         . timeItPure
          .: perft
 
 
@@ -81,8 +81,8 @@ makeUnknownMove UnknownMove {..} pos =
   mv = find (\x -> x.start == start && x.end == end)
             (allMoves pos)
        
-timeItpure :: MonadIO m => a -> m a
-timeItpure x = timeIt do
+timeItPure :: MonadIO m => a -> m a
+timeItPure x = timeIt do
   !result <- pure x
   pure result
 

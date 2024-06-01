@@ -5,10 +5,9 @@ import           Constants.Boards
 import           Models.Piece
 
 import           Data.Bits
-import           Data.List                (iterate)
-import qualified Data.Vector.Storable     as Vector
-import           Foreign.Storable.Generic
-import           Test.QuickCheck          (Arbitrary (..), chooseInt)
+import           Data.List            (iterate)
+import qualified Data.Vector.Storable as Vector
+import           Test.QuickCheck      (Arbitrary (..), chooseInt)
 
 
 data Move = Move {
@@ -27,9 +26,6 @@ instance Arbitrary Move where
 
 newtype StorableMove = StorableMove Word32
   deriving (Eq, Ord, Num, Bits, Generic, Storable)
-
-instance GStorable StorableMove
-
 
 
 encodeMove :: Maybe Move -> StorableMove
@@ -62,7 +58,7 @@ decodeMove (StorableMove n)
 
 {-# INLINE  foldBoard #-}
 foldBoard ::  (Square -> Board) -> Board -> Board
-foldBoard = foldlBoard 0 (.|)
+foldBoard !f !board = foldlBoard 0 (.|) f board
 
 
 {-# INLINE  foldBoardMoves #-}

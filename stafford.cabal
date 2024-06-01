@@ -6,14 +6,14 @@ cabal-version: 1.12
 
 name:           stafford
 version:        0.1.0
-synopsis:       Elegant chess engine in Haskell
+synopsis:       Minimalistic chess engine in Haskell
 description:    Please see the README on GitHub at <https://github.com/albertprz/stafford#readme>
 category:       Chess Engine
 homepage:       https://github.com/albertprz/stafford#readme
 bug-reports:    https://github.com/albertprz/stafford/issues
-author:         Alberto Perez Lopez
+author:         Alberto Perez
 maintainer:     albertoperez1994@gmail.com
-copyright:      2023 Alberto Perez Lopez
+copyright:      2023 Alberto Perez
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
@@ -60,20 +60,13 @@ library
       MultiWayIf
       BlockArguments
       PostfixOperators
-      LiberalTypeSynonyms
-      FunctionalDependencies
       DuplicateRecordFields
       NoFieldSelectors
       RecordWildCards
       OverloadedRecordDot
-      ApplicativeDo
       OverloadedStrings
       ViewPatterns
       PatternSynonyms
-      GADTs
-      TypeFamilies
-      TypeFamilyDependencies
-      DataKinds
       ImplicitParams
   ghc-options: -O2 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
@@ -108,20 +101,13 @@ executable stafford
       MultiWayIf
       BlockArguments
       PostfixOperators
-      LiberalTypeSynonyms
-      FunctionalDependencies
       DuplicateRecordFields
       NoFieldSelectors
       RecordWildCards
       OverloadedRecordDot
-      ApplicativeDo
       OverloadedStrings
       ViewPatterns
       PatternSynonyms
-      GADTs
-      TypeFamilies
-      TypeFamilyDependencies
-      DataKinds
       ImplicitParams
   ghc-options: -O2 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
@@ -160,20 +146,13 @@ test-suite test
       MultiWayIf
       BlockArguments
       PostfixOperators
-      LiberalTypeSynonyms
-      FunctionalDependencies
       DuplicateRecordFields
       NoFieldSelectors
       RecordWildCards
       OverloadedRecordDot
-      ApplicativeDo
       OverloadedStrings
       ViewPatterns
       PatternSynonyms
-      GADTs
-      TypeFamilies
-      TypeFamilyDependencies
-      DataKinds
       ImplicitParams
   ghc-options: -O2 -funbox-strict-fields -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wno-type-defaults
   build-tool-depends:

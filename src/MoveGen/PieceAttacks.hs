@@ -159,18 +159,18 @@ kingAttacks !n = kingMovesVec !! n
 
 bishopAttacks :: Board -> Square -> Board
 bishopAttacks !allPieces !n =
-     sliding lsb (northEastMovesVec !!) allPieces n
-  .| sliding lsb (northWestMovesVec !!) allPieces n
-  .| sliding msb (southWestMovesVec !!) allPieces n
-  .| sliding msb (southEastMovesVec !!) allPieces n
+     sliding lsb northEastMovesVec allPieces n
+  .| sliding lsb northWestMovesVec allPieces n
+  .| sliding msb southWestMovesVec allPieces n
+  .| sliding msb southEastMovesVec allPieces n
 
 
 rookAttacks :: Board -> Square -> Board
 rookAttacks !allPieces !n =
-     sliding lsb (northMovesVec !!) allPieces n
-  .| sliding lsb (eastMovesVec !!) allPieces n
-  .| sliding msb (westMovesVec !!) allPieces n
-  .| sliding msb (southMovesVec !!) allPieces n
+     sliding lsb northMovesVec allPieces n
+  .| sliding lsb eastMovesVec allPieces n
+  .| sliding msb westMovesVec allPieces n
+  .| sliding msb southMovesVec allPieces n
 
 
 queenAttacks :: Board -> Square -> Board
@@ -179,11 +179,11 @@ queenAttacks !allPieces !n =
   .| bishopAttacks allPieces n
 
 
-sliding :: (Board -> Square) -> (Square -> Board) -> Board -> Square -> Board
-sliding findBlocker lookupMove allPieces n =
+sliding :: (Board -> Square) -> Vector Board -> Board -> Square -> Board
+sliding !findBlocker !mask !allPieces !n =
    ray ^ blockerRay
   where
-    blockerRay = lookupMove firstBlocker
+    !blockerRay = mask !! firstBlocker
     !firstBlocker = findBlocker blockers
-    blockers = ray & allPieces
-    ray = lookupMove n
+    !blockers = ray & allPieces
+    !ray = mask !! n

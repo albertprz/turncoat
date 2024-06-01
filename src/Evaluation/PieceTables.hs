@@ -142,7 +142,6 @@ kingSquareTable =
   whiteKingSquareTable <> blackKingSquareTable
 
 
-{-# INLINE  getSquareTableIndex #-}
 getSquareTableIndex :: Board -> Color -> Square
 getSquareTableIndex board color =
   lsb board + 64 * fromIntegral color

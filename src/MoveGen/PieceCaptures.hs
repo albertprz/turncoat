@@ -1,4 +1,4 @@
-module MoveGen.PieceCaptures (allCaptures, staticExchangeCaptures, rookCaptures, queenCaptures) where
+module MoveGen.PieceCaptures (allCaptures, staticExchangeCaptures, knightCaptures, bishopCaptures, rookCaptures, queenCaptures) where
 
 import           AppPrelude
 
@@ -225,18 +225,47 @@ bishopCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingBishopRay king n
   | otherwise              = attacks
   where
-    attacks = bishopAttacks allPieces n & enemy
+    attacks = bishopCaptureAttacks allPieces n & enemy
 
 rookCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 rookCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingRookRay king n
   | otherwise              = attacks
   where
-    attacks = rookAttacks allPieces n & enemy
+    attacks = rookCaptureAttacks allPieces n & enemy
 
 queenCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 queenCaptures enemy allPieces pinnedPieces king n
   | testBit pinnedPieces n = attacks & getKingQueenRay king n
   | otherwise              = attacks
   where
-    attacks = queenAttacks allPieces n & enemy
+    attacks = queenCaptureAttacks allPieces n & enemy
+
+bishopCaptureAttacks :: Board -> Square -> Board
+bishopCaptureAttacks !allPieces !n =
+     slidingCaptures lsb northEastMovesVec allPieces n
+  .| slidingCaptures lsb northWestMovesVec allPieces n
+  .| slidingCaptures msb southWestMovesVec allPieces n
+  .| slidingCaptures msb southEastMovesVec allPieces n
+
+
+rookCaptureAttacks :: Board -> Square -> Board
+rookCaptureAttacks !allPieces !n =
+     slidingCaptures lsb northMovesVec allPieces n
+  .| slidingCaptures lsb eastMovesVec allPieces n
+  .| slidingCaptures msb westMovesVec allPieces n
+  .| slidingCaptures msb southMovesVec allPieces n
+
+
+queenCaptureAttacks :: Board -> Square -> Board
+queenCaptureAttacks !allPieces !n =
+     rookCaptureAttacks allPieces n
+  .| bishopCaptureAttacks allPieces n
+
+
+slidingCaptures :: (Board -> Square) -> Vector Board -> Board -> Square -> Board
+slidingCaptures !findBlocker !mask !allPieces !n =
+  toBoard $ findBlocker blockers
+  where
+    !blockers = ray & allPieces
+    !ray = mask !! n

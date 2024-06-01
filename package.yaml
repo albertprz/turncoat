@@ -2,15 +2,15 @@ name:                stafford
 version:             0.1.0
 github:              "albertprz/stafford"
 license:             BSD3
-author:              "Alberto Perez Lopez"
+author:              "Alberto Perez"
 maintainer:          "albertoperez1994@gmail.com"
-copyright:           "2023 Alberto Perez Lopez"
+copyright:           "2023 Alberto Perez"
 
 extra-source-files:
 - README.md
 
 # Metadata used when publishing your package
-synopsis:            Elegant chess engine in Haskell
+synopsis:            Minimalistic chess engine in Haskell
 category:            Chess Engine
 
 # To avoid duplicated efforts in documentation and dealing with the
@@ -50,10 +50,6 @@ default-extensions:
 - BlockArguments
 - PostfixOperators
 
-# Types
-- LiberalTypeSynonyms
-- FunctionalDependencies
-
 # Records
 - DuplicateRecordFields
 - NoFieldSelectors
@@ -61,16 +57,11 @@ default-extensions:
 - OverloadedRecordDot
 
 # Convenience
-- ApplicativeDo
 - OverloadedStrings
+
+# Patterns
 - ViewPatterns
 - PatternSynonyms
-
-# Type Level Programming
-- GADTs
-- TypeFamilies
-- TypeFamilyDependencies
-- DataKinds
 
 # Implicits
 - ImplicitParams
@@ -79,14 +70,30 @@ default-extensions:
 ghc-options:
 - -O2
 - -funbox-strict-fields
+# - -fllvm
+# - -fspecialize-aggressively
+# - -fexpose-all-unfoldings
+# - -funfolding-use-threshold=200
+# - -fspec-constr-count=20
+# - -flate-dmd-anal
+# - -flate-specialise
+
 - -Wall
 - -Wcompat
 - -Wincomplete-record-updates
 - -Wincomplete-uni-patterns
 - -Wredundant-constraints
 # - -Wall-missed-specialisations
+
+# - -fprof-late
 # - -finfo-table-map
 # - -fdistinct-constructor-tables
+
+# - -ddump-simpl
+# - -ddump-to-file
+# - -dsuppress-all
+# - -dsuppress-uniques
+# - -ddump-opt-cmm
 
 library:
   source-dirs: src

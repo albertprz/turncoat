@@ -29,14 +29,6 @@ infixl 9 >>
 (>>) :: Shift
 (>>) !x !y = unsafeShiftR x y
 
-infixl 7 /
-(/) :: Square -> Square -> Square
-(/) !x !y = div x y
-
-infixl 7 %
-(%) :: Square -> Square -> Square
-(%) !x !y = rem x y
-
 infixl 8 &
 (&) :: Board -> Board -> Board
 (&) !x !y = (.&.) x y
@@ -53,6 +45,14 @@ infixl 7 ^
 (^) :: Board -> Board -> Board
 (^) !x !y = xor x y
 
+infixl 7 /
+(/) :: Square -> Square -> Square
+(/) !x !y = div x y
+
+infixl 7 %
+(%) :: Square -> Square -> Square
+(%) !x !y = rem x y
+
 infixl 9 ~
 (~) :: Board -> Board
 (~) !x = complement x
@@ -64,9 +64,9 @@ lsb :: Board -> Square
 lsb !x = countTrailingZeros x
 
 msb :: Board -> Square
-msb !board = 65 * (zeros / 64) + 63 - zeros
+msb !x = 65 * (zeros / 64) + 63 - zeros
   where
-    !zeros = countLeadingZeros board
+    !zeros = countLeadingZeros x
 
 toBoard :: Square -> Board
 toBoard !x = bit x

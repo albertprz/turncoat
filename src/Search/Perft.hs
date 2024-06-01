@@ -5,10 +5,10 @@ import           AppPrelude
 import           Models.Move
 import           Models.Position
 import           MoveGen.MakeMove
-import           MoveGen.PieceCaptures
 import           MoveGen.PieceQuietMoves
+import           MoveGen.PieceCaptures
 
-import qualified Data.Map                as Map
+import qualified Data.Map           as Map
 import           Models.Score
 
 
@@ -17,9 +17,9 @@ perft = go 0
   where
     go !nodes !depth !pos
       | depth == 1 = nodes + length moves
-      | otherwise = foldr f nodes moves
+      | otherwise = foldl' f nodes moves
       where
-        f mv acc = go acc (depth - 1) (makeMove mv pos)
+        f !acc mv  = go acc (depth - 1) (makeMove mv pos)
         moves = allMoves pos
 
 

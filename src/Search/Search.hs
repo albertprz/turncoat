@@ -154,9 +154,9 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
       !newScore <- advanceState beta score ply nodeType mv pos
       pure newScore
 
-    !lmrFactor = min @Double 1 (fromIntegral mvIdx / 30)
+    !lmrFactor = min @Double 1 (fromIntegral mvIdx / 40)
     !lmrDepth  = min (depth - 1) $ ceiling
-      (lmrFactor * (fromIntegral depth * 4 / 5)
+      (lmrFactor * (fromIntegral depth * 3 / 4)
         + (1 - lmrFactor) * (fromIntegral depth - 1))
 
     getNegamaxScore !alpha' !beta' !depth' = liftIO do

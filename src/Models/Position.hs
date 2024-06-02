@@ -2,9 +2,9 @@ module Models.Position where
 
 
 import           AppPrelude
+import           Bookhound.Utils.List      (hasMultiple)
 import           Constants.Boards
 import           Data.Bitraversable        (bisequence)
-import           Data.Bits                 (Bits (..))
 import           Data.List.Split           (chunksOf)
 import           Data.Maybe                (fromJust)
 import           Models.Move               (foldlBoard)
@@ -14,39 +14,30 @@ import           Models.TranspositionTable (ZKey (ZKey))
 
 
 data Position = Position {
-    materialScore     :: Score
-  , halfMoveClock     :: Ply
-  , previousPositions :: [ZKey]
-  , color             :: Color
-  , attacked          :: Board
-  , castling          :: Board
-  , enPassant         :: Board
-  , leapingCheckers   :: Board
-  , sliderCheckers    :: Board
-  , pinnedPieces      :: Board
-  , player            :: Board
-  , enemy             :: Board
-  , pawns             :: Board
-  , knights           :: Board
-  , bishops           :: Board
-  , rooks             :: Board
-  , queens            :: Board
-  , kings             :: Board
+   previousPositions :: ~[ZKey]
+  , materialScore    :: Score
+  , halfMoveClock    :: Ply
+  , color            :: Color
+  , player           :: Board
+  , enemy            :: Board
+  , pawns            :: Board
+  , knights          :: Board
+  , bishops          :: Board
+  , rooks            :: Board
+  , queens           :: Board
+  , kings            :: Board
+  , enPassant        :: Board
+  , castling         :: Board
+  , attacked         :: Board
+  , leapingCheckers  :: ~Board
+  , sliderCheckers   :: ~Board
+  , pinnedPieces     :: ~Board
 }
 
 
 startPosition :: Position
-startPosition = Position {
-    materialScore = 0
-  , color = White
-  , halfMoveClock = 0
-  , previousPositions = []
-  , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
-  , attacked = 0
-  , enPassant = 0
-  , leapingCheckers = 0
-  , sliderCheckers = 0
-  , pinnedPieces = 0
+startPosition = emptyPosition {
+    color = White
   , player = rank_1 .| rank_2
   , enemy = rank_7 .| rank_8
   , pawns = rank_2 .| rank_7
@@ -55,7 +46,9 @@ startPosition = Position {
   , bishops = (rank_1 .| rank_8) & (file_C .| file_F)
   , queens = (rank_1 .| rank_8) & file_D
   , kings = (rank_1 .| rank_8) & file_E
+  , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
 }
+
 
 emptyPosition :: Position
 emptyPosition = Position {
@@ -63,12 +56,6 @@ emptyPosition = Position {
   , color = White
   , halfMoveClock = 0
   , previousPositions = []
-  , castling = 0
-  , attacked = 0
-  , enPassant = 0
-  , leapingCheckers = 0
-  , sliderCheckers = 0
-  , pinnedPieces = 0
   , player = 0
   , enemy = 0
   , pawns = 0
@@ -77,7 +64,14 @@ emptyPosition = Position {
   , bishops = 0
   , queens = 0
   , kings = 0
+  , castling = 0
+  , attacked = 0
+  , enPassant = 0
+  , leapingCheckers = 0
+  , sliderCheckers = 0
+  , pinnedPieces = 0
 }
+
 
 {-# INLINE  getZobristKey #-}
 getZobristKey :: Position -> ZKey
@@ -112,26 +106,26 @@ getZobristKey pos@Position {..} = ZKey
 pieceAt :: Square -> Position -> Maybe (Piece, Color)
 pieceAt n (Position {..}) = bisequence (piece, color')
   where
-    piece  | testBit pawns n = Just Pawn
-           | testBit knights n = Just Knight
-           | testBit bishops n = Just Bishop
-           | testBit rooks n = Just Rook
-           | testBit queens n = Just Queen
-           | testBit kings n = Just King
+    piece  | testSquare pawns n = Just Pawn
+           | testSquare knights n = Just Knight
+           | testSquare bishops n = Just Bishop
+           | testSquare rooks n = Just Rook
+           | testSquare queens n = Just Queen
+           | testSquare kings n = Just King
            | otherwise = Nothing
 
-    color' | testBit player n = Just color
-           | testBit enemy n = Just $ reverseColor color
+    color' | testSquare player n = Just color
+           | testSquare enemy n = Just $ reverseColor color
            | otherwise = Nothing
 
 {-# INLINE  maybeCapturedPieceAt #-}
 maybeCapturedPieceAt :: Square -> Position -> Maybe Piece
 maybeCapturedPieceAt n (Position {..})
-  | testBit pawns n = Just Pawn
-  | testBit knights n = Just Knight
-  | testBit bishops n = Just Bishop
-  | testBit rooks n = Just Rook
-  | testBit queens n = Just Queen
+  | testSquare pawns n = Just Pawn
+  | testSquare knights n = Just Knight
+  | testSquare bishops n = Just Bishop
+  | testSquare rooks n = Just Rook
+  | testSquare queens n = Just Queen
   | otherwise = Nothing
 
 
@@ -139,19 +133,19 @@ maybeCapturedPieceAt n (Position {..})
 isPieceAt :: Piece -> Square -> Position -> Bool
 isPieceAt piece n Position {..} =
   case piece of
-    Pawn   -> testBit pawns n
-    Knight -> testBit knights n
-    Bishop -> testBit bishops n
-    Rook   -> testBit rooks n
-    Queen  -> testBit queens n
-    King   -> testBit kings n
+    Pawn   -> testSquare pawns n
+    Knight -> testSquare knights n
+    Bishop -> testSquare bishops n
+    Rook   -> testSquare rooks n
+    Queen  -> testSquare queens n
+    King   -> testSquare kings n
+
 
 {-# INLINE  isRepeatedPosition #-}
 isRepeatedPosition :: ZKey -> Position -> Bool
 isRepeatedPosition zKey Position {..} =
-  length samePositions >= 2
-  where
-    samePositions = filter (== zKey) previousPositions
+  hasMultiple $ filter (== zKey) previousPositions
+
 
 instance Show Position where
   show pos =

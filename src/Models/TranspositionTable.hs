@@ -60,7 +60,7 @@ encodeTEntry TEntry {..} = StorableTEntry {
 
 decodeTEntry :: StorableTEntry -> Maybe TEntry
 decodeTEntry StorableTEntry {..}
-  | testBit info 63 = Nothing
+  | testSquare info 63 = Nothing
   | otherwise = Just TEntry {
       zobristKey = zobristKey,
       bestMove = decodeMove $ fromIntegral info,

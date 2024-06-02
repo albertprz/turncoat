@@ -1,4 +1,4 @@
-module Models.Move (Move(..), StorableMove(..), encodeMove, decodeMove, foldBoard, foldBoardMoves, foldBoardSquares, foldlBoard, showBoard) where
+module Models.Move (Move(..), StorableMove(..), encodeMove, decodeMove,  foldBoard, foldBoardMoves, foldBoardMovesConst, foldBoardPawnMovesConst, foldBoardSquares, foldlBoard, showBoard) where
 
 import           AppPrelude
 import           Constants.Boards
@@ -67,25 +67,40 @@ foldBoardMoves !piece !f !board moves =
   foldlBoard moves (foldBoardSquares piece f) id board
 
 
+{-# INLINE  foldBoardMovesConst #-}
+foldBoardMovesConst :: Piece -> Square -> Board -> [Move] -> [Move]
+foldBoardMovesConst !piece !end !board moves =
+  foldlBoard moves genMoves id board
+  where
+    genMoves xs start = Move piece NoProm start end : xs
+
+
+foldBoardPawnMovesConst :: Square -> Board -> [Move] -> [Move]
+foldBoardPawnMovesConst !end !board moves =
+  foldlBoard moves genMoves id board
+  where
+    genMoves xs start = genPawnMoves start end xs
+
+
 {-# INLINE  foldBoardSquares #-}
 foldBoardSquares :: Piece -> (Square -> Board) -> [Move] -> Square -> [Move]
 foldBoardSquares Pawn !f moves !start =
-  foldlBoard moves foldFn id $! f start
-  where
-    foldFn xs end
-      | testBit (rank_1 .| rank_8) end =
-        Move Pawn QueenProm start end
-        : Move Pawn KnightProm start end
-        : Move Pawn RookProm start end
-        : Move Pawn BishopProm start end
-        : xs
-      | otherwise =
-        Move Pawn NoProm start end : xs
+    foldlBoard moves (flip $ genPawnMoves start) id $! f start
 
 foldBoardSquares piece !f moves !start =
-  foldlBoard moves (flip cons) mapFn (f start)
-  where
-    mapFn = Move piece NoProm start
+    foldlBoard moves (flip cons) (Move piece NoProm start) (f start)
+
+
+genPawnMoves :: Square -> Square -> [Move] -> [Move]
+genPawnMoves !start !end xs
+  | testSquare (rank_1 .| rank_8) end =
+    Move Pawn QueenProm start end
+    : Move Pawn KnightProm start end
+    : Move Pawn RookProm start end
+    : Move Pawn BishopProm start end
+    : xs
+  | otherwise =
+    Move Pawn NoProm start end : xs
 
 
 {-# INLINE  foldlBoard #-}
@@ -100,14 +115,16 @@ foldlBoard !initial !foldFn !mapFn = go 0 initial
         board'  = (board >> current) >> 1
         current = lsb board
 
+
 showBoard :: Board -> String
 showBoard board = unlines $ map showBin
                           $ reverse $ take 8
                           $ iterate (>> 8) board
   where
-    showBin w = intersperse ' ' [sb (testBit w i) | i <- [0 .. 7]]
+    showBin w = intersperse ' ' [sb (testSquare w i) | i <- [0 .. 7]]
     sb False = '0'
     sb True  = 'X'
+
 
 showSquare :: Square -> String
 showSquare n = [fileChars !! toFile n, rankChars !! toRank n]
@@ -117,7 +134,4 @@ showSquare n = [fileChars !! toFile n, rankChars !! toRank n]
 
 
 instance Show Move where
-  show (Move {..}) =
-    showSquare start
-    <> showSquare end
-    <> show promotion
+  show (Move {..}) = showSquare start <> showSquare end <> show promotion

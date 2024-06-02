@@ -1,4 +1,4 @@
-module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, allPlayerAttacks, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks ) where
+module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, allPlayerAttacks, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks, filterPinnedAttacks) where
 
 import           AppPrelude
 
@@ -16,14 +16,13 @@ getLeapingCheckers Position {..} =
             .| knights & knightAttacks (lsb (enemy&kings))
 
 
-getSliderCheckers :: Board -> Board -> Board -> Position -> Board
-getSliderCheckers bishopCheckerRays rookCheckerRays queenCheckerRays
-   Position {..} =
+getSliderCheckers :: Board -> Board -> Position -> Board
+getSliderCheckers bishopCheckerRays rookCheckerRays Position {..} =
   player & checkers
   where
     checkers = bishopCheckerRays & bishops
             .| rookCheckerRays   & rooks
-            .| queenCheckerRays  & queens
+            .| (bishopCheckerRays .| rookCheckerRays) & queens
 
 
 getEnemyKingSliderRays :: Position -> Board
@@ -114,13 +113,7 @@ getKingRookRay !king !n
 
 
 allPlayerAttacks :: Position -> Board
-allPlayerAttacks pos@Position {..} =
-  allAttacks player enemy color pos
-
-
-allAttacks :: Board -> Board -> Color -> Position -> Board
-allAttacks !player !enemy !color
-  Position {pawns, knights, bishops, rooks, queens, kings} =
+allPlayerAttacks Position {..} =
      pawnAttacks  color                  (player&pawns)
   .| foldBoard knightAttacks             (player&knights)
   .| foldBoard (bishopAttacks allPieces) (player&bishops)
@@ -156,6 +149,11 @@ knightAttacks !n = knightMovesVec !! n
 kingAttacks :: Square -> Board
 kingAttacks !n = kingMovesVec !! n
 
+
+filterPinnedAttacks :: Board -> Board -> Board -> Square -> Board
+filterPinnedAttacks pinnedPieces attacks ray n
+  | testSquare pinnedPieces n = attacks & ray
+  | otherwise                 = attacks
 
 bishopAttacks :: Board -> Square -> Board
 bishopAttacks !allPieces !n =

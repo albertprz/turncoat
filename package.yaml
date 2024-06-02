@@ -69,14 +69,14 @@ default-extensions:
 
 ghc-options:
 - -O2
-- -funbox-strict-fields
 # - -fllvm
-# - -fspecialize-aggressively
-# - -fexpose-all-unfoldings
-# - -funfolding-use-threshold=200
-# - -fspec-constr-count=20
-# - -flate-dmd-anal
-# - -flate-specialise
+- -funbox-strict-fields
+- -fspecialize-aggressively
+- -fexpose-all-unfoldings
+- -funfolding-use-threshold=200
+- -fspec-constr-count=20
+- -flate-dmd-anal
+- -flate-specialise
 
 - -Wall
 - -Wcompat
@@ -93,7 +93,6 @@ ghc-options:
 # - -ddump-to-file
 # - -dsuppress-all
 # - -dsuppress-uniques
-# - -ddump-opt-cmm
 
 library:
   source-dirs: src

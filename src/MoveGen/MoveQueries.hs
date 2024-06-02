@@ -3,7 +3,6 @@ module MoveGen.MoveQueries (isEndgame, isLegalQuietMove,  isCheckOrWinningCaptur
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits             (Bits (testBit))
 import           Data.Composition
 import           Evaluation.Evaluation
 import           Models.Move
@@ -41,7 +40,7 @@ isCheckMove mv pos =
 isCapture :: Move -> Position -> Bool
 isCapture Move {..} Position {..} =
   promotion /= NoProm
-    || testBit (enemy .| enPassant) end
+    || testSquare (enemy .| enPassant) end
 
 isWinningCapture :: Move -> Position -> Bool
 isWinningCapture mv pos =
@@ -80,8 +79,8 @@ isEnemyKingInCheck pos@Position {..} =
 
 isLegalQuietMove :: Move -> Position -> Bool
 isLegalQuietMove mv@Move {..} pos@Position {..} =
-  testBit player start
-    && not (testBit allPieces end)
+  testSquare player start
+    && not (testSquare allPieces end)
     && not (isCastlingMove mv)
     && isPieceAt piece start pos
     && isRayUnblocked allPieces mv
@@ -93,7 +92,7 @@ isLegalQuietMove mv@Move {..} pos@Position {..} =
 isRayUnblocked :: Board -> Move -> Bool
 isRayUnblocked allPieces Move {..} =
  piece `elem` [Knight, King]
-   || testBit (queenAttacks allPieces start) end
+   || testSquare (queenAttacks allPieces start) end
 
 
 quietMakeMove :: Move -> Position -> Position

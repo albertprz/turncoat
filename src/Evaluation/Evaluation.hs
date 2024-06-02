@@ -31,7 +31,7 @@ evaluatePosition pos@Position {..} =
   + evaluatePositionHelper enemyPos.attacked pos
   - evaluatePositionHelper pos.attacked      enemyPos
   where
-    enemyPos = makeNullMove pos
+    enemyPos = switchPlayersSimple pos
 
 
 evaluatePositionHelper :: Board -> Position -> Score
@@ -63,22 +63,21 @@ evaluatePieceMobility Position {..} =
     knightsMobility =
       foldlBoard 0 (+)
         (getMobilityScore knightMobilityTable . knightAttacks)
-        (unpinned & knights)
+        knights
     bishopsMobility =
       foldlBoard 0 (+)
         (getMobilityScore bishopMobilityTable . bishopAttacks allPieces)
-        (unpinned & bishops)
+        bishops
     rooksMobility =
       foldlBoard 0 (+)
         (getMobilityScore rookMobilityTable . rookAttacks allPieces)
-        (unpinned & rooks)
+        rooks
     queensMobility =
       foldlBoard 0 (+)
         (getMobilityScore queenMobilityTable . queenAttacks allPieces)
-        (unpinned & queens)
+        queens
 
     getMobilityScore !table = (table !!) . ones . (.\ player)
-    unpinned = player .\ pinnedPieces
     allPieces = player .| enemy
 
 

@@ -64,7 +64,7 @@ squareParser = (+) <$> column <*> map (* 8) row
 --   - Switch players twice to calculate attack & pins boards
 --   - Set the inital static evaluation
 newPosition :: Position -> Position
-newPosition = setInitialScore . switchPlayers . switchPlayers
+newPosition = setInitialScore . makeNullMove . makeNullMove
 
 
 setInitialScore :: Position -> Position

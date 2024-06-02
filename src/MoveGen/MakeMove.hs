@@ -1,4 +1,4 @@
-module MoveGen.MakeMove (makeMove, makeNullMove, switchPlayers) where
+module MoveGen.MakeMove (makeMove, makeNullMove, switchPlayersSimple) where
 
 import           AppPrelude
 
@@ -25,6 +25,16 @@ makeNullMove :: Position -> Position
 makeNullMove = switchPlayers
 
 
+switchPlayersSimple :: Position -> Position
+switchPlayersSimple pos@Position {..} =
+  pos {
+    materialScore   = - materialScore
+  , color           = reverseColor color
+  , player          = enemy
+  , enemy           = player
+  , attacked        = MoveGen.allPlayerAttacks pos
+  }
+
 switchPlayers :: Position -> Position
 switchPlayers pos@Position {..} =
   pos {
@@ -33,18 +43,17 @@ switchPlayers pos@Position {..} =
   , player          = enemy
   , enemy           = player
   , attacked        = MoveGen.allPlayerAttacks pos
+  , enPassant       = fromIntegral (1 - ones enPassantPinnedPawns)
+                        * enPassant
   , leapingCheckers = MoveGen.getLeapingCheckers pos
   , sliderCheckers  = MoveGen.getSliderCheckers bishopCheckerRays
-                        rookCheckerRays queenCheckerRays pos
+                        rookCheckerRays pos
   , pinnedPieces    = MoveGen.getPinnedPieces bishopCheckerRays
                         rookCheckerRays sliderRays pos
-  , enPassant       = toEnum (1 - ones enPassantPinnedPawns)
-                        * enPassant
   }
   where
     bishopCheckerRays = MoveGen.getBishopCheckerRays pos
     rookCheckerRays = MoveGen.getRookCheckerRays pos
-    queenCheckerRays = bishopCheckerRays .| rookCheckerRays
     sliderRays = MoveGen.getEnemyKingSliderRays pos
     enPassantPinnedPawns
       | enPassant == 0 = 0
@@ -206,9 +215,7 @@ movePiece King _ start end pos@Position {..} =
     materialScore = materialScore
       + kingSquareTable !! endIdx
       - kingSquareTable !! startIdx
-      + fromIntegral (ones rookStart)
-      * (rookSquareTable !! rookEndIdx
-        - rookSquareTable !! rookStartIdx),
+      + castlingScore,
     kings = (kings ^ start) .| end,
     castling = castling .\ kingRank,
     player = (player ^ rookStart) .| rookEnd,
@@ -216,11 +223,15 @@ movePiece King _ start end pos@Position {..} =
     enPassant = 0
   }
   where
-    !rookStart = shortCastle << 1 .| longCastle >> 2
-    !rookEnd = shortCastle >> 1 .| longCastle << 1
-    !shortCastle = (start << 2) & end
-    !longCastle = (start >> 2) & end
+    rookStart = shortCastle << 1 .| longCastle >> 2
+    rookEnd = shortCastle >> 1 .| longCastle << 1
+    shortCastle = (start << 2) & end
+    longCastle = (start >> 2) & end
     kingRank = fileMovesVec !! lsb start
+    castlingScore
+      | rookStart /= 0 =
+        rookSquareTable !! rookEndIdx - rookSquareTable !! rookStartIdx
+      | otherwise = 0
     endIdx = getSquareTableIndex end color
     startIdx = getSquareTableIndex start color
     rookEndIdx = getSquareTableIndex rookEnd color

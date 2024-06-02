@@ -4,7 +4,6 @@ module MoveGen.PieceQuietMoves (allQuietMoves) where
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits             (testBit)
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -83,24 +82,24 @@ pawnAdvances noPieces color board = advances & noPieces
            .| ((board & rank_7) >> 8 & noPieces) >> 8
 
 bishopMoves :: Board -> Board -> Board -> Board -> Square -> Board
-bishopMoves noPieces allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingBishopRay king n
-  | otherwise              = attacks
+bishopMoves noPieces allPieces pinnedPieces king n =
+  filterPinnedAttacks pinnedPieces attacks ray n
   where
+    ray = getKingBishopRay king n
     attacks = bishopAttacks allPieces n & noPieces
 
 rookMoves :: Board -> Board -> Board -> Board -> Square -> Board
-rookMoves noPieces allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingRookRay king n
-  | otherwise              = attacks
+rookMoves noPieces allPieces pinnedPieces king n =
+  filterPinnedAttacks pinnedPieces attacks ray n
   where
+    ray = getKingRookRay king n
     attacks = rookAttacks allPieces n & noPieces
 
 queenMoves :: Board -> Board -> Board -> Board -> Square -> Board
-queenMoves noPieces allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingQueenRay king n
-  | otherwise              = attacks
+queenMoves noPieces allPieces pinnedPieces king n =
+  filterPinnedAttacks pinnedPieces attacks ray n
   where
+    ray = getKingQueenRay king n
     attacks = queenAttacks allPieces n & noPieces
 
 
@@ -115,11 +114,11 @@ kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Boar
 kingCastlingMoves allPieces attacked castling rooks king n =
 
   (shortCastlingCond
-      * toEnum (ones (castling & rooks & file_H))
+      * fromIntegral (ones (castling & rooks & file_H))
       * ((castling & king) << 2))
   .|
   (longCastlingCond
-      * toEnum (ones (castling & rooks & file_A))
+      * fromIntegral (ones (castling & rooks & file_A))
       * ((castling & king) >> 2))
   where
     shortCastlingCond = 1

@@ -50,21 +50,20 @@ getSortedMoves !depth !ply pos = do
 
 getSortedKillers :: (?killersTable :: KillersTable)
   => Ply -> Position -> IO [Move]
-getSortedKillers !ply pos =
-  sortMoves pos <$> killerMoves
+getSortedKillers !ply pos = sortMoves pos <$> killerMoves
   where
-    killerMoves     =
+    killerMoves =
       filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
 
 
 getSortedCaptures :: Position -> ([Move], [Move])
 getSortedCaptures pos =
-  bimap (map fst) (map fst)
+  bimap mapFn mapFn
     $ partition ((>= 0) . snd)
-    $ sortOn (Down . snd)
     $ map attachEval
     $ allCaptures pos
   where
+    !mapFn        = map fst . sortBy (comparing (Down . snd))
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
 
 
@@ -75,7 +74,6 @@ getSortedQuietMoves depth pos
 
 
 sortMoves :: Position -> [Move] -> [Move]
-sortMoves pos =
-  sortOn (Down . getMoveScore)
+sortMoves pos = sortOn (Down . getMoveScore)
   where
     getMoveScore mv = - evaluatePosition (makeMove mv pos)

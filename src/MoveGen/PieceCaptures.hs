@@ -3,7 +3,6 @@ module MoveGen.PieceCaptures (allCaptures, staticExchangeCaptures, knightCapture
 import           AppPrelude
 
 import           Constants.Boards
-import           Data.Bits
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -12,7 +11,7 @@ import           MoveGen.PieceAttacks
 
 -- Captures legal move generator:
 -- - Piece captures
--- - En passant capture
+-- - En passant captures
 -- - Pawn promotions
 
 allCaptures :: Position -> [Move]
@@ -21,7 +20,7 @@ allCaptures pos@Position {..}
   | allCheckers == 0      = genCaptures id id
   | ones allCheckers > 1 = allKingCaptures
   | sliderCheckers /= 0   = genCaptures captureChecker
-                                       pawnCaptureOrBlockChecker
+                                       pawnCaptureChecker
   | otherwise            = genCaptures captureChecker
                                        pawnCaptureChecker
 
@@ -31,12 +30,6 @@ allCaptures pos@Position {..}
     captureChecker board = board & allCheckers
     pawnCaptureChecker board = board
       & (allCheckers .| enPassantChecker)
-    pawnCaptureOrBlockChecker board = board
-      & (allCheckers .| enPassantChecker .| checkerRay)
-    checkerRay = getKingQueenRay king checkerSquare
-      & queenAttacks allPieces kingSquare
-      & queenAttacks allPieces checkerSquare
-    checkerSquare = lsb allCheckers
     allKingCaptures =
       foldBoardSquares King (kingCaptures enemy attacked) [] kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
@@ -96,68 +89,33 @@ allCapturesHelper allPieces king allKingCaptures Position {..} !f !g =
 
 staticExchangeCaptures :: Square -> Position -> [Move]
 staticExchangeCaptures target pos@Position {..}
-
-  | allCheckers == 0      = genCaptures id id
-  | ones allCheckers > 1 = allKingCaptures
-  | sliderCheckers /= 0   = genCaptures captureChecker
-                                       pawnCaptureOrBlockChecker
-  | otherwise            = genCaptures captureChecker
-                                       pawnCaptureChecker
+  | allCheckers == 0               = genCaptures
+  | ones allCheckers > 1          = allKingCaptures
+  | testSquare allCheckers target = genCaptures
+  | otherwise                     = []
 
   where
     genCaptures =
       staticExchangeCapturesHelper target allPieces king allKingCaptures pos
-    captureChecker board = board & allCheckers
-    pawnCaptureChecker board = board
-      & (allCheckers .| enPassantChecker)
-    pawnCaptureOrBlockChecker board = board
-      & (allCheckers .| checkerRay .| enPassantChecker)
-    checkerRay = getKingQueenRay king checkerSquare
-      & queenAttacks allPieces kingSquare
-      & queenAttacks allPieces checkerSquare
-    checkerSquare = lsb allCheckers
     allKingCaptures =
       foldBoardSquares King (kingCaptures enemy attacked) [] kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
-    enPassantChecker =
-      let checker = allCheckers & pawns
-      in enPassant & (checker << 8 .| checker >> 8)
     allPieces = player .| enemy
     kingSquare = lsb king
     king = player&kings
 
 
-staticExchangeCapturesHelper :: Square -> Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
-staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..} f g =
-
-    foldBoardMoves    Pawn   (g . pawnCaptures targetBoard enPassant color
-                                . toBoard)
-                             (unpinned&pawnAttackers)
-
-    $ foldBoardMoves  Pawn   (g . diagPawnCaptures
-                                    targetBoard color)
-                             diagPinnedPawns
-
-    $ foldBoardMoves  Pawn   (g . antiDiagPawnCaptures
-                                    targetBoard color)
-                             antiDiagPinnedPawns
-
-    $ foldBoardMoves  Knight (f . knightCaptures targetBoard)
-                             (unpinned&knightAttackers)
-
-    $ foldBoardMoves  Bishop (f . bishopCaptures targetBoard
-                                    allPieces pinnedPieces king)
-                             (player&bishopAttackers)
-
-    $ foldBoardMoves  Rook   (f . rookCaptures targetBoard
-                                    allPieces pinnedPieces king)
-                             (player&rookAttackers)
-
-    $ foldBoardMoves  Queen  (f . queenCaptures targetBoard
-
-                                    allPieces pinnedPieces king)
-                             (player&queenAttackers)
-    allKingCaptures
+staticExchangeCapturesHelper
+  :: Square -> Board -> Board -> [Move] -> Position -> [Move]
+staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..} =
+      foldBoardPawnMovesConst    target (unpinned&pawnAttackers)
+    $ foldBoardPawnMovesConst    target (diagPinnedPawns&pawnAttackers)
+    $ foldBoardPawnMovesConst    target (antiDiagPinnedPawns&pawnAttackers)
+    $ foldBoardMovesConst Knight target (unpinned&knightAttackers)
+    $ foldBoardMovesConst Bishop target (player&bishopAttackers)
+    $ foldBoardMovesConst Rook   target (player&rookAttackers)
+    $ foldBoardMovesConst Queen  target (player&queenAttackers)
+      allKingCaptures
 
     where
     pawnAttackers = pawns & pawnAttacks (reverseColor color) targetBoard
@@ -198,11 +156,13 @@ pawnCaptures :: Board -> Board -> Color -> Board -> Board
 pawnCaptures enemy enPassant color board =
   pawnAttacks color board & (enemy .| enPassant)
 
+
 diagPawnCaptures :: Board -> Color -> Square -> Board
 diagPawnCaptures enemy color n =
   pawnDiagAttacks color board & enemy
   where
     board = toBoard n
+
 
 antiDiagPawnCaptures :: Board -> Color -> Square -> Board
 antiDiagPawnCaptures enemy color n =
@@ -215,31 +175,35 @@ knightCaptures :: Board -> Square -> Board
 knightCaptures enemy n =
   knightAttacks n & enemy
 
+
 kingCaptures :: Board -> Board -> Square -> Board
 kingCaptures enemy attacked n =
-  (kingAttacks n & enemy)
-  .\ attacked
+  (kingAttacks n & enemy) .\ attacked
+
 
 bishopCaptures :: Board -> Board -> Board -> Board -> Square -> Board
-bishopCaptures enemy allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingBishopRay king n
-  | otherwise              = attacks
+bishopCaptures enemy allPieces pinnedPieces king n =
+  filterPinnedAttacks pinnedPieces attacks ray n
   where
+    ray = getKingBishopRay king n
     attacks = bishopCaptureAttacks allPieces n & enemy
 
+
 rookCaptures :: Board -> Board -> Board -> Board -> Square -> Board
-rookCaptures enemy allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingRookRay king n
-  | otherwise              = attacks
+rookCaptures enemy allPieces pinnedPieces king n =
+  filterPinnedAttacks pinnedPieces attacks ray n
   where
+    ray = getKingRookRay king n
     attacks = rookCaptureAttacks allPieces n & enemy
 
+
 queenCaptures :: Board -> Board -> Board -> Board -> Square -> Board
-queenCaptures enemy allPieces pinnedPieces king n
-  | testBit pinnedPieces n = attacks & getKingQueenRay king n
-  | otherwise              = attacks
+queenCaptures enemy allPieces pinnedPieces king n =
+  filterPinnedAttacks pinnedPieces attacks ray n
   where
+    ray = getKingQueenRay king n
     attacks = queenCaptureAttacks allPieces n & enemy
+
 
 bishopCaptureAttacks :: Board -> Square -> Board
 bishopCaptureAttacks !allPieces !n =

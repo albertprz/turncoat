@@ -10,7 +10,7 @@ import           MoveGen.MakeMove
 import           Evaluation.Evaluation
 
 import           Control.Monad.State
-import           MoveGen.PieceCaptures     (allCaptures)
+import           MoveGen.PieceCaptures (allCaptures)
 
 
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
@@ -46,4 +46,3 @@ getWinningCaptures :: Position -> [Move]
 getWinningCaptures pos =
   filter ((>= 0) . (`evaluateCaptureExchange` pos))
     $ allCaptures pos
-

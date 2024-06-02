@@ -10,13 +10,14 @@ import           Models.Score
 import           Models.TranspositionTable (TEntry (..), TTable, ZKey)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
+import           MoveGen.MoveQueries
+import           MoveGen.PositionQueries
 import           Search.MoveOrdering
 import           Search.Perft              (allMoves)
 import           Search.Quiescence
 
 import           Control.Monad.State
 import           GHC.Real                  ((/))
-import           MoveGen.MoveQueries
 
 
 -- Features:

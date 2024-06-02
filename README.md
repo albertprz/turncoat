@@ -1,2 +1,2 @@
 # stafford
-Chess engine in Haskell
+Minimalistic chess engine in Haskell

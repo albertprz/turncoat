@@ -1,4 +1,4 @@
-module MoveGen.MoveQueries (isEndgame, isLegalQuietMove,  isCheckOrWinningCapture, isQuietMove, isKingInCheck) where
+module MoveGen.MoveQueries (isQuietMove, isLegalQuietMove, isCheckOrWinningCapture) where
 
 import           AppPrelude
 
@@ -10,14 +10,8 @@ import           Models.Piece
 import           Models.Position
 import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
+import           MoveGen.PositionQueries
 
-
-isEndgame :: Position -> Bool
-isEndgame Position {..} =
-  ones (player & allMinorPieces) < 3
-    || ones (enemy & allMinorPieces) < 3
-  where
-    allMinorPieces = bishops .| knights .| rooks .| queens
 
 
 isCheckOrWinningCapture :: Move -> Position -> Bool
@@ -55,26 +49,6 @@ isPromotionPush Move{..} =
 isQuietMove :: Move -> Position -> Bool
 isQuietMove = not .: isCapture
 
-
-isKingInCheck :: Position -> Bool
-isKingInCheck Position {..} =
-  sliderCheckers .| leapingCheckers /= 0
-
-
-isEnemyKingInCheck :: Position -> Bool
-isEnemyKingInCheck pos@Position {..} =
-  player & potentialCheckers /= 0
-  where
-    potentialCheckers =
-      pawns & pawnAttacks (reverseColor color) (enemy&kings)
-      .| knights & knightAttacks (lsb (enemy&kings))
-      .| kings & kingAttacks (lsb (enemy&kings))
-      .| bishopCheckerRays & bishops
-      .| rookCheckerRays   & rooks
-      .| queenCheckerRays  & queens
-    bishopCheckerRays = getBishopCheckerRays pos
-    rookCheckerRays = getRookCheckerRays pos
-    queenCheckerRays = bishopCheckerRays .| rookCheckerRays
 
 
 isLegalQuietMove :: Move -> Position -> Bool

@@ -16,6 +16,7 @@ import           Models.TranspositionTable (ZKey (ZKey))
 data Position = Position {
    previousPositions :: ~[ZKey]
   , materialScore    :: Score
+  , mobilityScore    :: Score
   , halfMoveClock    :: Ply
   , color            :: Color
   , player           :: Board
@@ -29,47 +30,49 @@ data Position = Position {
   , enPassant        :: Board
   , castling         :: Board
   , attacked         :: Board
-  , leapingCheckers  :: ~Board
-  , sliderCheckers   :: ~Board
-  , pinnedPieces     :: ~Board
+  , leapingCheckers  :: Board
+  , sliderCheckers   :: Board
+  , pinnedPieces     :: Board
 }
 
 
 startPosition :: Position
 startPosition = emptyPosition {
-    color = White
-  , player = rank_1 .| rank_2
-  , enemy = rank_7 .| rank_8
-  , pawns = rank_2 .| rank_7
-  , rooks = (rank_1 .| rank_8) & (file_A .| file_H)
-  , knights = (rank_1 .| rank_8) & (file_B .| file_G)
-  , bishops = (rank_1 .| rank_8) & (file_C .| file_F)
-  , queens = (rank_1 .| rank_8) & file_D
-  , kings = (rank_1 .| rank_8) & file_E
+    color    = White
+  , player   = rank_1 .| rank_2
+  , enemy    = rank_7 .| rank_8
+  , pawns    = rank_2 .| rank_7
+  , rooks    = (rank_1 .| rank_8) & (file_A .| file_H)
+  , knights  = (rank_1 .| rank_8) & (file_B .| file_G)
+  , bishops  = (rank_1 .| rank_8) & (file_C .| file_F)
+  , queens   = (rank_1 .| rank_8) & file_D
+  , kings    = (rank_1 .| rank_8) & file_E
   , castling = (rank_1 .| rank_8) & (file_A .| file_E .| file_H)
 }
 
 
 emptyPosition :: Position
 emptyPosition = Position {
-    materialScore = 0
-  , color = White
-  , halfMoveClock = 0
-  , previousPositions = []
-  , player = 0
-  , enemy = 0
-  , pawns = 0
-  , rooks = 0
-  , knights = 0
-  , bishops = 0
-  , queens = 0
-  , kings = 0
-  , castling = 0
-  , attacked = 0
-  , enPassant = 0
-  , leapingCheckers = 0
-  , sliderCheckers = 0
-  , pinnedPieces = 0
+   previousPositions = []
+  , color             = White
+  , halfMoveClock     = 0
+  , materialScore     = 0
+  , mobilityScore     = 0
+  , player            = 0
+  , enemy             = 0
+  , pawns             = 0
+  , rooks             = 0
+  , knights           = 0
+  , bishops           = 0
+  , queens            = 0
+  , kings             = 0
+  , castling          = 0
+  , attacked          = 0
+  , enPassant         = 0
+  , leapingCheckers   = 0
+  , sliderCheckers    = 0
+  , pinnedPieces      = 0
+
 }
 
 
@@ -106,27 +109,28 @@ getZobristKey pos@Position {..} = ZKey
 pieceAt :: Square -> Position -> Maybe (Piece, Color)
 pieceAt n (Position {..}) = bisequence (piece, color')
   where
-    piece  | testSquare pawns n = Just Pawn
+    piece  | testSquare pawns n   = Just Pawn
            | testSquare knights n = Just Knight
            | testSquare bishops n = Just Bishop
-           | testSquare rooks n = Just Rook
-           | testSquare queens n = Just Queen
-           | testSquare kings n = Just King
-           | otherwise = Nothing
+           | testSquare rooks n   = Just Rook
+           | testSquare queens n  = Just Queen
+           | testSquare kings n   = Just King
+           | otherwise            = Nothing
 
     color' | testSquare player n = Just color
-           | testSquare enemy n = Just $ reverseColor color
-           | otherwise = Nothing
+           | testSquare enemy n  = Just $ reverseColor color
+           | otherwise           = Nothing
+
 
 {-# INLINE  maybeCapturedPieceAt #-}
 maybeCapturedPieceAt :: Square -> Position -> Maybe Piece
 maybeCapturedPieceAt n (Position {..})
-  | testSquare pawns n = Just Pawn
+  | testSquare pawns n   = Just Pawn
   | testSquare knights n = Just Knight
   | testSquare bishops n = Just Bishop
-  | testSquare rooks n = Just Rook
-  | testSquare queens n = Just Queen
-  | otherwise = Nothing
+  | testSquare rooks n   = Just Rook
+  | testSquare queens n  = Just Queen
+  | otherwise            = Nothing
 
 
 {-# INLINE  isPieceAt #-}

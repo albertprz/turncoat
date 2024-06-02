@@ -1,11 +1,14 @@
-module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, allPlayerAttacks, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks, filterPinnedAttacks) where
+module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, getAllAttacksAndMobility, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks, filterPinnedAttacks) where
 
 import           AppPrelude
 
 import           Constants.Boards
+import           Evaluation.PieceTables
 import           Models.Move
 import           Models.Piece
 import           Models.Position
+import           Models.Score
+
 
 
 getLeapingCheckers :: Position -> Board
@@ -112,16 +115,29 @@ getKingRookRay !king !n
     rank = fileMovesVec !! n
 
 
-allPlayerAttacks :: Position -> Board
-allPlayerAttacks Position {..} =
-     pawnAttacks  color                  (player&pawns)
-  .| foldBoard knightAttacks             (player&knights)
-  .| foldBoard (bishopAttacks allPieces) (player&bishops)
-  .| foldBoard (rookAttacks allPieces)   (player&rooks)
-  .| foldBoard (queenAttacks allPieces)  (player&queens)
-  .| kingAttacks                    (lsb (player&kings))
+getAllAttacksAndMobility :: Position -> (Board, Score)
+getAllAttacksAndMobility Position {..} =
+  (allAttacks, mobility)
   where
-    allPieces = player .| (enemy .\ kings)
+    !allAttacks = pawnThreats .| knightThreats .| bishopThreats
+                .| rookThreats .| queenThreats .| kingThreats
+    !mobility = knightsScore + bishopsScore + rooksScore + queensScore
+
+    pawnThreats   = pawnAttacks color (player&pawns)
+    (knightThreats, knightsScore) = foldBoardMobility
+      knightMobilityTable knightAttacks (player&knights)
+    (bishopThreats, bishopsScore) = foldBoardMobility
+      bishopMobilityTable (bishopAttacks allPieces) (player&bishops)
+    (rookThreats, rooksScore)   = foldBoardMobility
+      rookMobilityTable (rookAttacks allPieces) (player&rooks)
+    (queenThreats, queensScore)  = foldBoardMobility
+      queenMobilityTable (queenAttacks allPieces) (player&queens)
+    kingThreats   = kingAttacks (lsb (player&kings))
+    allPieces     = player .| (enemy .\ kings)
+
+    foldBoardMobility table !f !board = foldlBoard (0, 0) foldFn f board
+      where
+        foldFn (!x, !y) !curr = (x .| curr, y + table !! ones curr)
 
 
 pawnAttacks :: Color -> Board -> Board
@@ -154,6 +170,7 @@ filterPinnedAttacks :: Board -> Board -> Board -> Square -> Board
 filterPinnedAttacks pinnedPieces attacks ray n
   | testSquare pinnedPieces n = attacks & ray
   | otherwise                 = attacks
+
 
 bishopAttacks :: Board -> Square -> Board
 bishopAttacks !allPieces !n =

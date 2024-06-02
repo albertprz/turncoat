@@ -43,6 +43,7 @@ library
       MoveGen.PieceAttacks
       MoveGen.PieceCaptures
       MoveGen.PieceQuietMoves
+      MoveGen.PositionQueries
       Parsers.Command
       Parsers.Position
       Search.MoveOrdering

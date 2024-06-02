@@ -4,13 +4,13 @@ import           AppPrelude
 
 import           Constants.Boards
 import           Evaluation.Material
-import           Evaluation.PieceTables
 import           Models.Move
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 import           MoveGen.PieceCaptures
+import           MoveGen.PositionQueries (isKingInCheck)
 
 
 evaluateCaptureExchange :: Move -> Position -> Score
@@ -28,57 +28,37 @@ evaluateCaptureExchange initialMv@Move {..} initialPos =
 evaluatePosition :: Position -> Score
 evaluatePosition pos@Position {..} =
   materialScore
-  + evaluatePositionHelper enemyPos.attacked pos
-  - evaluatePositionHelper pos.attacked      enemyPos
+  + evaluatePositionHelper enemyPos.attacked enemyPos.mobilityScore pos
+  - evaluatePositionHelper pos.attacked      pos.mobilityScore      enemyPos
   where
-    enemyPos = switchPlayersSimple pos
+    enemyPos = makeFastNullMove pos
 
 
-evaluatePositionHelper :: Board -> Position -> Score
-evaluatePositionHelper playerAttacked pos =
-    evaluatePositionBonuses pos
+evaluatePositionHelper :: Board -> Score -> Position -> Score
+evaluatePositionHelper playerAttacked mobilityScore pos =
+    evaluatePositionBonuses mobilityScore pos
   - evaluatePositionMaluses playerAttacked pos
 
 
-evaluatePositionBonuses :: Position -> Score
-evaluatePositionBonuses pos =
-    evaluatePieceMobility pos
+evaluatePositionBonuses :: Score -> Position -> Score
+evaluatePositionBonuses mobilityScore pos =
+  evaluateMobility mobilityScore pos
   + evaluateBishopPair pos
   -- evaluate Passed pawns
   -- evaluate knight outposts
 
+evaluateMobility :: Score -> Position -> Score
+evaluateMobility mobilityScore pos
+  | isKingInCheck pos = 0
+  | otherwise         = mobilityScore
+
 
 evaluatePositionMaluses :: Board -> Position -> Score
 evaluatePositionMaluses playerAttacked pos@Position {..} =
-  evaluateKingSafety   player kings          attacked
+  evaluateKingSafety   player   kings          attacked
   + evaluatePieceThreats player playerAttacked attacked pos
   + evaluateDoubledPawns  (player & pawns)
   + evaluateIsolatedPawns (player & pawns)
-
-
-evaluatePieceMobility :: Position -> Score
-evaluatePieceMobility Position {..} =
-  knightsMobility + bishopsMobility + rooksMobility + queensMobility
-  where
-    knightsMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore knightMobilityTable . knightAttacks)
-        knights
-    bishopsMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore bishopMobilityTable . bishopAttacks allPieces)
-        bishops
-    rooksMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore rookMobilityTable . rookAttacks allPieces)
-        rooks
-    queensMobility =
-      foldlBoard 0 (+)
-        (getMobilityScore queenMobilityTable . queenAttacks allPieces)
-        queens
-
-    getMobilityScore !table = (table !!) . ones . (.\ player)
-    allPieces = player .| enemy
 
 
 evaluateBishopPair :: Position -> Score

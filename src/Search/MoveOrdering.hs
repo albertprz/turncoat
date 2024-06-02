@@ -14,6 +14,7 @@ import           MoveGen.MakeMove          (makeMove)
 import           MoveGen.MoveQueries
 import           MoveGen.PieceCaptures     (allCaptures)
 import           MoveGen.PieceQuietMoves   (allQuietMoves)
+import           MoveGen.PositionQueries
 
 
 

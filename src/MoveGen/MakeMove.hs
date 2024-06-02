@@ -1,4 +1,4 @@
-module MoveGen.MakeMove (makeMove, makeNullMove, switchPlayersSimple) where
+module MoveGen.MakeMove (makeMove, makeNullMove, makeFastNullMove) where
 
 import           AppPrelude
 
@@ -8,12 +8,12 @@ import           Evaluation.PieceTables
 import           Models.Move
 import           Models.Piece
 import           Models.Position
-import qualified MoveGen.PieceAttacks   as MoveGen
+import           MoveGen.PieceAttacks
 
 
 makeMove :: Move -> Position -> Position
 makeMove Move {..} =
-  switchPlayers
+  makeNullMove
   . movePiece piece promotion startBoard endBoard
   . updatePlayerBoards startBoard endBoard end
   where
@@ -21,64 +21,66 @@ makeMove Move {..} =
     !endBoard = toBoard end
 
 
-makeNullMove :: Position -> Position
-makeNullMove = switchPlayers
-
-
-switchPlayersSimple :: Position -> Position
-switchPlayersSimple pos@Position {..} =
+makeFastNullMove :: Position -> Position
+makeFastNullMove pos@Position {materialScore, color, player, enemy} =
   pos {
-    materialScore   = - materialScore
-  , color           = reverseColor color
-  , player          = enemy
-  , enemy           = player
-  , attacked        = MoveGen.allPlayerAttacks pos
+    materialScore = - materialScore
+  , mobilityScore = mobilityScore
+  , color         = reverseColor color
+  , player        = enemy
+  , enemy         = player
+  , attacked      = attacked
   }
+  where
+    (!attacked, !mobilityScore) = getAllAttacksAndMobility pos
 
-switchPlayers :: Position -> Position
-switchPlayers pos@Position {..} =
+
+makeNullMove :: Position -> Position
+makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
   pos {
     materialScore   = - materialScore
+    , mobilityScore = mobilityScore
   , color           = reverseColor color
   , player          = enemy
   , enemy           = player
-  , attacked        = MoveGen.allPlayerAttacks pos
+  , attacked        = attacked
   , enPassant       = fromIntegral (1 - ones enPassantPinnedPawns)
-                        * enPassant
-  , leapingCheckers = MoveGen.getLeapingCheckers pos
-  , sliderCheckers  = MoveGen.getSliderCheckers bishopCheckerRays
+                      * enPassant
+  , leapingCheckers = getLeapingCheckers pos
+  , sliderCheckers  = getSliderCheckers bishopCheckerRays
                         rookCheckerRays pos
-  , pinnedPieces    = MoveGen.getPinnedPieces bishopCheckerRays
+  , pinnedPieces    = getPinnedPieces bishopCheckerRays
                         rookCheckerRays sliderRays pos
   }
   where
-    bishopCheckerRays = MoveGen.getBishopCheckerRays pos
-    rookCheckerRays = MoveGen.getRookCheckerRays pos
-    sliderRays = MoveGen.getEnemyKingSliderRays pos
+    (!attacked, !mobilityScore) = getAllAttacksAndMobility pos
+    bishopCheckerRays         = getBishopCheckerRays pos
+    rookCheckerRays           = getRookCheckerRays pos
+    sliderRays                = getEnemyKingSliderRays pos
     enPassantPinnedPawns
-      | enPassant == 0 = 0
-      | otherwise = MoveGen.getEnPassantPinnedPawns pos
+      | enPassant             == 0 = 0
+      | otherwise             = getEnPassantPinnedPawns pos
 
 
 updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
 updatePlayerBoards start end endSquare pos@Position {..} =
   pos {
-    previousPositions = getZobristKey pos
+    previousPositions    = getZobristKey pos
       : if halfMoveClock == 0
         then []
         else previousPositions,
-    materialScore = materialScore
+    materialScore        = materialScore
       + maybe 0 (evaluateCapturedPiece color endSquare)
                 (maybeCapturedPieceAt endSquare pos),
-    halfMoveClock = fromIntegral
+    halfMoveClock        = fromIntegral
       (1 - ones (enemy & end)) * (halfMoveClock + 1),
-    player = (player ^ start) .| end,
-    enemy = enemy .\ end,
-    pawns = pawns .\ end,
-    knights = knights .\ end,
-    bishops = bishops .\ end,
-    rooks = rooks .\ end,
-    queens = queens .\ end
+    player               = (player ^ start) .| end,
+    enemy                = enemy .\ end,
+    pawns                = pawns .\ end,
+    knights              = knights .\ end,
+    bishops              = bishops .\ end,
+    rooks                = rooks .\ end,
+    queens               = queens .\ end
   }
 
 

@@ -57,7 +57,7 @@ decodeMove (StorableMove n)
 
 
 {-# INLINE  foldBoard #-}
-foldBoard ::  (Square -> Board) -> Board -> Board
+foldBoard :: (Square -> Board) -> Board -> Board
 foldBoard !f !board = foldlBoard 0 (.|) f board
 
 

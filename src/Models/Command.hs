@@ -1,8 +1,8 @@
 module Models.Command where
 
-import           Constants.Boards
 import           Models.Position
 import           Models.Score
+import           Utils.Board
 
 
 data Command

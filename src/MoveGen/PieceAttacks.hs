@@ -1,13 +1,13 @@
-module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, getAllAttacksAndMobility, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks, filterPinnedAttacks) where
+module MoveGen.PieceAttacks (getLeapingCheckers, getSliderCheckers, getEnemyKingSliderRays, getBishopCheckerRays, getRookCheckerRays, getKingBishopRay, getPinnedPieces, getEnPassantPinnedPawns, getKingQueenRay, getKingRookRay, getAllAttacksAndScores, knightAttacks, bishopAttacks, rookAttacks, queenAttacks, kingAttacks, pawnAttacks, pawnDiagAttacks, pawnAntiDiagAttacks, filterPinnedAttacks) where
 
 import           AppPrelude
 
-import           Constants.Boards
-import           Evaluation.PieceTables
+import           Evaluation.Constants
 import           Models.Move
 import           Models.Piece
 import           Models.Position
 import           Models.Score
+import           Utils.Board
 
 
 
@@ -115,29 +115,55 @@ getKingRookRay !king !n
     rank = fileMovesVec !! n
 
 
-getAllAttacksAndMobility :: Position -> (Board, Score)
-getAllAttacksAndMobility Position {..} =
-  (allAttacks, mobility)
+getAllAttacksAndScores :: Position -> (Board, Score, Score)
+getAllAttacksAndScores Position {..} =
+  (allAttacks, mobility, unsafe)
   where
-    !allAttacks = pawnThreats .| knightThreats .| bishopThreats
-                .| rookThreats .| queenThreats .| kingThreats
-    !mobility = knightsScore + bishopsScore + rooksScore + queensScore
+    !allAttacks   = pawnThreats .| knightThreats .| bishopThreats
+                 .| rookThreats .| queenThreats .| kingThreats
+    !mobility     = knightsScore + bishopsScore + rooksScore + queensScore
+    !unsafe       = (kingZonePenalty !! unsafePieces) * unsafeScore `div` 100
+    !unsafePieces =
+      knightsUnsafe + bishopsUnsafe + rooksUnsafe + queensUnsafe
+    !unsafeScore  =
+      minorSafetyPenalty *
+        fromIntegral (knightsUnsafeSquares + bishopsUnsafeSquares)
+      + rookSafetyPenalty * fromIntegral rooksUnsafeSquares
+      + queenSafetyPenalty * fromIntegral queensUnsafeSquares
 
-    pawnThreats   = pawnAttacks color (player&pawns)
-    (knightThreats, knightsScore) = foldBoardMobility
-      knightMobilityTable knightAttacks (player&knights)
-    (bishopThreats, bishopsScore) = foldBoardMobility
-      bishopMobilityTable (bishopAttacks allPieces) (player&bishops)
-    (rookThreats, rooksScore)   = foldBoardMobility
-      rookMobilityTable (rookAttacks allPieces) (player&rooks)
-    (queenThreats, queensScore)  = foldBoardMobility
-      queenMobilityTable (queenAttacks allPieces) (player&queens)
-    kingThreats   = kingAttacks (lsb (player&kings))
-    allPieces     = player .| (enemy .\ kings)
+    (knightThreats, knightsScore, knightsUnsafeSquares, knightsUnsafe) =
+      foldBoardMobility knightMobilityTable
+      ((.\ player) . knightAttacks) (player&knights)
 
-    foldBoardMobility table !f !board = foldlBoard (0, 0) foldFn f board
+    (bishopThreats, bishopsScore, bishopsUnsafeSquares, bishopsUnsafe) =
+      foldBoardMobility bishopMobilityTable
+      ((.\ player) . bishopAttacks allPieces) (player&bishops)
+
+    (rookThreats, rooksScore, rooksUnsafeSquares, rooksUnsafe) =
+      foldBoardMobility rookMobilityTable
+      ((.\ player) . rookAttacks allPieces) (player&rooks)
+
+    (queenThreats, queensScore, queensUnsafeSquares, queensUnsafe) =
+      foldBoardMobility queenMobilityTable
+      ((.\ player) . queenAttacks allPieces) (player&queens)
+
+    !pawnThreats   = pawnAttacks color (player&pawns)
+    !kingThreats   = kingAttacks (lsb (player&kings))
+    !allPieces     = player .| (enemy .\ kings)
+    !enemyKingArea = kingAttacks (lsb (enemy&kings))
+
+    foldBoardMobility !table !f !board =
+      foldlBoard (0, 0, 0, 0) foldFn f board
       where
-        foldFn (!x, !y) !curr = (x .| curr, y + table !! ones curr)
+        foldFn (!x, !y, !z, !t) !curr =
+          (x .| curr,
+           y + table !! ones curr,
+           z + unsafeSquares,
+           t + min 1 unsafeSquares
+          )
+          where
+            !unsafeSquares = ones (enemyKingArea & curr)
+
 
 
 pawnAttacks :: Color -> Board -> Board

@@ -1,11 +1,32 @@
-module Evaluation.PieceTables where
+module Evaluation.Constants where
 
 import           AppPrelude
-import           Constants.Boards
+import           Utils.Board
 import           Data.List.Split      (chunksOf)
 import qualified Data.Vector.Storable as Vector
 import           Models.Piece
 import           Models.Score
+
+
+bishopPairBonus :: Score
+bishopPairBonus = 25
+
+isolatedPawnPenalty :: Score
+isolatedPawnPenalty = 25
+
+minorSafetyPenalty :: Score
+minorSafetyPenalty = 20
+
+rookSafetyPenalty :: Score
+rookSafetyPenalty = 40
+
+queenSafetyPenalty :: Score
+queenSafetyPenalty = 80
+
+
+kingZonePenalty :: Vector Score
+kingZonePenalty = Vector.fromList
+  [0, 50, 75, 88, 94, 97, 99, 100, 100, 100]
 
 
 knightMobilityTable :: Vector Score
@@ -18,12 +39,12 @@ bishopMobilityTable = Vector.fromList
 
 rookMobilityTable :: Vector Score
 rookMobilityTable = Vector.fromList
-  [-12, -5, -2, 0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+  [-20, -12, -6, -1, 3, 6, 9, 11, 13, 15, 16, 17, 18, 19, 20]
 
 queenMobilityTable :: Vector Score
 queenMobilityTable = Vector.fromList
-  [-10, -7, -4, -2, -1, 0, 1, 2, 2, 3, 3, 4, 4, 5,
-   5, 6, 6, 7, 7, 8, 8, 8, 9, 9, 9, 10, 10, 10 ]
+  [-30, -17, -10, -5, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16,
+   17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 ]
 
 
 blackPawnSquareTable :: Vector Score

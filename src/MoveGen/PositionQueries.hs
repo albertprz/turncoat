@@ -2,10 +2,10 @@ module MoveGen.PositionQueries (isEndgame, isKingInCheck, isEnemyKingInCheck) wh
 
 import           AppPrelude
 
-import           Constants.Boards
 import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceAttacks
+import           Utils.Board
 
 
 isEndgame :: Position -> Bool

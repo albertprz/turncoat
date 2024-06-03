@@ -4,7 +4,6 @@ import           AppPrelude
 
 import           Foreign.Storable.Generic
 
-import           Constants.Boards
 import           Data.Vector.Storable.Mutable (IOVector)
 import qualified Data.Vector.Storable.Mutable as Vector
 import           GHC.Bits
@@ -12,6 +11,7 @@ import           GHC.Word                     (Word16)
 import           Models.Move
 import           Models.Score
 import           Test.QuickCheck              (Arbitrary (..))
+import           Utils.Board
 
 type TTable = IOVector StorableTEntry
 

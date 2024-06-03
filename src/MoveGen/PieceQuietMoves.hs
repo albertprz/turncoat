@@ -3,12 +3,12 @@ module MoveGen.PieceQuietMoves (allQuietMoves) where
 
 import           AppPrelude
 
-import           Constants.Boards
 import           Models.Move
 import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceAttacks
 import           MoveGen.PieceCaptures
+import           Utils.Board
 
 
 -- Quiet moves legal move generator:
@@ -112,7 +112,6 @@ kingMoves allPieces attacked castling rooks king n =
 
 kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
 kingCastlingMoves allPieces attacked castling rooks king n =
-
   (shortCastlingCond
       * fromIntegral (ones (castling & rooks & file_H))
       * ((castling & king) << 2))
@@ -121,10 +120,10 @@ kingCastlingMoves allPieces attacked castling rooks king n =
       * fromIntegral (ones (castling & rooks & file_A))
       * ((castling & king) >> 2))
   where
-    shortCastlingCond = 1
-     - min 1 (shortCastleSliding & collisions .| inCheck)
-    longCastlingCond = 1
-     - min 1 (longCastleSliding & collisions .| inCheck
+    shortCastlingCond =
+     toCondition (shortCastleSliding & collisions .| inCheck)
+    longCastlingCond =
+     toCondition (longCastleSliding & collisions .| inCheck
               .| allPieces & kingRank & file_B)
     collisions = kingRank & (attacked .| allPieces)
     kingRank = fileMovesVec !! n

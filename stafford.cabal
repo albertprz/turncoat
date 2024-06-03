@@ -27,10 +27,9 @@ source-repository head
 library
   exposed-modules:
       AppPrelude
-      Constants.Boards
+      Evaluation.Constants
       Evaluation.Evaluation
       Evaluation.Material
-      Evaluation.PieceTables
       Models.Command
       Models.KillersTable
       Models.Move
@@ -50,6 +49,7 @@ library
       Search.Perft
       Search.Quiescence
       Search.Search
+      Utils.Board
   other-modules:
       Paths_stafford
   hs-source-dirs:

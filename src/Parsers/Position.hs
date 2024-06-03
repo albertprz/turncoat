@@ -8,12 +8,12 @@ import           Bookhound.Parsers.Char      (space)
 import           Bookhound.Parsers.Number    (unsignedInt)
 import           Data.Char                   (digitToInt)
 
-import           Constants.Boards
 import           Evaluation.Material         (evaluateMaterial)
 import           Models.Piece
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
+import           Utils.Board
 
 
 positionFenParser :: Parser Position
@@ -28,6 +28,7 @@ positionFenParser = do
     $ includeColor color
     emptyPosition
   where
+  newPosition = setInitialScore . makeNullMove . makeNullMove
   position = (,,,,,)
     <$> (piecesP <* space)
     <*> (colorP <* space)
@@ -58,13 +59,6 @@ squareParser = (+) <$> column <*> map (* 8) row
   where
     column = (\x -> x - fromEnum 'a') . fromEnum <$> oneOf ['a' .. 'h']
     row = (\x -> x - 1) . digitToInt <$> oneOf ['1' .. '8']
-
-
--- For a new position:
---   - Switch players twice to calculate attack & pins boards
---   - Set the inital static evaluation
-newPosition :: Position -> Position
-newPosition = setInitialScore . makeNullMove . makeNullMove
 
 
 setInitialScore :: Position -> Position

@@ -2,7 +2,6 @@ module MoveGen.MoveQueries (isQuietMove, isLegalQuietMove, isCheckOrWinningCaptu
 
 import           AppPrelude
 
-import           Constants.Boards
 import           Data.Composition
 import           Evaluation.Evaluation
 import           Models.Move
@@ -11,6 +10,7 @@ import           Models.Position
 import           MoveGen.MakeMove
 import           MoveGen.PieceAttacks
 import           MoveGen.PositionQueries
+import           Utils.Board
 
 
 

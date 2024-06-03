@@ -1,8 +1,8 @@
 module Models.Move (Move(..), StorableMove(..), encodeMove, decodeMove,  foldBoard, foldBoardMoves, foldBoardMovesConst, foldBoardPawnMovesConst, foldBoardSquares, foldlBoard, showBoard) where
 
 import           AppPrelude
-import           Constants.Boards
 import           Models.Piece
+import           Utils.Board
 
 import           Data.Bits
 import           Data.List            (iterate)

@@ -2,11 +2,11 @@ module MoveGen.PieceCaptures (allCaptures, staticExchangeCaptures, knightCapture
 
 import           AppPrelude
 
-import           Constants.Boards
 import           Models.Move
 import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceAttacks
+import           Utils.Board
 
 
 -- Captures legal move generator:

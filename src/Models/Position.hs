@@ -3,7 +3,6 @@ module Models.Position where
 
 import           AppPrelude
 import           Bookhound.Utils.List      (hasMultiple)
-import           Constants.Boards
 import           Data.Bitraversable        (bisequence)
 import           Data.List.Split           (chunksOf)
 import           Data.Maybe                (fromJust)
@@ -11,11 +10,13 @@ import           Models.Move               (foldlBoard)
 import           Models.Piece
 import           Models.Score
 import           Models.TranspositionTable (ZKey (ZKey))
+import           Utils.Board
 
 
 data Position = Position {
    previousPositions :: ~[ZKey]
   , materialScore    :: Score
+  , kingSafetyScore  :: Score
   , mobilityScore    :: Score
   , halfMoveClock    :: Ply
   , color            :: Color
@@ -58,6 +59,7 @@ emptyPosition = Position {
   , halfMoveClock     = 0
   , materialScore     = 0
   , mobilityScore     = 0
+  , kingSafetyScore   = 0
   , player            = 0
   , enemy             = 0
   , pawns             = 0

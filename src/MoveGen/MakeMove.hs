@@ -1,14 +1,14 @@
-module MoveGen.MakeMove (makeMove, makeNullMove, makeFastNullMove) where
+module MoveGen.MakeMove (makeMove, makeNullMove) where
 
 import           AppPrelude
 
-import           Constants.Boards
+import           Evaluation.Constants
 import           Evaluation.Material
-import           Evaluation.PieceTables
 import           Models.Move
 import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceAttacks
+import           Utils.Board
 
 
 makeMove :: Move -> Position -> Position
@@ -21,25 +21,12 @@ makeMove Move {..} =
     !endBoard = toBoard end
 
 
-makeFastNullMove :: Position -> Position
-makeFastNullMove pos@Position {materialScore, color, player, enemy} =
-  pos {
-    materialScore = - materialScore
-  , mobilityScore = mobilityScore
-  , color         = reverseColor color
-  , player        = enemy
-  , enemy         = player
-  , attacked      = attacked
-  }
-  where
-    (!attacked, !mobilityScore) = getAllAttacksAndMobility pos
-
-
 makeNullMove :: Position -> Position
 makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
   pos {
     materialScore   = - materialScore
-    , mobilityScore = mobilityScore
+  , mobilityScore   = - mobilityScore
+  , kingSafetyScore = - kingSafetyScore
   , color           = reverseColor color
   , player          = enemy
   , enemy           = player
@@ -53,13 +40,14 @@ makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
                         rookCheckerRays sliderRays pos
   }
   where
-    (!attacked, !mobilityScore) = getAllAttacksAndMobility pos
-    bishopCheckerRays         = getBishopCheckerRays pos
-    rookCheckerRays           = getRookCheckerRays pos
-    sliderRays                = getEnemyKingSliderRays pos
+    (!attacked, !mobilityScore, !kingSafetyScore)
+                      = getAllAttacksAndScores pos
+    bishopCheckerRays = getBishopCheckerRays pos
+    rookCheckerRays   = getRookCheckerRays pos
+    sliderRays        = getEnemyKingSliderRays pos
     enPassantPinnedPawns
-      | enPassant             == 0 = 0
-      | otherwise             = getEnPassantPinnedPawns pos
+      | enPassant     == 0 = 0
+      | otherwise     = getEnPassantPinnedPawns pos
 
 
 updatePlayerBoards :: Board -> Board -> Square -> Position -> Position

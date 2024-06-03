@@ -1,6 +1,6 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Constants.Boards (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  ones, lsb, msb, toBoard, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec,
+module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  ones, lsb, msb, toBoard, toCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec,
                          shortCastleSliding, longCastleSliding, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
 
 import           AppPrelude           hiding (map)
@@ -67,6 +67,9 @@ msb :: Board -> Square
 msb !x = 65 * (zeros / 64) + 63 - zeros
   where
     !zeros = countLeadingZeros x
+
+toCondition :: (Num a, Ord a) => a -> a
+toCondition !x = 1 - min 1 x
 
 toBoard :: Square -> Board
 toBoard !n = fromIntegral (1 - n / 64) * (1 << n)

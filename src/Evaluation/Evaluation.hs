@@ -2,15 +2,16 @@ module Evaluation.Evaluation (evaluateCaptureExchange, evaluatePosition) where
 
 import           AppPrelude
 
-import           Constants.Boards
-import           Evaluation.Material
+import           Evaluation.Constants
 import           Models.Move
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
-import           MoveGen.PieceAttacks
 import           MoveGen.PieceCaptures
-import           MoveGen.PositionQueries (isKingInCheck)
+import           MoveGen.PositionQueries
+import           Utils.Board
+
+import           Data.Ord                (clamp)
 
 
 evaluateCaptureExchange :: Move -> Position -> Score
@@ -21,122 +22,75 @@ evaluateCaptureExchange initialMv@Move {..} initialPos =
     evaluateExchange !square pos =
       case headMay $ staticExchangeCaptures square pos of
         Just mv -> - (max pos.materialScore
-                        (evaluateExchange square (makeMove mv pos)))
+                        $! evaluateExchange square (makeMove mv pos))
         Nothing -> - pos.materialScore
 
 
 evaluatePosition :: Position -> Score
-evaluatePosition pos@Position {..} =
-  materialScore
-  + evaluatePositionHelper enemyPos.attacked enemyPos.mobilityScore pos
-  - evaluatePositionHelper pos.attacked      pos.mobilityScore      enemyPos
+evaluatePosition pos =
+  pos.materialScore
+  + evaluatePositionHelper pos
+  - evaluatePositionHelper enemyPos
   where
-    enemyPos = makeFastNullMove pos
+    enemyPos = makeNullMove pos
 
 
-evaluatePositionHelper :: Board -> Score -> Position -> Score
-evaluatePositionHelper playerAttacked mobilityScore pos =
-    evaluatePositionBonuses mobilityScore pos
-  - evaluatePositionMaluses playerAttacked pos
+evaluatePositionHelper :: Position -> Score
+evaluatePositionHelper pos =
+    evaluatePositionBonuses pos
+  - evaluatePositionPenalties pos
 
 
-evaluatePositionBonuses :: Score -> Position -> Score
-evaluatePositionBonuses mobilityScore pos =
-  evaluateMobility mobilityScore pos
+evaluatePositionBonuses :: Position -> Score
+evaluatePositionBonuses pos =
+  evaluateMobility pos
   + evaluateBishopPair pos
   -- evaluate Passed pawns
   -- evaluate knight outposts
 
-evaluateMobility :: Score -> Position -> Score
-evaluateMobility mobilityScore pos
-  | isKingInCheck pos = 0
-  | otherwise         = mobilityScore
-
-
-evaluatePositionMaluses :: Board -> Position -> Score
-evaluatePositionMaluses playerAttacked pos@Position {..} =
-  evaluateKingSafety   player   kings          attacked
-  + evaluatePieceThreats player playerAttacked attacked pos
-  + evaluateDoubledPawns  (player & pawns)
+evaluatePositionPenalties :: Position -> Score
+evaluatePositionPenalties pos@Position {..} =
+  evaluateKingSafety pos
   + evaluateIsolatedPawns (player & pawns)
+
+
+evaluateMobility :: Position -> Score
+evaluateMobility pos
+  | isKingInCheck pos = 0
+  | otherwise         = pos.mobilityScore
 
 
 evaluateBishopPair :: Position -> Score
 evaluateBishopPair Position {..} =
-   bishopPairBonus * max 0 (onesScore (player & bishops) - 1)
+   bishopPairBonus * clamp (0, 1) (onesScore (player & bishops) - 1)
 
 
-evaluateKingSafety :: Board -> Board -> Board -> Score
-evaluateKingSafety defender kings attackerAttacks =
-  kingSafetySquareMalus * onesScore kingUnsafeSquares
-  where
-    kingMoves         = kingAttacks king .\ defender
-    kingUnsafeSquares = kingMoves & attackerAttacks
-    king             = lsb (defender & kings)
-
-
-evaluatePieceThreats :: Board -> Board -> Board -> Position -> Score
-evaluatePieceThreats defender defenderAttacks attackerAttacks Position {..} =
- (pieceThreatMalus * threatenedScore) `div` pawnScore
-  where
-    threatenedScore =
-        onesScore (threatened & knights) * knightScore
-      + onesScore (threatened & bishops) * bishopScore
-      + onesScore (threatened & rooks)   * rookScore
-      + onesScore (threatened & queens)  * queenScore
-    threatened     =
-      attackerAttacks & defender .\ defenderAttacks
-
-
-evaluateDoubledPawns :: Board -> Score
-evaluateDoubledPawns pawns =
-  doubledPawnMalus * doubledPawnsCount
-  where
-    doubledPawnsCount =
-        max 0 (onesScore (file_A & pawns) - 1)
-      + max 0 (onesScore (file_B & pawns) - 1)
-      + max 0 (onesScore (file_C & pawns) - 1)
-      + max 0 (onesScore (file_D & pawns) - 1)
-      + max 0 (onesScore (file_E & pawns) - 1)
-      + max 0 (onesScore (file_F & pawns) - 1)
-      + max 0 (onesScore (file_G & pawns) - 1)
-      + max 0 (onesScore (file_H & pawns) - 1)
+evaluateKingSafety :: Position -> Score
+evaluateKingSafety pos =
+  pos.kingSafetyScore
 
 
 evaluateIsolatedPawns :: Board -> Score
 evaluateIsolatedPawns pawns =
-  isolatedPawnMalus * isolatedPawnsCount
+  isolatedPawnPenalty * fromIntegral isolatedPawnsCount
   where
     isolatedPawnsCount =
-      onesScore (file_B & pawns)
-        * (1 - min 1 (onesScore (pawns & (file_A .| file_C))))
-      + onesScore (file_C & pawns)
-        * (1 - min 1 (onesScore (pawns & (file_B .| file_D))))
-      + onesScore (file_D & pawns)
-        * (1 - min 1 (onesScore (pawns & (file_C .| file_E))))
-      + onesScore (file_E & pawns)
-        * (1 - min 1 (onesScore (pawns & (file_D .| file_F))))
-      + onesScore (file_F & pawns)
-        * (1 - min 1 (onesScore (pawns & (file_E .| file_G))))
-      + onesScore (file_G & pawns)
-        * (1 - min 1 (onesScore (pawns & (file_F .| file_H))))
+      onesBoard (file_B & pawns)
+        * toCondition (pawns & (file_A .| file_C))
+      + onesBoard (file_C & pawns)
+        * toCondition (pawns & (file_B .| file_D))
+      + onesBoard (file_D & pawns)
+        * toCondition (pawns & (file_C .| file_E))
+      + onesBoard (file_E & pawns)
+        * toCondition (pawns & (file_D .| file_F))
+      + onesBoard (file_F & pawns)
+        * toCondition (pawns & (file_E .| file_G))
+      + onesBoard (file_G & pawns)
+        * toCondition (pawns & (file_F .| file_H))
 
+
+onesBoard :: Board -> Board
+onesBoard !x = fromIntegral $! ones x
 
 onesScore :: Board -> Score
 onesScore !x = fromIntegral $! ones x
-
-
-bishopPairBonus :: Score
-bishopPairBonus = 50
-
-kingSafetySquareMalus :: Score
-kingSafetySquareMalus = 40
-
-pieceThreatMalus :: Score
-pieceThreatMalus = 20
-
-doubledPawnMalus :: Score
-doubledPawnMalus = 25
-
-isolatedPawnMalus :: Score
-isolatedPawnMalus = 25

@@ -2,6 +2,7 @@ module CommandLine.UciCommands where
 
 import           AppPrelude
 
+import           Evaluation.Evaluation
 import           Models.Command
 import qualified Models.KillersTable       as KillersTable
 import           Models.Move
@@ -14,7 +15,7 @@ import           Search.Search
 
 import           Control.Monad.State
 import           Data.Composition
-import           Data.Map (traverseWithKey)
+import           Data.Map                  (traverseWithKey)
 import           System.TimeIt
 
 
@@ -24,6 +25,8 @@ executeCommand = \case
   Perft n         -> printPerft    n
   Divide n        -> printDivide   n
   SetPosition pos -> setPosition   pos
+  MakeMove mv     -> move          mv
+  Evaluate        -> printEvaluate
 
 
 printBestMove :: SearchOptions -> CommandM ()
@@ -60,30 +63,51 @@ printDivide = withPosition go
          .: divide
 
 
+printEvaluate :: CommandM ()
+printEvaluate = withPosition (const go) ()
+  where
+    go = putStrLn
+         . ("\n" <>)
+         . tshow
+         . getScoreBreakdown
+
+
 setPosition :: PositionSpec -> CommandM ()
 setPosition PositionSpec {..} =
-  case newPos of
-    Just position -> put position
-    Nothing       -> putStrLn "Error: Invalid Position"
-  where
-    newPos = foldM (flip makeUnknownMove) initialPosition moves
+  updatePosition
+    $ foldM (flip makeUnknownMove) initialPosition moves
 
 
-withPosition :: MonadState Position m => (a -> Position -> m b) -> a -> m b
-withPosition f n = do
-  f n =<< get
+move :: UnknownMove -> CommandM ()
+move mv =
+  updatePosition
+    . makeUnknownMove mv =<< get
+  
 
+updatePosition :: Maybe Position -> CommandM ()
+updatePosition = \case
+  Just pos -> put pos
+  Nothing  -> putStrLn "Error: Invalid Position"
 
+  
+  
 makeUnknownMove :: UnknownMove -> Position -> Maybe Position
 makeUnknownMove UnknownMove {..} pos =
   (`makeMove` pos) <$> mv
   where
   mv = find (\x -> x.start == start && x.end == end)
             (allMoves pos)
-       
+
+
+withPosition :: MonadState Position m => (a -> Position -> m b) -> a -> m b
+withPosition f n = 
+  f n =<< get
+
+
 timeItPure :: MonadIO m => a -> m a
 timeItPure x = timeIt do
   !result <- pure x
   pure result
+  
 
 type CommandM = StateT Position IO

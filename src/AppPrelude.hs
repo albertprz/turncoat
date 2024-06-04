@@ -1,10 +1,11 @@
-module AppPrelude (module ClassyPrelude, Vector, (!!), inRange, maybeFilter, findTraverse, elem, notElem) where
+module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), inRange, maybeFilter, findTraverse, elem, notElem) where
 
 import           ClassyPrelude        hiding (Vector, elem, mask, notElem, (/),
                                        (>>), (^))
 
 import           Data.Foldable        (elem, notElem)
 import           Data.Int             (Int16)
+import           Data.Ord
 import           Data.Vector.Storable (Vector)
 
 

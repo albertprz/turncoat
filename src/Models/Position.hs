@@ -16,8 +16,6 @@ import           Utils.Board
 data Position = Position {
    previousPositions :: ~[ZKey]
   , materialScore    :: Score
-  , kingSafetyScore  :: Score
-  , mobilityScore    :: Score
   , halfMoveClock    :: Ply
   , color            :: Color
   , player           :: Board
@@ -58,8 +56,6 @@ emptyPosition = Position {
   , color             = White
   , halfMoveClock     = 0
   , materialScore     = 0
-  , mobilityScore     = 0
-  , kingSafetyScore   = 0
   , player            = 0
   , enemy             = 0
   , pawns             = 0

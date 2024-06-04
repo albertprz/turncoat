@@ -19,8 +19,10 @@ parseCommand :: Text -> Either [ParseError] Command
 parseCommand = runParser command
   where
   command =
-    stringToken "position" *> (SetPosition <$> positionSpec)
-      <|> stringToken "go" *> (
+        stringToken "position" *> (SetPosition <$> positionSpec)
+    <|> stringToken "move"     *> (MakeMove    <$> unknownMove)
+    <|> stringToken "evaluate" $> Evaluate
+    <|> stringToken "go" *> (
           stringToken "perft"  *> (Perft  <$> depth)
       <|> stringToken "divide" *> (Divide <$> depth)
       <|> (Search <$> searchOptions)

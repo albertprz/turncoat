@@ -1,5 +1,5 @@
 {-# OPTIONS_GHC -Wno-incomplete-patterns #-}
-module Evaluation.Material (evaluateMaterial, evaluateCapturedPiece, pawnScore, knightScore, bishopScore, rookScore, queenScore) where
+module Evaluation.Material (evaluateMaterial, evaluatePlayerMaterial, evaluateCapturedPiece, pawnScore, knightScore, bishopScore, rookScore, queenScore) where
 
 import           AppPrelude
 
@@ -12,10 +12,13 @@ import           Utils.Board
 
 
 evaluateMaterial :: Position -> Score
-evaluateMaterial Position {..} =
-  go player color - go enemy (reverseColor color)
-  where
-  go board = \case
+evaluateMaterial pos@Position {..} =
+    evaluatePlayerMaterial pos player color
+  - evaluatePlayerMaterial pos enemy  (reverseColor color)
+
+
+evaluatePlayerMaterial :: Position -> Board -> Color -> Score
+evaluatePlayerMaterial Position {..} !board  = \case
     White -> boardScore pawnScore whitePawnSquareTable     (board & pawns)
           + boardScore knightScore whiteKnightSquareTable (board & knights)
           + boardScore bishopScore whiteBishopSquareTable (board & bishops)
@@ -28,6 +31,7 @@ evaluateMaterial Position {..} =
           + boardScore rookScore blackRookSquareTable     (board & rooks)
           + boardScore queenScore blackQueenSquareTable   (board & queens)
           + blackKingSquareTable !! lsb                   (board & kings)
+
 
 
 boardScore :: Score -> Vector Score -> Board -> Score

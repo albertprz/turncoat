@@ -183,53 +183,14 @@ kingCaptures enemy attacked n =
 
 bishopCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 bishopCaptures enemy allPieces pinnedPieces king n =
-  filterPinnedAttacks pinnedPieces attacks ray n
-  where
-    ray = getKingBishopRay king n
-    attacks = bishopCaptureAttacks allPieces n & enemy
+  bishopMoves allPieces pinnedPieces king n & enemy
 
 
 rookCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 rookCaptures enemy allPieces pinnedPieces king n =
-  filterPinnedAttacks pinnedPieces attacks ray n
-  where
-    ray = getKingRookRay king n
-    attacks = rookCaptureAttacks allPieces n & enemy
+  rookMoves allPieces pinnedPieces king n & enemy
 
 
 queenCaptures :: Board -> Board -> Board -> Board -> Square -> Board
 queenCaptures enemy allPieces pinnedPieces king n =
-  filterPinnedAttacks pinnedPieces attacks ray n
-  where
-    ray = getKingQueenRay king n
-    attacks = queenCaptureAttacks allPieces n & enemy
-
-
-bishopCaptureAttacks :: Board -> Square -> Board
-bishopCaptureAttacks !allPieces !n =
-     slidingCaptures lsb northEastMovesVec allPieces n
-  .| slidingCaptures lsb northWestMovesVec allPieces n
-  .| slidingCaptures msb southWestMovesVec allPieces n
-  .| slidingCaptures msb southEastMovesVec allPieces n
-
-
-rookCaptureAttacks :: Board -> Square -> Board
-rookCaptureAttacks !allPieces !n =
-     slidingCaptures lsb northMovesVec allPieces n
-  .| slidingCaptures lsb eastMovesVec allPieces n
-  .| slidingCaptures msb westMovesVec allPieces n
-  .| slidingCaptures msb southMovesVec allPieces n
-
-
-queenCaptureAttacks :: Board -> Square -> Board
-queenCaptureAttacks !allPieces !n =
-     rookCaptureAttacks allPieces n
-  .| bishopCaptureAttacks allPieces n
-
-
-slidingCaptures :: (Board -> Square) -> Vector Board -> Board -> Square -> Board
-slidingCaptures !findBlocker !mask !allPieces !n =
-  toBoard $ findBlocker blockers
-  where
-    !blockers = ray & allPieces
-    !ray = mask !! n
+  queenMoves allPieces pinnedPieces king n & enemy

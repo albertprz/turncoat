@@ -30,7 +30,7 @@ allQuietMoves pos@Position {..}
     checkerSquare = lsb allCheckers
     allKingMoves =
       foldBoardSquares King
-      (kingMoves allPieces attacked castling (player&rooks) king) [] kingSquare
+      (kingQuietMoves allPieces attacked castling (player&rooks) king) [] kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
     allPieces = player .| enemy
     kingSquare = lsb king
@@ -48,15 +48,15 @@ quietMovesHelper allPieces king allKingMoves Position {..} !f =
     $ foldBoardMoves   Knight (f . knightCaptures noPieces)
                               (unpinned&knights)
 
-    $ foldBoardMoves   Bishop (f . bishopMoves noPieces
+    $ foldBoardMoves   Bishop (f . bishopQuietMoves noPieces
                                      allPieces pinnedPieces king)
                               (player&bishops)
 
-    $ foldBoardMoves   Rook   (f . rookMoves noPieces
+    $ foldBoardMoves   Rook   (f . rookQuietMoves noPieces
                                      allPieces pinnedPieces king)
                               (player&rooks)
 
-    $ foldBoardMoves   Queen  (f . queenMoves noPieces
+    $ foldBoardMoves   Queen  (f . queenQuietMoves noPieces
                                      allPieces pinnedPieces king)
                               (player&queens)
 
@@ -81,30 +81,23 @@ pawnAdvances noPieces color board = advances & noPieces
       Black -> (board .\ rank_2) >> 8
            .| ((board & rank_7) >> 8 & noPieces) >> 8
 
-bishopMoves :: Board -> Board -> Board -> Board -> Square -> Board
-bishopMoves noPieces allPieces pinnedPieces king n =
-  filterPinnedAttacks pinnedPieces attacks ray n
-  where
-    ray = getKingBishopRay king n
-    attacks = bishopAttacks allPieces n & noPieces
-
-rookMoves :: Board -> Board -> Board -> Board -> Square -> Board
-rookMoves noPieces allPieces pinnedPieces king n =
-  filterPinnedAttacks pinnedPieces attacks ray n
-  where
-    ray = getKingRookRay king n
-    attacks = rookAttacks allPieces n & noPieces
-
-queenMoves :: Board -> Board -> Board -> Board -> Square -> Board
-queenMoves noPieces allPieces pinnedPieces king n =
-  filterPinnedAttacks pinnedPieces attacks ray n
-  where
-    ray = getKingQueenRay king n
-    attacks = queenAttacks allPieces n & noPieces
+bishopQuietMoves :: Board -> Board -> Board -> Board -> Square -> Board
+bishopQuietMoves noPieces allPieces pinnedPieces king n =
+  bishopMoves allPieces pinnedPieces king n & noPieces
 
 
-kingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
-kingMoves allPieces attacked castling rooks king n =
+rookQuietMoves :: Board -> Board -> Board -> Board -> Square -> Board
+rookQuietMoves noPieces allPieces pinnedPieces king n =
+  rookMoves allPieces pinnedPieces king n & noPieces
+
+
+queenQuietMoves :: Board -> Board -> Board -> Board -> Square -> Board
+queenQuietMoves noPieces allPieces pinnedPieces king n =
+  queenMoves allPieces pinnedPieces king n & noPieces
+
+
+kingQuietMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
+kingQuietMoves allPieces attacked castling rooks king n =
   (kingAttacks n
   .| kingCastlingMoves allPieces attacked castling rooks king n)
   .\ (attacked .| allPieces)

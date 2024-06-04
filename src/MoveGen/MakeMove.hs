@@ -25,12 +25,11 @@ makeNullMove :: Position -> Position
 makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
   pos {
     materialScore   = - materialScore
-  , mobilityScore   = - mobilityScore
-  , kingSafetyScore = - kingSafetyScore
   , color           = reverseColor color
+
   , player          = enemy
   , enemy           = player
-  , attacked        = attacked
+  , attacked        = allAttacks pos
   , enPassant       = fromIntegral (1 - ones enPassantPinnedPawns)
                       * enPassant
   , leapingCheckers = getLeapingCheckers pos
@@ -40,8 +39,6 @@ makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
                         rookCheckerRays sliderRays pos
   }
   where
-    (!attacked, !mobilityScore, !kingSafetyScore)
-                      = getAllAttacksAndScores pos
     bishopCheckerRays = getBishopCheckerRays pos
     rookCheckerRays   = getRookCheckerRays pos
     sliderRays        = getEnemyKingSliderRays pos

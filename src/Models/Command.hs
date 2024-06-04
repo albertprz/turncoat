@@ -5,14 +5,17 @@ import           Models.Score
 import           Utils.Board
 
 
+
 data Command
   = Search SearchOptions
   | Perft Depth
   | Divide Depth
   | SetPosition PositionSpec
+  | MakeMove UnknownMove
+  | Evaluate
 
 
-data SearchOptions = SearchOptions
+newtype SearchOptions = SearchOptions
   { depth :: Depth
   }
 
@@ -30,6 +33,6 @@ data UnknownMove = UnknownMove
 
 
 defaultSearchOptions :: SearchOptions
-defaultSearchOptions = SearchOptions {
-  depth = 12
-}
+defaultSearchOptions = SearchOptions
+  { depth = 12
+  }

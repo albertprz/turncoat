@@ -1,32 +1,33 @@
 module Evaluation.Constants where
 
 import           AppPrelude
-import           Utils.Board
 import           Data.List.Split      (chunksOf)
 import qualified Data.Vector.Storable as Vector
 import           Models.Piece
 import           Models.Score
+import           Utils.Board
 
 
 bishopPairBonus :: Score
 bishopPairBonus = 25
 
+byMinorThreatBonus :: Score
+byMinorThreatBonus = 20
+
+byRookThreatBonus :: Score
+byRookThreatBonus = 40
+
+byQueenThreatBonus :: Score
+byQueenThreatBonus = 80
+
 isolatedPawnPenalty :: Score
 isolatedPawnPenalty = 25
 
-minorSafetyPenalty :: Score
-minorSafetyPenalty = 20
 
-rookSafetyPenalty :: Score
-rookSafetyPenalty = 40
-
-queenSafetyPenalty :: Score
-queenSafetyPenalty = 80
-
-
-kingZonePenalty :: Vector Score
-kingZonePenalty = Vector.fromList
-  [0, 50, 75, 88, 94, 97, 99, 100, 100, 100]
+kingThreatPiecesTable :: Vector Score
+kingThreatPiecesTable = Vector.fromList
+  [0, 0, 50, 75, 88, 94, 97, 99, 100,
+   100, 100, 100, 100, 100, 100, 100]
 
 
 knightMobilityTable :: Vector Score

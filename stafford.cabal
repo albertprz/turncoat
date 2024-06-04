@@ -69,7 +69,7 @@ library
       ViewPatterns
       PatternSynonyms
       ImplicitParams
-  ghc-options: -O2 -funbox-strict-fields -fspecialize-aggressively -fexpose-all-unfoldings -funfolding-use-threshold=200 -fspec-constr-count=20 -flate-dmd-anal -flate-specialise -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
   build-depends:
       QuickCheck
     , base ==4.*
@@ -110,7 +110,7 @@ executable stafford
       ViewPatterns
       PatternSynonyms
       ImplicitParams
-  ghc-options: -O2 -funbox-strict-fields -fspecialize-aggressively -fexpose-all-unfoldings -funfolding-use-threshold=200 -fspec-constr-count=20 -flate-dmd-anal -flate-specialise -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
     , base ==4.*
@@ -155,7 +155,7 @@ test-suite test
       ViewPatterns
       PatternSynonyms
       ImplicitParams
-  ghc-options: -O2 -funbox-strict-fields -fspecialize-aggressively -fexpose-all-unfoldings -funfolding-use-threshold=200 -fspec-constr-count=20 -flate-dmd-anal -flate-specialise -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wno-type-defaults
+  ghc-options: -O2 -Wall -Wcompat -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints -Wno-type-defaults
   build-tool-depends:
       hspec-discover:hspec-discover
   build-depends:

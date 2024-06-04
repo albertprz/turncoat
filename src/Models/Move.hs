@@ -1,4 +1,4 @@
-module Models.Move (Move(..), StorableMove(..), encodeMove, decodeMove,  foldBoard, foldBoardMoves, foldBoardMovesConst, foldBoardPawnMovesConst, foldBoardSquares, foldlBoard, showBoard) where
+module Models.Move (Move(..), StorableMove(..), encodeMove, decodeMove,  foldBoardAttacks, foldBoardMoves, foldBoardMovesConst, foldBoardPawnMovesConst, foldBoardSquares, foldlBoard, showBoard) where
 
 import           AppPrelude
 import           Models.Piece
@@ -56,9 +56,9 @@ decodeMove (StorableMove n)
       promotion = Promotion $ fromIntegral ((n >> 24) .&. 7)
 
 
-{-# INLINE  foldBoard #-}
-foldBoard :: (Square -> Board) -> Board -> Board
-foldBoard !f !board = foldlBoard 0 (.|) f board
+{-# INLINE  foldBoardAttacks #-}
+foldBoardAttacks :: (Square -> Board) -> Board -> Board
+foldBoardAttacks !f !board = foldlBoard 0 (.|) f board
 
 
 {-# INLINE  foldBoardMoves #-}
@@ -75,6 +75,7 @@ foldBoardMovesConst !piece !end !board moves =
     genMoves xs start = Move piece NoProm start end : xs
 
 
+{-# INLINE  foldBoardPawnMovesConst #-}
 foldBoardPawnMovesConst :: Square -> Board -> [Move] -> [Move]
 foldBoardPawnMovesConst !end !board moves =
   foldlBoard moves genMoves id board
@@ -91,6 +92,7 @@ foldBoardSquares piece !f moves !start =
     foldlBoard moves (flip cons) (Move piece NoProm start) (f start)
 
 
+{-# INLINE  genPawnMoves #-}
 genPawnMoves :: Square -> Square -> [Move] -> [Move]
 genPawnMoves !start !end xs
   | testSquare (rank_1 .| rank_8) end =

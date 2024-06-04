@@ -30,11 +30,11 @@ positionFenParser = do
   where
   newPosition = setInitialScore . makeNullMove . makeNullMove
   position = (,,,,,)
-    <$> (piecesP <* space)
-    <*> (colorP <* space)
-    <*> (castlingP <* space)
+    <$> (piecesP    <* space)
+    <*> (colorP     <* space)
+    <*> (castlingP  <* space)
     <*> (enPassantP <* space)
-    <*> (ply <* space)
+    <*> (ply        <* space)
     <*> unsignedInt
   piecesP =
     map (mapMaybe (\(x, y) -> (x,) <$> y) . zip [0 ..] . fold . reverse)
@@ -103,4 +103,4 @@ includeCastling (castlingRights, castlingColor) pos@Position {..} =
 
 includeEnPassant :: Square -> Position -> Position
 includeEnPassant square pos =
-  pos {enPassant = toBoard square}
+  pos { enPassant = toBoard square }

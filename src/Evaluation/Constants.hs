@@ -8,17 +8,40 @@ import           Models.Score
 import           Utils.Board
 
 
+-- Material scores
+pawnScore :: Score
+pawnScore = 100
+
+knightScore :: Score
+knightScore = 320
+
+bishopScore :: Score
+bishopScore = 330
+
+rookScore :: Score
+rookScore = 500
+
+queenScore :: Score
+queenScore = 950
+
+
+-- Bonuses
 bishopPairBonus :: Score
 bishopPairBonus = 25
 
-byMinorThreatBonus :: Score
-byMinorThreatBonus = 20
+knightOutpostBonus :: Score
+knightOutpostBonus = 40
 
-byRookThreatBonus :: Score
-byRookThreatBonus = 40
 
-byQueenThreatBonus :: Score
-byQueenThreatBonus = 80
+-- Penalties
+threatByMinorPenalty :: Score
+threatByMinorPenalty = 40
+
+threatByRookPenalty :: Score
+threatByRookPenalty = 60
+
+threatByQueenPenalty :: Score
+threatByQueenPenalty = 120
 
 isolatedPawnPenalty :: Score
 isolatedPawnPenalty = 25

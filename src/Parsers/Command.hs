@@ -2,26 +2,27 @@ module Parsers.Command (parseCommand) where
 
 import           AppPrelude
 
-import           Bookhound.Parser
-import           Bookhound.ParserCombinators
-
-import           Bookhound.Parsers.Number
-import           Bookhound.Parsers.Text
 import           Models.Command
 import           Models.Position
 import           Models.Score
 import           Parsers.Position
 
+import           Bookhound.Parser
+import           Bookhound.ParserCombinators
+import           Bookhound.Parsers.Number
+import           Bookhound.Parsers.Text
+import           Control.Newtype
 import           Data.Monoid
 
 
 parseCommand :: Text -> Either [ParseError] Command
+
 parseCommand = runParser command
   where
   command =
         stringToken "position" *> (SetPosition <$> positionSpec)
     <|> stringToken "move"     *> (MakeMove    <$> unknownMove)
-    <|> stringToken "evaluate" $> Evaluate
+    <|> stringToken "eval"     $> Evaluate
     <|> stringToken "go" *> (
           stringToken "perft"  *> (Perft  <$> depth)
       <|> stringToken "divide" *> (Divide <$> depth)
@@ -31,12 +32,12 @@ parseCommand = runParser command
     <$> initialPosition
     <*> (stringToken "moves" *> (token unknownMove |+) <|> pure [])
   searchOptions =
-    (`appEndo` defaultSearchOptions) . foldMap Endo <$> (searchOption |*)
+    ($ defaultSearchOptions) . ala Endo foldMap <$> (searchOption |*)
   searchOption =
     includeDepth <$> (stringToken "depth" *> depth)
   initialPosition =
     stringToken "startpos" $> startPosition
-    <|> stringToken "fen" *> positionFenParser
+    <|> stringToken "fen"  *> positionFenParser
   unknownMove = UnknownMove <$> squareParser <*> squareParser
   token = withTransform maybeBetweenSpacing
   stringToken = token . string

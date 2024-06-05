@@ -30,6 +30,7 @@ library
       Evaluation.Constants
       Evaluation.Evaluation
       Evaluation.Material
+      Evaluation.ScoreBreakdown
       Models.Command
       Models.KillersTable
       Models.Move
@@ -80,6 +81,7 @@ library
     , derive-storable
     , errors
     , mtl
+    , newtype
     , random
     , split
     , text
@@ -121,6 +123,7 @@ executable stafford
     , derive-storable
     , errors
     , mtl
+    , newtype
     , random
     , split
     , stafford
@@ -169,6 +172,7 @@ test-suite test
     , errors
     , hspec
     , mtl
+    , newtype
     , random
     , split
     , stafford

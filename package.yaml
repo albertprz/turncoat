@@ -22,18 +22,19 @@ dependencies:
 - base >= 4 && < 5
 - bookhound
 - classy-prelude
-- errors
 - mtl
 - text
 - vector
 - containers
 - unordered-containers
-- random
 - derive-storable
+- timeit
+- random
+- QuickCheck
+- newtype
+- errors
 - split
 - composition
-- timeit
-- QuickCheck
 
 language: GHC2021
 

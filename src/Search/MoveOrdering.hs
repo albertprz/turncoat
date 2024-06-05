@@ -35,14 +35,15 @@ getSortedMoves !depth !ply pos = do
   killerMoves <- filter (`notElem` ttMove) <$> getSortedKillers ply pos
   let
     hashMoves = ttMove <> killerMoves
-    allTheMoves = ttMove
+    bestMoves = ttMove
       <> filter (`notElem` ttMove) winningCaptures
       <> killerMoves
-      <> filter (`notElem` hashMoves) quietMoves
+    worstMoves = filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
-  pure $! if not (isKingInCheck pos) && depth >= 3
-    then (splitAt 4 allTheMoves, notNull ttMove)
-    else ((allTheMoves, []), notNull ttMove)
+
+  pure $ if not (isKingInCheck pos) && depth >= 3
+    then (second (<> worstMoves) $ splitAt 4 bestMoves, notNull ttMove)
+    else ((bestMoves <> worstMoves, []), notNull ttMove)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves depth pos

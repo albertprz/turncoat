@@ -1,12 +1,11 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  ones, lsb, msb, toBoard, toCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec,
-                         shortCastleSliding, longCastleSliding, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
+module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  ones, lsb, msb, toBoard, toCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSliding, longCastleSliding, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
 
-import           AppPrelude           hiding (map)
+import           AppPrelude           hiding (foldl', map)
 
 import           Data.Bits
-import           Data.Vector.Storable (foldl1, map, slice)
+import           Data.Vector.Storable (foldl', foldl1, foldl1', map, slice)
 import           System.IO.Unsafe     (unsafePerformIO)
 import           System.Random
 
@@ -114,6 +113,19 @@ kingMove n =
     board = toBoard n
 
 
+knightOutpostAttackers :: Bool -> Int -> Board
+knightOutpostAttackers above n = filesBoard & ranksBoard
+  where
+    filesBoard = getPreviousFile file .| getNextFile file
+    ranksBoard = foldl' (.|) 0
+      $ map getRank
+      $ filter (compareFn rank) sideSquares
+    rank = toRank n
+    file = toFile n
+    compareFn | above     = (<)
+              | otherwise = (>)
+
+
 fileMove :: Square -> Board
 fileMove n = ranks !! toRank n
 
@@ -127,14 +139,25 @@ antiDiagMove :: Square -> Board
 antiDiagMove n = diags !! (7 - toFile n + toRank n)
 
 getRank :: Rank -> Board
-getRank n = foldl1 (.|) (map f sideSquares)
+getRank n = foldl1' (.|) (map f sideSquares)
   where
     f = (1 << (8 * n) <<)
 
 getFile :: File -> Board
-getFile n = foldl1 (.|) (map f sideSquares)
+getFile n = foldl1' (.|) (map f sideSquares)
   where
     f = (1 << n <<) . (* 8)
+
+getPreviousFile :: File -> Board
+getPreviousFile n
+  | n == 0 = 0
+  | otherwise = getFile (n + 1)
+
+getNextFile :: File -> Board
+getNextFile n
+  | n == 7 = 0
+  | otherwise = getFile (n - 1)
+
 
 getDiag :: Diag -> Board
 getDiag = diagHelper (7 -)
@@ -246,6 +269,16 @@ southWestMovesVec :: Vector Board
 southWestMovesVec = snoc (map southWestMove squares) 0
 
 
+-- Evaluation
+whiteKnightOutpostAttackersVec :: Vector Board
+whiteKnightOutpostAttackersVec =
+  map (knightOutpostAttackers True) squares
+
+blackKnightOutpostAttackersVec :: Vector Board
+blackKnightOutpostAttackersVec =
+  map (knightOutpostAttackers False) squares
+
+
 {-# NOINLINE pieceRngVec #-}
 pieceRngVec :: Vector Board
 pieceRngVec = unsafePerformIO
@@ -286,11 +319,22 @@ sideSquares = fromList [0 .. 7]
 diagonals :: Vector Diagonal
 diagonals = fromList [0 .. 14]
 
+
+-- Useful boards
 shortCastleSliding :: Board
 shortCastleSliding = file_F .| file_G
 
 longCastleSliding :: Board
 longCastleSliding = file_C .| file_D
+
+whiteKnightOutpostRanks :: Board
+whiteKnightOutpostRanks = rank_5 .| rank_6 .| rank_7
+
+blackKnightOutpostRanks :: Board
+blackKnightOutpostRanks = rank_4 .| rank_3 .| rank_2
+
+knightOupostFiles :: Board
+knightOupostFiles = file_C .| file_D .| file_E .| file_F
 
 
 -- Ranks

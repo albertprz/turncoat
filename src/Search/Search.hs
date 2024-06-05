@@ -157,7 +157,7 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
     !lmrFactor = min @Double 1 (fromIntegral mvIdx / 40)
     !lmrDepth  = min (depth - 1) $ ceiling
-      (lmrFactor * (fromIntegral depth * 3 / 4)
+      (lmrFactor * (fromIntegral depth * 4 / 5)
         + (1 - lmrFactor) * (fromIntegral depth - 1))
 
     getNegamaxScore !alpha' !beta' !depth' = liftIO do

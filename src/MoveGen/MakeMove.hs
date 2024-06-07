@@ -2,8 +2,8 @@ module MoveGen.MakeMove (makeMove, makeNullMove) where
 
 import           AppPrelude
 
-import           Evaluation.Constants
 import           Evaluation.Material
+import           Evaluation.Parameters
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -30,8 +30,7 @@ makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
   , player          = enemy
   , enemy           = player
   , attacked        = allAttacks pos
-  , enPassant       = fromIntegral (1 - ones enPassantPinnedPawns)
-                      * enPassant
+  , enPassant       = toReverseCondition enPassantPinnedPawns * enPassant
   , leapingCheckers = getLeapingCheckers pos
   , sliderCheckers  = getSliderCheckers bishopCheckerRays
                         rookCheckerRays pos
@@ -43,7 +42,7 @@ makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
     rookCheckerRays   = getRookCheckerRays pos
     sliderRays        = getEnemyKingSliderRays pos
     enPassantPinnedPawns
-      | enPassant     == 0 = 0
+      | enPassant == 0 = 0
       | otherwise     = getEnPassantPinnedPawns pos
 
 
@@ -58,7 +57,7 @@ updatePlayerBoards start end endSquare pos@Position {..} =
       + maybe 0 (evaluateCapturedPiece color endSquare)
                 (maybeCapturedPieceAt endSquare pos),
     halfMoveClock        = fromIntegral
-      (1 - ones (enemy & end)) * (halfMoveClock + 1),
+      (toReverseCondition (enemy & end)) * (halfMoveClock + 1),
     player               = (player ^ start) .| end,
     enemy                = enemy .\ end,
     pawns                = pawns .\ end,
@@ -75,7 +74,7 @@ movePiece Pawn NoProm start end pos@Position {..} =
     materialScore = materialScore
       + pawnSquareTable !! endIdx
       - pawnSquareTable !! startIdx
-      + fromIntegral (ones enPassantCapture)
+      + fromIntegral (popCount enPassantCapture)
       * (pawnScore + pawnSquareTable !! enPassantIdx),
     halfMoveClock = 0,
     pawns = (pawns ^ (start .| enPassantCapture)) .| end,

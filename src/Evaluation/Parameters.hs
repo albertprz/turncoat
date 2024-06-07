@@ -1,4 +1,4 @@
-module Evaluation.Constants where
+module Evaluation.Parameters where
 
 import           AppPrelude
 import           Data.List.Split      (chunksOf)
@@ -30,18 +30,18 @@ bishopPairBonus :: Score
 bishopPairBonus = 25
 
 knightOutpostBonus :: Score
-knightOutpostBonus = 40
+knightOutpostBonus = 50
 
 
 -- Penalties
 threatByMinorPenalty :: Score
-threatByMinorPenalty = 40
+threatByMinorPenalty = 20
 
 threatByRookPenalty :: Score
-threatByRookPenalty = 60
+threatByRookPenalty = 40
 
 threatByQueenPenalty :: Score
-threatByQueenPenalty = 120
+threatByQueenPenalty = 80
 
 isolatedPawnPenalty :: Score
 isolatedPawnPenalty = 25
@@ -51,6 +51,10 @@ kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
   [0, 0, 50, 75, 88, 94, 97, 99, 100,
    100, 100, 100, 100, 100, 100, 100]
+
+passedPawnTable :: Vector Score
+passedPawnTable = Vector.fromList
+  [0, 0, 10, 20, 30, 40, 50]
 
 
 knightMobilityTable :: Vector Score

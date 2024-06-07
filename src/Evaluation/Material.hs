@@ -3,7 +3,7 @@ module Evaluation.Material (evaluateMaterial, evaluatePlayerMaterial, evaluateCa
 
 import           AppPrelude
 
-import           Evaluation.Constants
+import           Evaluation.Parameters
 import           Evaluation.ScoreBreakdown
 import           Models.Move
 import           Models.Piece

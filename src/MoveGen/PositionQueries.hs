@@ -10,8 +10,8 @@ import           Utils.Board
 
 isEndgame :: Position -> Bool
 isEndgame Position {..} =
-  ones (player & allMinorPieces) < 3
-    || ones (enemy & allMinorPieces) < 3
+  popCount (player & allMinorPieces) < 3
+    || popCount (enemy & allMinorPieces) < 3
   where
     allMinorPieces = bishops .| knights .| rooks .| queens
 

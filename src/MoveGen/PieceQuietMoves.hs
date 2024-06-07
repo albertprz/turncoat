@@ -17,9 +17,9 @@ import           Utils.Board
 allQuietMoves :: Position -> [Move]
 allQuietMoves pos@Position {..}
 
-  | allCheckers == 0                            = genMoves id
-  | leapingCheckers /= 0 || ones allCheckers > 1 = allKingMoves
-  | otherwise                                  = genMoves blockChecker
+  | allCheckers == 0                                = genMoves id
+  | leapingCheckers /= 0 || popCount allCheckers > 1 = allKingMoves
+  | otherwise                                      = genMoves blockChecker
 
   where
     genMoves = quietMovesHelper allPieces king allKingMoves pos
@@ -106,17 +106,17 @@ kingQuietMoves allPieces attacked castling rooks king n =
 kingCastlingMoves :: Board -> Board -> Board -> Board -> Board -> Square -> Board
 kingCastlingMoves allPieces attacked castling rooks king n =
   (shortCastlingCond
-      * fromIntegral (ones (castling & rooks & file_H))
+      * fromIntegral (popCount (castling & rooks & file_H))
       * ((castling & king) << 2))
   .|
   (longCastlingCond
-      * fromIntegral (ones (castling & rooks & file_A))
+      * fromIntegral (popCount (castling & rooks & file_A))
       * ((castling & king) >> 2))
   where
     shortCastlingCond =
-     toCondition (shortCastleSliding & collisions .| inCheck)
+     toReverseCondition (shortCastleSliding & collisions .| inCheck)
     longCastlingCond =
-     toCondition (longCastleSliding & collisions .| inCheck
+     toReverseCondition (longCastleSliding & collisions .| inCheck
               .| allPieces & kingRank & file_B)
     collisions = kingRank & (attacked .| allPieces)
     kingRank = fileMovesVec !! n

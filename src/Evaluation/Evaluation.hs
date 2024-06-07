@@ -4,8 +4,8 @@ where
 
 import           AppPrelude
 
-import           Evaluation.Constants
 import           Evaluation.Material
+import           Evaluation.Parameters
 import           Evaluation.ScoreBreakdown
 import           Models.Move
 import           Models.Piece
@@ -77,7 +77,7 @@ evaluatePositionBonuses ScoresBatch {mobility} pos =
     mobility       = mobility
   , bishopPair     = evaluateBishopPair pos
   , knightOutposts = evaluateKnightOutposts pos
-  -- passedPawns
+  , passedPawns    = evaluatePassedPawns pos
   }
 
 evaluatePositionPenalties :: ScoresBatch -> Position -> PenaltyBreakdown
@@ -91,7 +91,8 @@ evaluatePositionPenalties
 
 evaluateBishopPair :: Position -> Score
 evaluateBishopPair Position {player, bishops} =
-   bishopPairBonus * clamp (0, 1) (onesScore (player & bishops) - 1)
+   bishopPairBonus
+   * fromIntegral (clamp (0, 1) (popCount (player & bishops) - 1))
 
 
 evaluateIsolatedPawns :: Board -> Score
@@ -99,57 +100,67 @@ evaluateIsolatedPawns pawns =
   isolatedPawnPenalty * fromIntegral isolatedPawnsCount
   where
     isolatedPawnsCount =
-      onesBoard (file_B & pawns)
-        * toCondition (pawns & (file_A .| file_C))
-      + onesBoard (file_C & pawns)
-        * toCondition (pawns & (file_B .| file_D))
-      + onesBoard (file_D & pawns)
-        * toCondition (pawns & (file_C .| file_E))
-      + onesBoard (file_E & pawns)
-        * toCondition (pawns & (file_D .| file_F))
-      + onesBoard (file_F & pawns)
-        * toCondition (pawns & (file_E .| file_G))
-      + onesBoard (file_G & pawns)
-        * toCondition (pawns & (file_F .| file_H))
+      popCountToBoard (file_B & pawns)
+        * toReverseCondition (pawns & (file_A .| file_C))
+      + popCountToBoard (file_C & pawns)
+        * toReverseCondition (pawns & (file_B .| file_D))
+      + popCountToBoard (file_D & pawns)
+        * toReverseCondition (pawns & (file_C .| file_E))
+      + popCountToBoard (file_E & pawns)
+        * toReverseCondition (pawns & (file_D .| file_F))
+      + popCountToBoard (file_F & pawns)
+        * toReverseCondition (pawns & (file_E .| file_G))
+      + popCountToBoard (file_G & pawns)
+        * toReverseCondition (pawns & (file_F .| file_H))
 
 
 evaluateKnightOutposts :: Position -> Score
 evaluateKnightOutposts Position {..} =
-  knightOutpostBonus
-  * foldlBoard 0 (+) mapFn
-    (knights&player & defended & ranks & knightOupostFiles)
+    knightOutpostBonus
+  * fromIntegral (foldlBoard 0 (+) mapFn
+    (knights&player & defended & ranks & knightOupostFiles))
   where
     defended = pawnAttacks color (player&pawns)
-    mapFn !n
-      | attackersMask & enemy&pawns == 0 = 1
-      | otherwise                       = 0
-      where
-        attackersMask = attackersVec !! n
-    (ranks, attackersVec)
+    mapFn !n = toReverseCondition (attackersVec !! n & enemy&pawns)
+    (!ranks, !attackersVec)
       | color == White =
-        (whiteKnightOutpostRanks,  whiteKnightOutpostAttackersVec)
+        (whiteKnightOutpostRanks , whiteKnightOutpostAttackersVec)
       | otherwise =
          (blackKnightOutpostRanks, blackKnightOutpostAttackersVec)
 
 
-getScoresBatch :: Position -> ScoresBatch
+evaluatePassedPawns :: Position -> Score
+evaluatePassedPawns Position {..} =
+  eval file_A + eval file_B + eval file_C + eval file_D
+  + eval file_E + eval file_F + eval file_G + eval file_H
+  where
+    eval board = mapFn $ msb (player & pawns & board)
+    mapFn n
+      | n == 64 || blockersVec !! n & enemy&pawns /= 0 = 0
+      | otherwise = passedPawnTable !! getRank n
+    (!getRank, !blockersVec)
+      | color == White = (toRank           , whitePassedPawnBlockersVec)
+      | otherwise     = (\n -> 7 - toRank n, blackPassedPawnBlockersVec)
 
+
+getScoresBatch :: Position -> ScoresBatch
 getScoresBatch pos
   | isKingInCheck pos = emptyScoresBatch
 
 getScoresBatch Position {..} = ScoresBatch {..}
   where
-    !mobility        =
+    mobility        =
         knightsMobility + bishopsMobility + rooksMobility + queensMobility
 
-    !kingThreats     =
+    kingThreats     =
       (kingThreatPiecesTable !! piecesCount) * kingThreatScore `div` 100
 
-    !piecesCount     =
+    piecesCount     =
       knightsCount + bishopsCount + rooksCount + queensCount
 
-    !kingThreatScore =
-        threatByMinorPenalty * fromIntegral (byKnightThreats + byBishopThreats)
+    kingThreatScore =
+        threatByMinorPenalty * fromIntegral
+          (byKnightThreats + byBishopThreats)
       + threatByRookPenalty  * fromIntegral byRookThreats
       + threatByQueenPenalty * fromIntegral byQueenThreats
 
@@ -178,11 +189,11 @@ getScoresBatch Position {..} = ScoresBatch {..}
       foldlBoard (0, 0, 0) foldFn f board
       where
         foldFn (!x, !y, !z) !attackArea =
-          (x + mobilityTable !! ones (attackArea .\ player),
+          (x + mobilityTable !! popCount (attackArea .\ player),
            y + threatenedSquares,
-           z + min 1 threatenedSquares)
+           z + toCondition threatenedSquares)
           where
-            !threatenedSquares = ones (enemyKingArea & attackArea)
+            !threatenedSquares = popCount (enemyKingArea & attackArea)
 
     !king          = player & kings
     !unpinned      = player .\ pinnedPieces
@@ -200,10 +211,3 @@ emptyScoresBatch = ScoresBatch {
     mobility = 0
   , kingThreats = 0
 }
-
-
-onesBoard :: Board -> Board
-onesBoard !x = fromIntegral $! ones x
-
-onesScore :: Board -> Score
-onesScore !x = fromIntegral $! ones x

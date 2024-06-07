@@ -17,12 +17,10 @@ import           Utils.Board
 allCaptures :: Position -> [Move]
 allCaptures pos@Position {..}
 
-  | allCheckers == 0      = genCaptures id id
-  | ones allCheckers > 1 = allKingCaptures
-  | sliderCheckers /= 0   = genCaptures captureChecker
-                                       pawnCaptureChecker
-  | otherwise            = genCaptures captureChecker
-                                       pawnCaptureChecker
+  | allCheckers          == 0 = genCaptures id id
+  | popCount allCheckers > 1 = allKingCaptures
+  | sliderCheckers /= 0       = genCaptures captureChecker pawnCaptureChecker
+  | otherwise                = genCaptures captureChecker pawnCaptureChecker
 
   where
     genCaptures =
@@ -90,7 +88,7 @@ allCapturesHelper allPieces king allKingCaptures Position {..} !f !g =
 staticExchangeCaptures :: Square -> Position -> [Move]
 staticExchangeCaptures target pos@Position {..}
   | allCheckers == 0               = genCaptures
-  | ones allCheckers > 1          = allKingCaptures
+  | popCount allCheckers > 1      = allKingCaptures
   | testSquare allCheckers target = genCaptures
   | otherwise                     = []
 

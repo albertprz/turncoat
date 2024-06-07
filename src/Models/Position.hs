@@ -87,9 +87,9 @@ getZobristKey pos@Position {..} = ZKey
       where
       idx =   inBoard file_A + 2 * inBoard file_H
         + 4 * inBoard rank_1 + 8 * inBoard rank_8
-      inBoard x = fromIntegral $ min 1 (castling & x)
+      inBoard x = fromIntegral $ toCondition (castling & x)
 
-    !enPassantHash = min 1 enPassant * enPassantRngVec !! idx
+    !enPassantHash = toCondition enPassant * enPassantRngVec !! idx
       where
         idx = toFile (lsb enPassant)
 

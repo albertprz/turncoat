@@ -1,5 +1,5 @@
 .stack-work/
-stack.yaml.lock
 output/
 target/
 *.prof
+*.cabal

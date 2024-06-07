@@ -1,10 +1,10 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  ones, lsb, msb, toBoard, toCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSliding, longCastleSliding, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
+module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  popCount, popCountToBoard, lsb, msb, toBoard, toCondition, toReverseCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSliding, longCastleSliding, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, whitePassedPawnBlockersVec, blackPassedPawnBlockersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
 
 import           AppPrelude           hiding (foldl', map)
 
-import           Data.Bits
+import qualified Data.Bits            as Bits
 import           Data.Vector.Storable (foldl', foldl1, foldl1', map, slice)
 import           System.IO.Unsafe     (unsafePerformIO)
 import           System.Random
@@ -18,19 +18,20 @@ type Rank = Int
 type File = Int
 type Diag = Int
 
-type Shift = forall a. Bits a => a -> Square -> a
 
+{-# SPECIALIZE (<<) :: Board -> Square -> Board #-}
 infixl 9 <<
-(<<) :: Shift
-(<<) !x !y = unsafeShiftL x y
+(<<) :: Bits.Bits a => a -> Square -> a
+(<<) !x !y = Bits.unsafeShiftL x y
 
+{-# SPECIALIZE (>>) :: Board -> Square -> Board #-}
 infixl 9 >>
-(>>) :: Shift
-(>>) !x !y = unsafeShiftR x y
+(>>) :: Bits.Bits a => a -> Square -> a
+(>>) !x !y = Bits.unsafeShiftR x y
 
 infixl 8 &
 (&) :: Board -> Board -> Board
-(&) !x !y = (.&.) x y
+(&) !x !y = (Bits..&.) x y
 
 infixl 8 .\
 (.\) :: Board -> Board -> Board
@@ -38,11 +39,11 @@ infixl 8 .\
 
 infixl 7 .|
 (.|) :: Board -> Board -> Board
-(.|) !x !y = (.|.) x y
+(.|) !x !y = (Bits..|.) x y
 
 infixl 7 ^
 (^) :: Board -> Board -> Board
-(^) !x !y = xor x y
+(^) !x !y = Bits.xor x y
 
 infixl 7 /
 (/) :: Square -> Square -> Square
@@ -54,21 +55,31 @@ infixl 7 %
 
 infixl 9 ~
 (~) :: Board -> Board
-(~) !x = complement x
+(~) !x = Bits.complement x
 
-ones :: Board -> Int
-ones !x = popCount x
+popCount :: Board -> Int
+popCount !x = Bits.popCount x
+
+popCountToBoard :: Board -> Board
+popCountToBoard !x = fromIntegral $! popCount x
 
 lsb :: Board -> Square
-lsb !x = countTrailingZeros x
+lsb !x = Bits.countTrailingZeros x
 
 msb :: Board -> Square
 msb !x = 65 * (zeros / 64) + 63 - zeros
   where
-    !zeros = countLeadingZeros x
+    !zeros = Bits.countLeadingZeros x
 
-toCondition :: (Num a, Ord a) => a -> a
-toCondition !x = 1 - min 1 x
+{-# SPECIALIZE toReverseCondition :: Board -> Board #-}
+{-# SPECIALIZE toReverseCondition :: Square -> Square #-}
+toReverseCondition :: (Num a, Ord a) => a -> a
+toReverseCondition !x = 1 - toCondition x
+
+{-# SPECIALIZE toCondition :: Board -> Board #-}
+{-# SPECIALIZE toCondition :: Square -> Square #-}
+toCondition :: (Ord a, Num a) => a -> a
+toCondition !x = min 1 x
 
 toBoard :: Square -> Board
 toBoard !n = fromIntegral (1 - n / 64) * (1 << n)
@@ -125,6 +136,17 @@ knightOutpostAttackers above n = filesBoard & ranksBoard
     compareFn | above     = (<)
               | otherwise = (>)
 
+passedPawnBlockers :: Bool -> Int -> Board
+passedPawnBlockers above n = filesBoard & ranksBoard
+  where
+    filesBoard = getPreviousFile file .| getFile file .| getNextFile file
+    ranksBoard = foldl' (.|) 0
+      $ map getRank
+      $ filter (compareFn rank) sideSquares
+    rank = toRank n
+    file = toFile n
+    compareFn | above     = (<)
+              | otherwise = (>)
 
 fileMove :: Square -> Board
 fileMove n = ranks !! toRank n
@@ -151,12 +173,12 @@ getFile n = foldl1' (.|) (map f sideSquares)
 getPreviousFile :: File -> Board
 getPreviousFile n
   | n == 0 = 0
-  | otherwise = getFile (n + 1)
+  | otherwise = getFile (n - 1)
 
 getNextFile :: File -> Board
 getNextFile n
   | n == 7 = 0
-  | otherwise = getFile (n - 1)
+  | otherwise = getFile (n + 1)
 
 
 getDiag :: Diag -> Board
@@ -233,16 +255,16 @@ kingMovesVec = map kingMove squares
 
 -- Sliding moves
 fileMovesVec :: Vector Board
-fileMovesVec = map fileMove squares
+fileMovesVec = snoc (map fileMove squares) 0
 
 rankMovesVec :: Vector Board
-rankMovesVec = map rankMove squares
+rankMovesVec = snoc (map rankMove squares) 0
 
 diagMovesVec :: Vector Board
-diagMovesVec = map diagMove squares
+diagMovesVec = snoc (map diagMove squares) 0
 
 antiDiagMovesVec :: Vector Board
-antiDiagMovesVec = map antiDiagMove squares
+antiDiagMovesVec = snoc (map antiDiagMove squares) 0
 
 westMovesVec :: Vector Board
 westMovesVec = snoc (map westMove squares) 0
@@ -278,6 +300,13 @@ blackKnightOutpostAttackersVec :: Vector Board
 blackKnightOutpostAttackersVec =
   map (knightOutpostAttackers False) squares
 
+whitePassedPawnBlockersVec :: Vector Board
+whitePassedPawnBlockersVec =
+  map (passedPawnBlockers True) squares
+
+blackPassedPawnBlockersVec :: Vector Board
+blackPassedPawnBlockersVec =
+  map (passedPawnBlockers False) squares
 
 {-# NOINLINE pieceRngVec #-}
 pieceRngVec :: Vector Board

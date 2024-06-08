@@ -28,7 +28,6 @@ positionFenParser = do
     $ includeColor color
     emptyPosition
   where
-  newPosition = setInitialScore . makeNullMove . makeNullMove
   position = (,,,,,)
     <$> (piecesP    <* space)
     <*> (colorP     <* space)
@@ -53,17 +52,23 @@ positionFenParser = do
   mandatory = (=<<) (fromMaybe empty . map pure)
   foldrFlipped f = flip $ foldr f
 
-
 squareParser :: Parser Square
 squareParser = (+) <$> column <*> map (* 8) row
   where
     column = (\x -> x - fromEnum 'a') . fromEnum <$> oneOf ['a' .. 'h']
     row = (\x -> x - 1) . digitToInt <$> oneOf ['1' .. '8']
 
-
-setInitialScore :: Position -> Position
-setInitialScore pos =
-  pos {materialScore = evaluateMaterial pos}
+newPosition :: Position -> Position
+newPosition = setInitialValues . makeNullMove . makeNullMove
+  where
+  setInitialValues pos = pos {
+      materialScore = evaluateMaterial pos
+    , phase         = getPhase pos
+  }
+  getPhase Position {..} = min totalPhase
+     (minorPiecePhase * fromIntegral (popCount (knights .| bishops))
+    + rookPhase       * fromIntegral (popCount rooks)
+    + queenPhase      * fromIntegral (popCount queens))
 
 
 includePiece :: (Square, (Piece, Color)) -> Position -> Position

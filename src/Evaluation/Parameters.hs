@@ -1,11 +1,13 @@
 module Evaluation.Parameters where
 
 import           AppPrelude
-import           Data.List.Split      (chunksOf)
-import qualified Data.Vector.Storable as Vector
+import           Data.List.Split           (chunksOf)
+import           Evaluation.ScoreBreakdown
 import           Models.Piece
 import           Models.Score
 import           Utils.Board
+
+import qualified Data.Vector.Storable      as Vector
 
 
 -- Material scores
@@ -26,11 +28,41 @@ queenScore = 950
 
 
 -- Bonuses
-bishopPairBonus :: Score
-bishopPairBonus = 25
+bishopPairBonus :: (?phase :: Phase) => Score
+bishopPairBonus = taperScore $ ScorePair 25 75
 
-knightOutpostBonus :: Score
-knightOutpostBonus = 50
+knightOutpostBonus :: (?phase :: Phase) => Score
+knightOutpostBonus = taperScore $ ScorePair 50 0
+
+passedPawnTable :: Vector ScorePair
+passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
+  [(0, 0), (0, 0), (10, 20), (20, 40),
+   (30, 60), (40, 80), (50, 100)]
+
+knightMobilityTable :: Vector ScorePair
+knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
+  [(-15, -30), (-5, -10), (-1, -2), (2, 4), (6, 12),
+   (9, 18), (11, 22), (13, 26), (15, 30)]
+
+bishopMobilityTable :: Vector ScorePair
+bishopMobilityTable = Vector.fromList $ map (uncurry ScorePair)
+  [(-25, -50), (-11, -22), (-6, -12), (-1, -2),
+   (3, 6), (6, 12), (9, 18), (12, 24), (14, 28),
+   (17, 34), (19, 38), (21, 42), (23, 46), (25, 50)]
+
+rookMobilityTable :: Vector ScorePair
+rookMobilityTable = Vector.fromList $ map (uncurry ScorePair)
+  [(-10, -50), (-4, -20), (-2, -10), (0, 0), (1, 5),
+   (2, 10), (3, 15), (4, 20), (5, 25), (6, 30),
+   (7, 34), (8, 38), (9, 42), (10, 46), (10, 50)]
+
+queenMobilityTable :: Vector ScorePair
+queenMobilityTable = Vector.fromList $ map (uncurry ScorePair)
+  [(-10, -50), (-6, -30), (-5, -22), (-4, -16), (-2, -10),
+   (-1, -5), (0, -1), (1, 3), (1, 7), (2, 11), (2, 14),
+   (3, 17), (3, 20), (4, 23), (4, 26), (5, 28), (5, 30),
+   (6, 32), (6, 34), (7, 36), (7, 38), (8, 40), (8, 42),
+   (9, 44), (9, 46), (10, 48), (10, 49), (10, 50)]
 
 
 -- Penalties
@@ -46,35 +78,14 @@ threatByQueenPenalty = 80
 isolatedPawnPenalty :: Score
 isolatedPawnPenalty = 25
 
-
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
   [0, 0, 50, 75, 88, 94, 97, 99, 100,
    100, 100, 100, 100, 100, 100, 100]
 
-passedPawnTable :: Vector Score
-passedPawnTable = Vector.fromList
-  [0, 0, 10, 20, 30, 40, 50]
 
 
-knightMobilityTable :: Vector Score
-knightMobilityTable = Vector.fromList
-  [-25, -10, -2, 4, 9, 13, 19, 22, 25]
-
-bishopMobilityTable :: Vector Score
-bishopMobilityTable = Vector.fromList
-  [-35, -18, -8, -1, 5, 10, 15, 19, 23, 26, 29, 31, 33, 35]
-
-rookMobilityTable :: Vector Score
-rookMobilityTable = Vector.fromList
-  [-20, -12, -6, -1, 3, 6, 9, 11, 13, 15, 16, 17, 18, 19, 20]
-
-queenMobilityTable :: Vector Score
-queenMobilityTable = Vector.fromList
-  [-30, -17, -10, -5, -2, 0, 2, 4, 6, 8, 10, 12, 14, 16,
-   17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30 ]
-
-
+-- Piece Square Tables
 blackPawnSquareTable :: Vector Score
 blackPawnSquareTable = Vector.fromList
   [0,  0,  0,  0,  0,  0,  0,  0,
@@ -189,6 +200,15 @@ queenSquareTable =
 kingSquareTable :: Vector Score
 kingSquareTable =
   whiteKingSquareTable <> blackKingSquareTable
+
+
+infixl 9 !!%
+(!!%) :: (?phase::Phase) => Vector ScorePair -> Int -> Score
+(!!%) table idx = taperScore (table !! idx)
+
+taperScore :: (?phase :: Phase) => ScorePair -> Score
+taperScore (ScorePair mgScore egScore) =
+  (?phase * mgScore + (totalPhase - ?phase) * egScore) / totalPhase
 
 
 getSquareTableIndex :: Board -> Color -> Square

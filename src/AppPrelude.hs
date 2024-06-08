@@ -1,4 +1,4 @@
-module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), inRange, maybeFilter, findTraverse, elem, notElem) where
+module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverse, elem, notElem) where
 
 import           ClassyPrelude        hiding (Vector, elem, mask, notElem, (/),
                                        (>>), (^))
@@ -15,6 +15,22 @@ import           Data.Vector.Storable (Vector)
 infixl 9 !!
 (!!) :: Storable a => Vector a -> Int -> a
 (!!) !x !y = unsafeIndex x y
+
+
+{-# SPECIALIZE (/) :: Int16 -> Int16 -> Int16 #-}
+{-# SPECIALIZE (/) :: Int -> Int -> Int #-}
+{-# INLINE (/)  #-}
+infixl 7 /
+(/) :: Integral a => a -> a -> a
+(/) !x !y = quot x y
+
+{-# SPECIALIZE (%) :: Int16 -> Int16 -> Int16 #-}
+{-# SPECIALIZE (%) :: Int -> Int -> Int #-}
+{-# SPECIALIZE (%) :: Word64 -> Word64 -> Word64 #-}
+{-# INLINE (%)  #-}
+infixl 7 %
+(%) :: Integral a => a -> a -> a
+(%) !x !y = rem x y
 
 
 {-# INLINE inRange  #-}

@@ -7,6 +7,7 @@ import           Evaluation.Parameters
 import           Models.Move
 import           Models.Piece
 import           Models.Position
+import           Models.Score
 import           MoveGen.PieceAttacks
 import           Utils.Board
 
@@ -53,11 +54,10 @@ updatePlayerBoards start end endSquare pos@Position {..} =
       : if halfMoveClock == 0
         then []
         else previousPositions,
-    materialScore        = materialScore
-      + maybe 0 (evaluateCapturedPiece color endSquare)
-                (maybeCapturedPieceAt endSquare pos),
+    materialScore        = materialScore + materialDiff,
     halfMoveClock        = fromIntegral
       (toReverseCondition (enemy & end)) * (halfMoveClock + 1),
+    phase                = max 0 (phase - phaseDiff),
     player               = (player ^ start) .| end,
     enemy                = enemy .\ end,
     pawns                = pawns .\ end,
@@ -66,6 +66,11 @@ updatePlayerBoards start end endSquare pos@Position {..} =
     rooks                = rooks .\ end,
     queens               = queens .\ end
   }
+  where
+    (materialDiff, phaseDiff) = case maybeCapturedPieceAt endSquare pos of
+      Just captured -> (evaluateCapturedPiece color endSquare captured,
+                       pieceToPhase captured)
+      Nothing       -> (0, 0)
 
 
 movePiece :: Piece -> Promotion -> Board -> Board -> Position -> Position

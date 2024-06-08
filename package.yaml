@@ -16,7 +16,7 @@ category:            Chess Engine
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/albertprz/stafford#readme>
+description:         Please see the README on GitHub at <https://github.com/albertprz/apostate#readme>
 
 dependencies:
 - base >= 4 && < 5
@@ -109,7 +109,7 @@ tests:
     - -Wno-type-defaults
 
 executables:
-  stafford:
+  apostate:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

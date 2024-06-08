@@ -14,33 +14,35 @@ import           Utils.Board
 
 
 data Position = Position {
-   previousPositions :: ~[ZKey]
-  , materialScore    :: Score
-  , halfMoveClock    :: Ply
-  , color            :: Color
-  , player           :: Board
-  , enemy            :: Board
-  , pawns            :: Board
-  , knights          :: Board
-  , bishops          :: Board
-  , rooks            :: Board
-  , queens           :: Board
-  , kings            :: Board
-  , enPassant        :: Board
-  , castling         :: Board
-  , attacked         :: Board
-  , leapingCheckers  :: Board
-  , sliderCheckers   :: Board
-  , pinnedPieces     :: Board
+    previousPositions :: ~[ZKey]
+  , materialScore     :: Score
+  , halfMoveClock     :: Ply
+  , phase             :: Phase
+  , color             :: Color
+  , player            :: Board
+  , enemy             :: Board
+  , pawns             :: Board
+  , knights           :: Board
+  , bishops           :: Board
+  , rooks             :: Board
+  , queens            :: Board
+  , kings             :: Board
+  , enPassant         :: Board
+  , castling          :: Board
+  , attacked          :: Board
+  , leapingCheckers   :: Board
+  , sliderCheckers    :: Board
+  , pinnedPieces      :: Board
 }
 
 
 startPosition :: Position
 startPosition = emptyPosition {
     color    = White
-  , player   = rank_1 .| rank_2
-  , enemy    = rank_7 .| rank_8
-  , pawns    = rank_2 .| rank_7
+  , phase    = totalPhase
+  , player   = rank_1  .| rank_2
+  , enemy    = rank_7  .| rank_8
+  , pawns    = rank_2  .| rank_7
   , rooks    = (rank_1 .| rank_8) & (file_A .| file_H)
   , knights  = (rank_1 .| rank_8) & (file_B .| file_G)
   , bishops  = (rank_1 .| rank_8) & (file_C .| file_F)
@@ -52,10 +54,11 @@ startPosition = emptyPosition {
 
 emptyPosition :: Position
 emptyPosition = Position {
-   previousPositions = []
+    previousPositions = []
   , color             = White
-  , halfMoveClock     = 0
   , materialScore     = 0
+  , halfMoveClock     = 0
+  , phase             = 0
   , player            = 0
   , enemy             = 0
   , pawns             = 0
@@ -70,7 +73,6 @@ emptyPosition = Position {
   , leapingCheckers   = 0
   , sliderCheckers    = 0
   , pinnedPieces      = 0
-
 }
 
 

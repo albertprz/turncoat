@@ -2,7 +2,8 @@ module Evaluation.ScoreBreakdown where
 
 import           AppPrelude
 
-import           Bookhound.Utils.Text (indent)
+import           Bookhound.Utils.Text
+import           Foreign.Storable.Generic
 import           Models.Score
 
 
@@ -39,6 +40,9 @@ data PenaltyBreakdown = PenaltyBreakdown
   }
 
 data ScorePair = ScorePair Score Score
+  deriving Generic
+
+instance GStorable ScorePair
 
 class EvalScore a where
   evalScore :: a -> Score

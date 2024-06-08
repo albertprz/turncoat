@@ -18,22 +18,20 @@ import           MoveGen.PositionQueries
 import           Utils.Board
 
 
-getScoreBreakdown :: Position -> ScoreBreakdown
-getScoreBreakdown pos@Position{..} = ScoreBreakdown {..}
-  where
-    (white, black)
-      | color == White = (playerBreakdown, enemyBreakdown)
-      | otherwise     = (enemyBreakdown, playerBreakdown)
-    playerBreakdown =
-      (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
-      { material = Just $ evaluatePlayerMaterial pos player color }
-    enemyBreakdown  =
-      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
-      { material = Just $ evaluatePlayerMaterial pos enemy enemyColor }
+evaluatePosition :: Position -> Score
+evaluatePosition pos =
+  let
     enemyPos         = makeNullMove pos
-    enemyColor       = reverseColor color
     scoresBatch      = getScoresBatch pos
     enemyScoresBatch = getScoresBatch enemyPos
+  in
+    pos.materialScore
+    + evalScore
+      (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
+    - evalScore
+      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch  enemyPos)
+  where
+    ?phase = pos.phase
 
 
 evaluateCaptureExchange :: Move -> Position -> Score
@@ -48,21 +46,31 @@ evaluateCaptureExchange initialMv initialPos =
         Nothing -> - pos.materialScore
 
 
-evaluatePosition :: Position -> Score
-evaluatePosition pos =
-  pos.materialScore
-  + evalScore
-    (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
-  - evalScore
-    (evaluatePlayerBreakdown enemyScoresBatch scoresBatch  enemyPos)
-  where
+getScoreBreakdown :: Position -> ScoreBreakdown
+getScoreBreakdown pos@Position{..} =
+  let
+    (white, black)
+      | White <- color = (playerBreakdown, enemyBreakdown)
+      | Black <- color = (enemyBreakdown, playerBreakdown)
+    playerBreakdown =
+      (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
+      { material = Just $ evaluatePlayerMaterial pos player color }
+    enemyBreakdown  =
+      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
+      { material = Just $ evaluatePlayerMaterial pos enemy enemyColor }
     enemyPos         = makeNullMove pos
+    enemyColor       = reverseColor color
     scoresBatch      = getScoresBatch pos
     enemyScoresBatch = getScoresBatch enemyPos
+  in
+    ScoreBreakdown {..}
+  where
+    ?phase = phase
 
 
 evaluatePlayerBreakdown
-  :: ScoresBatch -> ScoresBatch -> Position -> PlayerScoreBreakdown
+  ::  (?phase :: Phase) => ScoresBatch -> ScoresBatch -> Position
+  -> PlayerScoreBreakdown
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
     material      = Nothing
@@ -71,7 +79,8 @@ evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   }
 
 
-evaluatePositionBonuses :: ScoresBatch -> Position -> BonusBreakdown
+evaluatePositionBonuses
+  :: (?phase :: Phase) => ScoresBatch -> Position -> BonusBreakdown
 evaluatePositionBonuses ScoresBatch {mobility} pos =
   BonusBreakdown {
     mobility       = mobility
@@ -79,6 +88,7 @@ evaluatePositionBonuses ScoresBatch {mobility} pos =
   , knightOutposts = evaluateKnightOutposts pos
   , passedPawns    = evaluatePassedPawns pos
   }
+
 
 evaluatePositionPenalties :: ScoresBatch -> Position -> PenaltyBreakdown
 evaluatePositionPenalties
@@ -89,10 +99,39 @@ evaluatePositionPenalties
   }
 
 
-evaluateBishopPair :: Position -> Score
+evaluateBishopPair :: (?phase :: Phase) => Position -> Score
 evaluateBishopPair Position {player, bishops} =
    bishopPairBonus
    * fromIntegral (clamp (0, 1) (popCount (player & bishops) - 1))
+
+
+evaluateKnightOutposts :: (?phase :: Phase) => Position -> Score
+evaluateKnightOutposts Position {..} =
+    knightOutpostBonus
+  * fromIntegral (foldlBoard 0 (+) mapFn
+    (knights&player & defended & ranks & knightOupostFiles))
+  where
+    defended = pawnAttacks color (player&pawns)
+    mapFn !n = toReverseCondition (attackersVec !! n & enemy&pawns)
+    (!ranks, !attackersVec)
+      | White <- color =
+        (whiteKnightOutpostRanks , whiteKnightOutpostAttackersVec)
+      | Black <- color =
+         (blackKnightOutpostRanks, blackKnightOutpostAttackersVec)
+
+
+evaluatePassedPawns :: (?phase :: Phase) => Position -> Score
+evaluatePassedPawns Position {..} =
+  eval file_A + eval file_B + eval file_C + eval file_D
+  + eval file_E + eval file_F + eval file_G + eval file_H
+  where
+    eval board = mapFn $ msb (player & pawns & board)
+    mapFn n
+      | n == 64 || blockersVec !! n & enemy&pawns /= 0 = 0
+      | otherwise = passedPawnTable !!% getRank n
+    (!getRank, !blockersVec)
+      | White <- color = (toRank           , whitePassedPawnBlockersVec)
+      | Black <- color = (\n -> 7 - toRank n, blackPassedPawnBlockersVec)
 
 
 evaluateIsolatedPawns :: Board -> Score
@@ -114,36 +153,7 @@ evaluateIsolatedPawns pawns =
         * toReverseCondition (pawns & (file_F .| file_H))
 
 
-evaluateKnightOutposts :: Position -> Score
-evaluateKnightOutposts Position {..} =
-    knightOutpostBonus
-  * fromIntegral (foldlBoard 0 (+) mapFn
-    (knights&player & defended & ranks & knightOupostFiles))
-  where
-    defended = pawnAttacks color (player&pawns)
-    mapFn !n = toReverseCondition (attackersVec !! n & enemy&pawns)
-    (!ranks, !attackersVec)
-      | color == White =
-        (whiteKnightOutpostRanks , whiteKnightOutpostAttackersVec)
-      | otherwise =
-         (blackKnightOutpostRanks, blackKnightOutpostAttackersVec)
-
-
-evaluatePassedPawns :: Position -> Score
-evaluatePassedPawns Position {..} =
-  eval file_A + eval file_B + eval file_C + eval file_D
-  + eval file_E + eval file_F + eval file_G + eval file_H
-  where
-    eval board = mapFn $ msb (player & pawns & board)
-    mapFn n
-      | n == 64 || blockersVec !! n & enemy&pawns /= 0 = 0
-      | otherwise = passedPawnTable !! getRank n
-    (!getRank, !blockersVec)
-      | color == White = (toRank           , whitePassedPawnBlockersVec)
-      | otherwise     = (\n -> 7 - toRank n, blackPassedPawnBlockersVec)
-
-
-getScoresBatch :: Position -> ScoresBatch
+getScoresBatch :: (?phase :: Phase) => Position -> ScoresBatch
 getScoresBatch pos
   | isKingInCheck pos = emptyScoresBatch
 
@@ -189,7 +199,7 @@ getScoresBatch Position {..} = ScoresBatch {..}
       foldlBoard (0, 0, 0) foldFn f board
       where
         foldFn (!x, !y, !z) !attackArea =
-          (x + mobilityTable !! popCount (attackArea .\ player),
+          (x + mobilityTable !!% popCount (attackArea .\ player),
            y + threatenedSquares,
            z + toCondition threatenedSquares)
           where
@@ -208,6 +218,6 @@ data ScoresBatch = ScoresBatch {
 
 emptyScoresBatch :: ScoresBatch
 emptyScoresBatch = ScoresBatch {
-    mobility = 0
+    mobility    = 0
   , kingThreats = 0
 }

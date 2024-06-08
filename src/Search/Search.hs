@@ -1,6 +1,6 @@
 module Search.Search (getBestMove) where
 
-import           AppPrelude
+import           AppPrelude                hiding ((/))
 
 import           Models.KillersTable       (KillersTable)
 import qualified Models.KillersTable       as KillersTable

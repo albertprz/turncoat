@@ -45,14 +45,6 @@ infixl 7 ^
 (^) :: Board -> Board -> Board
 (^) !x !y = Bits.xor x y
 
-infixl 7 /
-(/) :: Square -> Square -> Square
-(/) !x !y = div x y
-
-infixl 7 %
-(%) :: Square -> Square -> Square
-(%) !x !y = rem x y
-
 infixl 9 ~
 (~) :: Board -> Board
 (~) !x = Bits.complement x

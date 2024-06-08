@@ -11,7 +11,7 @@ import           Data.Char               (isSpace)
 
 
 main :: IO ()
-main = putStrLn "Stafford engine by albertprz" *>
+main = putStrLn "Apostate engine by albertprz" *>
        evalStateT (forever repl) startPosition
     where
     repl = do input <- getLine

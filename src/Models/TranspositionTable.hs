@@ -44,7 +44,7 @@ tTableSize = bit 26
 
 hashZKey :: ZKey -> Int
 hashZKey (ZKey zKey) =
-  fromIntegral $ mod zKey tTableSize
+  fromIntegral (zKey % tTableSize)
 
 encodeTEntry :: TEntry -> StorableTEntry
 encodeTEntry TEntry {..} = StorableTEntry {

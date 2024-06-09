@@ -23,9 +23,10 @@ import           System.TimeIt
 executeCommand :: Command -> CommandM ()
 executeCommand = \case
   Uci              -> handleStart
+  UciNewGame       -> handleNewGame
   IsReady          -> printReady
   Evaluate         -> printStaticEval
-  Search opts      -> printBestMove opts
+  Search opts      -> printSearch opts
   Perft n          -> printPerft    n
   Divide n         -> printDivide   n
   SetPosition pos  -> setPosition   pos
@@ -34,12 +35,10 @@ executeCommand = \case
   MakeMove mv      -> move          mv
   Display          -> displayBoard
   Flip             -> flipPosition
-  Debug _          -> pure ()
-  UciNewGame       -> pure ()
 
 
-printBestMove :: SearchOptions -> CommandM ()
-printBestMove opts = do
+printSearch :: SearchOptions -> CommandM ()
+printSearch opts = do
   st           <- get
   let ?options = st.options
   tTable       <- liftIO TTable.create
@@ -81,7 +80,11 @@ printStaticEval = withPosition (const go) ()
          . ("\n" <>)
          . tshow
          . getScoreBreakdown
-
+  
+  
+handleNewGame :: CommandM ()
+handleNewGame = pure ()
+  
 
 handleStart :: CommandM ()
 handleStart = do

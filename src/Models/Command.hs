@@ -7,7 +7,6 @@ import           Models.Score
 import           Utils.Board
 
 
-
 data Command
   = Uci
   | UciNewGame
@@ -17,8 +16,8 @@ data Command
   | Divide Depth
   | SetPosition PositionSpec
   | SetOption OptionSpec
-  | Debug Bool
   | MakeMove UnknownMove
+  | Stop
   | Quit
   | Evaluate
   | Display
@@ -48,8 +47,19 @@ data EngineOption = SpinOption
 
 newtype OptionSpec = HashSize Int
 
-newtype SearchOptions = SearchOptions
-  { depth :: Depth
+data SearchOptions = SearchOptions
+  { searchMoves        :: [UnknownMove]
+  , ponder             :: Bool
+  , whiteTime          :: Int
+  , whiteIncrement     :: Int
+  , blackTime          :: Int
+  , blackIncrement     :: Int
+  , movesUntilNextTime :: Int
+  , depth              :: Depth
+  , nodes              :: Int
+  , findMate           :: Int
+  , moveTime           :: Int
+  , infinite           :: Bool
   }
 
 
@@ -88,7 +98,18 @@ defaultEngineOptions = EngineOptions
 
 defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions
-  { depth = 12
+  { searchMoves        = []
+  , infinite           = True
+  , ponder             = False
+  , findMate           = 0
+  , whiteTime          = 0
+  , whiteIncrement     = 0
+  , blackTime          = 0
+  , blackIncrement     = 0
+  , movesUntilNextTime = 0
+  , depth              = 0
+  , nodes              = 0
+  , moveTime           = 0
   }
 
 

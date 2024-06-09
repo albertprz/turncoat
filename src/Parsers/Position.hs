@@ -52,11 +52,13 @@ positionFenParser = do
   mandatory = (=<<) (fromMaybe empty . map pure)
   foldrFlipped f = flip $ foldr f
 
+
 squareParser :: Parser Square
 squareParser = (+) <$> column <*> map (* 8) row
   where
     column = (\x -> x - fromEnum 'a') . fromEnum <$> oneOf ['a' .. 'h']
     row = (\x -> x - 1) . digitToInt <$> oneOf ['1' .. '8']
+
 
 newPosition :: Position -> Position
 newPosition = setInitialValues . makeNullMove . makeNullMove
@@ -87,13 +89,16 @@ includePiece (square, (piece, pieceColor)) pos@Position {..} =
     King   -> pos { kings = kings .| board }
   board = toBoard square
 
+
 includeHalfMoveClock :: Ply -> Position -> Position
 includeHalfMoveClock halfMoveClock pos =
   pos { halfMoveClock = halfMoveClock }
 
+
 includeColor :: Color -> Position -> Position
 includeColor color pos =
   pos { color = color }
+
 
 includeCastling :: (CastlingRights, Color) -> Position -> Position
 includeCastling (castlingRights, castlingColor) pos@Position {..} =
@@ -105,6 +110,7 @@ includeCastling (castlingRights, castlingColor) pos@Position {..} =
   column = case castlingRights of
     QueenSide -> file_A
     KingSide  -> file_H
+
 
 includeEnPassant :: Square -> Position -> Position
 includeEnPassant square pos =

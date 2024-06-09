@@ -2,15 +2,16 @@ module Models.Position where
 
 
 import           AppPrelude
-import           Bookhound.Utils.List      (hasMultiple)
-import           Data.Bitraversable        (bisequence)
-import           Data.List.Split           (chunksOf)
-import           Data.Maybe                (fromJust)
-import           Models.Move               (foldlBoard)
+import           Models.Move          (foldlBoard)
 import           Models.Piece
 import           Models.Score
-import           Models.TranspositionTable (ZKey (ZKey))
 import           Utils.Board
+
+import           Bookhound.Utils.List (hasMultiple)
+import           Data.Bitraversable   (bisequence)
+import           Data.List.Split      (chunksOf)
+import           Data.Maybe           (fromJust)
+import           Test.QuickCheck      (Arbitrary (..))
 
 
 data Position = Position {
@@ -34,6 +35,9 @@ data Position = Position {
   , sliderCheckers    :: Board
   , pinnedPieces      :: Board
 }
+
+newtype ZKey = ZKey Word64
+  deriving (Eq, Show, Generic, Ord, Num, Hashable, Storable, Arbitrary)
 
 
 startPosition :: Position

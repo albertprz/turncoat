@@ -118,7 +118,7 @@ instance Show BonusBreakdown where
      "Knight Outposts: " <> show knightOutposts,
      "Passed Pawns:    " <> show passedPawns,
      totalScoreLine,
-     "Bonus Total: " <> show (evalScore breakdown),
+     "Bonus Total: "     <> show (evalScore breakdown),
      totalScoreLine]
 
 
@@ -127,7 +127,7 @@ instance Show PenaltyBreakdown where
     ["King Threats:   " <> show kingThreats,
      "Isolated pawns: " <> show isolatedPawns,
      totalScoreLine,
-     "Penalty Total: " <> show (evalScore breakdown),
+     "Penalty Total: "  <> show (evalScore breakdown),
      totalScoreLine]
 
 instance Show ScorePair where

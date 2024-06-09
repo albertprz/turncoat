@@ -4,20 +4,30 @@ import           AppPrelude
 
 import           CommandLine.UciCommands (executeCommand)
 import           Control.Monad.State     (evalStateT)
-import           Models.Position         (startPosition)
+import           Models.Command          
 import           Parsers.Command         (parseCommand)
 
 import           Data.Char               (isSpace)
 
 
 main :: IO ()
-main = putStrLn "Apostate engine by albertprz" *>
-       evalStateT (forever repl) startPosition
-    where
+main = do
+  printHeader
+  evalStateT (forever repl) initialEngineState
+  where
     repl = do input <- getLine
               unless (all isSpace input)
                      (eval input)
-    eval = either (putStrLn . (errorMsg <>) . tshow)
-                  executeCommand
+    eval = either (const $ putStrLn parseErrorMsg) executeCommand
            . parseCommand
-    errorMsg = "Error when parsing command: "
+
+
+printHeader :: IO ()
+printHeader =
+  putStrLn (name <> " " <> version <> " by " <> author)
+  where
+    EngineInfo {..} = engineInfo
+
+
+parseErrorMsg :: Text
+parseErrorMsg = "Error when parsing command"

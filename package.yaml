@@ -10,7 +10,7 @@ extra-source-files:
 - README.md
 
 # Metadata used when publishing your package
-synopsis:            Elegant chess engine in Haskell
+synopsis:            Minimalistic chess engine in Haskell
 category:            Chess Engine
 
 # To avoid duplicated efforts in documentation and dealing with the
@@ -70,8 +70,8 @@ default-extensions:
 
 ghc-options:
 - -O2
+- -funbox-strict-fields
 # - -fllvm
-# - -funbox-strict-fields
 # - -fspecialize-aggressively
 # - -fexpose-all-unfoldings
 # - -funfolding-use-threshold=200

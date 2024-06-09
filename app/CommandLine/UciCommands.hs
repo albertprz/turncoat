@@ -3,7 +3,6 @@ module CommandLine.UciCommands where
 import           AppPrelude
 
 import           Evaluation.Evaluation
-import           Models.Command
 import qualified Models.KillersTable       as KillersTable
 import           Models.Move
 import           Models.Position
@@ -15,22 +14,34 @@ import           Search.Search
 
 import           Control.Monad.State
 import           Data.Composition
-import           Data.Map                  (traverseWithKey)
+import qualified Data.Map                  as Map
+import           Models.Command 
+import           System.Exit
 import           System.TimeIt
 
 
 executeCommand :: Command -> CommandM ()
 executeCommand = \case
-  Search opts     -> printBestMove opts
-  Perft n         -> printPerft    n
-  Divide n        -> printDivide   n
-  SetPosition pos -> setPosition   pos
-  MakeMove mv     -> move          mv
-  Evaluate        -> printEvaluate
+  Uci              -> handleStart
+  IsReady          -> printReady
+  Evaluate         -> printStaticEval
+  Search opts      -> printBestMove opts
+  Perft n          -> printPerft    n
+  Divide n         -> printDivide   n
+  SetPosition pos  -> setPosition   pos
+  SetOption option -> setOption   option
+  Quit             -> liftIO exitSuccess
+  MakeMove mv      -> move          mv
+  Display          -> displayBoard
+  Flip             -> flipPosition
+  Debug _          -> pure ()
+  UciNewGame       -> pure ()
 
 
 printBestMove :: SearchOptions -> CommandM ()
 printBestMove opts = do
+  st           <- get
+  let ?options = st.options
   tTable       <- liftIO TTable.create
   killersTable <- liftIO KillersTable.create
   result       <- withPosition (go tTable killersTable) opts.depth
@@ -59,12 +70,12 @@ printDivide :: Depth -> CommandM ()
 printDivide = withPosition go
   where
     go = void
-         . traverseWithKey (\k v -> putStrLn (tshow k <> ": " <> tshow v))
+         . Map.traverseWithKey (\k v -> putStrLn (tshow k <> ": " <> tshow v))
          .: divide
 
 
-printEvaluate :: CommandM ()
-printEvaluate = withPosition (const go) ()
+printStaticEval :: CommandM ()
+printStaticEval = withPosition (const go) ()
   where
     go = putStrLn
          . ("\n" <>)
@@ -72,25 +83,78 @@ printEvaluate = withPosition (const go) ()
          . getScoreBreakdown
 
 
+handleStart :: CommandM ()
+handleStart = do
+  printEngineInfo
+  putStrLn mempty
+  printEngineOptions
+  printUciReady
+
+
 setPosition :: PositionSpec -> CommandM ()
 setPosition PositionSpec {..} =
   updatePosition
     $ foldM (flip makeUnknownMove) initialPosition moves
 
+  
+setOption :: OptionSpec -> CommandM ()
+setOption = \case
+  HashSize size -> modifyOptions \x -> x { hashSize = size }
+
+
+printUciReady :: CommandM ()
+printUciReady =
+  putStrLn "uciok"
+
+
+printReady :: CommandM ()
+printReady =
+  putStrLn "readyok"
+
+
+printEngineInfo :: CommandM ()
+printEngineInfo = do
+  go "name"  (name <> " " <> version)
+  go "author" author
+  where
+    EngineInfo {..} = engineInfo
+    go param value =
+      putStrLn ("id" <> " " <> param <> " " <> value)
+
+  
+printEngineOptions :: CommandM ()
+printEngineOptions =
+  go "Hash" (SpinOption hashSize 1 1_048_576)
+  where
+    EngineOptions {..} = defaultEngineOptions
+    go param option =
+      putStrLn ("option name " <> param <> " " <> tshow option)
+
 
 move :: UnknownMove -> CommandM ()
-move mv =
-  updatePosition
-    . makeUnknownMove mv =<< get
-  
+move mv = do
+  st <- get 
+  updatePosition $ makeUnknownMove mv st.position
+
+
+flipPosition :: CommandM ()
+flipPosition =
+  modifyPosition makeNullMove
+
+
+displayBoard :: CommandM ()
+displayBoard = do
+  putStrLn mempty
+  withPosition (const print) ()
+  putStrLn mempty
+
 
 updatePosition :: Maybe Position -> CommandM ()
 updatePosition = \case
-  Just pos -> put pos
+  Just pos -> modifyPosition $ const pos
   Nothing  -> putStrLn "Error: Invalid Position"
 
-  
-  
+
 makeUnknownMove :: UnknownMove -> Position -> Maybe Position
 makeUnknownMove UnknownMove {..} pos =
   (`makeMove` pos) <$> mv
@@ -99,15 +163,28 @@ makeUnknownMove UnknownMove {..} pos =
             (allMoves pos)
 
 
-withPosition :: MonadState Position m => (a -> Position -> m b) -> a -> m b
-withPosition f n = 
-  f n =<< get
+withPosition :: MonadState EngineState m => (a -> Position -> m b) -> a -> m b
+withPosition f x = do
+  st <-  get
+  f x st.position
 
+
+modifyOptions :: (EngineOptions -> EngineOptions) -> CommandM ()
+modifyOptions f =
+  modify \x -> x { options = f x.options }
+
+
+modifyPosition :: (Position -> Position) -> CommandM ()
+modifyPosition f =
+  modify \x -> x { position = f x.position }
+  
+  
 
 timeItPure :: MonadIO m => a -> m a
 timeItPure x = timeIt do
   !result <- pure x
   pure result
-  
 
-type CommandM = StateT Position IO
+
+type CommandM = StateT EngineState IO
+

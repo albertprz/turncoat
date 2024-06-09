@@ -7,7 +7,7 @@ import qualified Models.KillersTable       as KillersTable
 import           Models.Move
 import           Models.Position
 import           Models.Score
-import           Models.TranspositionTable (TEntry (..), TTable, ZKey)
+import           Models.TranspositionTable (TEntry (..), TTable)
 import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           MoveGen.MoveQueries
@@ -18,12 +18,15 @@ import           Search.Quiescence
 
 import           Control.Monad.State
 import           GHC.Real                  ((/))
+import           Models.Command            (EngineOptions)
 
 
 -- Features:
 -- - Iterative deepening
 
-getBestMove :: (?killersTable :: KillersTable, ?tTable :: TTable)
+getBestMove
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?options :: EngineOptions)
   => Depth -> Position -> IO (Maybe Move)
 getBestMove !depth pos =
   lastEx <$> traverse getNodeBestMove [0 .. depth]
@@ -36,7 +39,9 @@ getBestMove !depth pos =
 -- - Transposition table score caching
 -- - Search extensions
 
-negamax :: (?killersTable :: KillersTable, ?tTable :: TTable)
+negamax
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?options :: EngineOptions)
   => Score -> Score -> Depth -> Ply -> Position -> IO Score
 negamax !alpha !beta !depth !ply pos
 
@@ -58,7 +63,9 @@ negamax !alpha !beta !depth !ply pos
      hasOne _   = False
 
 
-cacheNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
+cacheNodeScore
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?options :: EngineOptions)
   => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO Score
 cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
   (!score, !bestMove) <- getNodeScore alpha beta depth ply pos
@@ -83,7 +90,9 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
 -- - Quiescence search
 -- - Null move prunning (R = 2)
 
-getNodeScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
+getNodeScore
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?options :: EngineOptions)
   => Score -> Score -> Depth -> Ply -> Position -> IO (Score, Maybe Move)
 getNodeScore !alpha !beta !depth !ply pos
 
@@ -110,7 +119,9 @@ getNodeScore !alpha !beta !depth !ply pos
           pure (newScore, bestMove)
 
 
-getMovesScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
+getMovesScore
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+    ?options :: EngineOptions)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
 getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
@@ -128,7 +139,9 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
 -- - Late Move Reductions
 -- - Principal Variation Search
 
-getMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
+getMoveScore
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?options :: EngineOptions)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
@@ -167,7 +180,9 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
 
 
-getNullMoveScore :: (?killersTable :: KillersTable, ?tTable :: TTable)
+getNullMoveScore
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?options :: EngineOptions)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
 

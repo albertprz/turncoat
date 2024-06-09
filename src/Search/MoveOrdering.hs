@@ -3,6 +3,7 @@ module Search.MoveOrdering (getSortedMoves ) where
 import           AppPrelude
 
 import           Evaluation.Evaluation
+import           Models.Command            (EngineOptions)
 import           Models.KillersTable       (KillersTable)
 import qualified Models.KillersTable       as KillersTable
 import           Models.Move
@@ -28,7 +29,8 @@ import           MoveGen.PositionQueries
 -- Reduced moves:
 -- Late killers / quiet moves
 
-getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable)
+getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable,
+                  ?options :: EngineOptions)
   => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
   ttMove   <- toList <$> TTable.lookupBestMove (getZobristKey pos)

@@ -18,7 +18,7 @@ import           Search.Quiescence
 
 import           Control.Monad.State
 import           GHC.Real                  ((/))
-import           Models.Command            (EngineOptions)
+import           Models.Command
 
 
 -- Features:
@@ -27,17 +27,19 @@ import           Models.Command            (EngineOptions)
 getBestMove
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?options :: EngineOptions)
-  => Depth -> Position -> IO (Maybe Move)
-getBestMove !depth pos =
+  => IORef (Maybe Move) -> Depth -> Position -> IO (Maybe Move)
+getBestMove bestMoveRef !depth pos =
   lastEx <$> traverse getNodeBestMove [0 .. depth]
   where
-    getNodeBestMove d =
-      snd <$> getNodeScore initialAlpha initialBeta d 0 pos
+  getNodeBestMove d = do
+    !bestMove <- snd <$> getNodeScore initialAlpha initialBeta d 0 pos
+    writeIORef bestMoveRef bestMove
+    pure bestMove
 
 
 -- Features:
 -- - Transposition table score caching
--- - Search extensions
+-- - Search extensions (Check & Single move)
 
 negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
@@ -132,7 +134,7 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
     mainMovesSearch    = movesSearch False mainMoves
     reducedMovesSearch = movesSearch True  reducedMoves
     movesSearch isReduced =
-      findTraverse (getMoveScore beta depth ply isReduced hasTTMove pos)
+      findTraverseIndex (getMoveScore beta depth ply isReduced hasTTMove pos)
 
 
 -- Features:

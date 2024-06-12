@@ -1,9 +1,10 @@
-module CommandLine.UciCommands where
+module Uci (executeCommand) where
 
 import           AppPrelude
 
 import           Evaluation.Evaluation
 import qualified Models.KillersTable       as KillersTable
+import           Models.Command
 import           Models.Move
 import           Models.Position
 import           Models.Score
@@ -15,9 +16,7 @@ import           Search.Search
 import           Control.Monad.State
 import           Data.Composition
 import qualified Data.Map                  as Map
-import           Models.Command 
 import           System.Exit
-import           System.TimeIt
 
 
 executeCommand :: Command -> CommandM ()
@@ -25,52 +24,68 @@ executeCommand = \case
   Uci              -> handleStart
   UciNewGame       -> handleNewGame
   IsReady          -> printReady
-  Evaluate         -> printStaticEval
-  Search opts      -> printSearch opts
-  Perft n          -> printPerft    n
-  Divide n         -> printDivide   n
-  SetPosition pos  -> setPosition   pos
+  Search opts      -> whenAvailable $ runSearch opts
+  Perft  depth     -> whenAvailable $ runPerft  depth
+  Divide depth     -> whenAvailable $ runDivide depth
+  Stop             -> stop
+  Quit             -> quit
+  SetPosition pos  -> setPosition pos
   SetOption option -> setOption   option
-  Quit             -> liftIO exitSuccess
-  MakeMove mv      -> move          mv
+  MakeMove mv      -> move        mv
+  Evaluate         -> printStaticEval
   Display          -> displayBoard
   Flip             -> flipPosition
 
 
-printSearch :: SearchOptions -> CommandM ()
-printSearch opts = do
-  st           <- get
+runSearch :: SearchOptions -> CommandM ()
+runSearch searchOpts = do
+  st   <- get
   let ?options = st.options
-  tTable       <- liftIO TTable.create
-  killersTable <- liftIO KillersTable.create
-  result       <- withPosition (go tTable killersTable) opts.depth
-  liftIO $ TTable.clear       tTable
-  liftIO $ KillersTable.clear killersTable
-  pure result
+  runTask $ printSearch st.bestMove searchOpts st.position
+
+
+runPerft :: Depth -> CommandM ()
+runPerft depth = do
+  st <- get
+  runTask $ printPerft depth st.position
+
+
+runDivide :: Depth -> CommandM ()
+runDivide depth = do
+  st <- get
+  runTask $ printDivide depth st.position
+
+
+printSearch :: (?options::EngineOptions)
+  => IORef (Maybe Move) -> SearchOptions -> Position -> IO ()
+printSearch bestMoveRef searchOpts pos =
+  bracket acquire release go
   where
-    printMove              = putStrLn . foldMap (("bestmove " ++) . tshow)
-    go tTable killersTable = (printMove <=< liftIO . timeIt)
-                             .: getBestMove
+    acquire = do
+      tTable       <- TTable.create
+      killersTable <- KillersTable.create
+      pure (tTable, killersTable)
+    release (tTable, killersTable) = do
+      liftIO $ TTable.clear       tTable
+      liftIO $ KillersTable.clear killersTable
+    go (tTable, killersTable) = do
+      traverse_ printBestMove
+        =<< getBestMove bestMoveRef searchOpts.depth pos
+      writeIORef bestMoveRef Nothing
       where
         ?tTable       = tTable
         ?killersTable = killersTable
 
 
-printPerft :: Depth -> CommandM ()
-printPerft = withPosition go
-  where
-    go = (=<<) putStrLn
-         . map tshow
-         . timeItPure
-         .: perft
+printPerft :: Depth -> Position -> IO ()
+printPerft = putStrLn . tshow .: perft
 
 
-printDivide :: Depth -> CommandM ()
-printDivide = withPosition go
-  where
-    go = void
-         . Map.traverseWithKey (\k v -> putStrLn (tshow k <> ": " <> tshow v))
-         .: divide
+printDivide :: Depth -> Position -> IO ()
+printDivide =
+  void
+  . Map.traverseWithKey (\k v -> putStrLn (tshow k <> ": " <> tshow v))
+  .: divide
 
 
 printStaticEval :: CommandM ()
@@ -80,11 +95,26 @@ printStaticEval = withPosition (const go) ()
          . ("\n" <>)
          . tshow
          . getScoreBreakdown
-  
-  
+
+
+stop :: CommandM ()
+stop = do
+  task <- getTask
+  traverse_ cancel task
+  traverse_ printBestMove =<< getLastBestMove
+  clearBestMove
+  clearTask
+
+
+quit :: CommandM ()
+quit = do
+  stop
+  liftIO exitSuccess
+
+
 handleNewGame :: CommandM ()
 handleNewGame = pure ()
-  
+
 
 handleStart :: CommandM ()
 handleStart = do
@@ -99,20 +129,22 @@ setPosition PositionSpec {..} =
   updatePosition
     $ foldM (flip makeUnknownMove) initialPosition moves
 
-  
+
 setOption :: OptionSpec -> CommandM ()
 setOption = \case
   HashSize size -> modifyOptions \x -> x { hashSize = size }
 
 
+printBestMove :: MonadIO m => Move -> m ()
+printBestMove = putStrLn . ("bestmove " ++) . tshow
+
+
 printUciReady :: CommandM ()
-printUciReady =
-  putStrLn "uciok"
+printUciReady = putStrLn "uciok"
 
 
 printReady :: CommandM ()
-printReady =
-  putStrLn "readyok"
+printReady = putStrLn "readyok"
 
 
 printEngineInfo :: CommandM ()
@@ -124,7 +156,7 @@ printEngineInfo = do
     go param value =
       putStrLn ("id" <> " " <> param <> " " <> value)
 
-  
+
 printEngineOptions :: CommandM ()
 printEngineOptions =
   go "Hash" (SpinOption hashSize 1 1_048_576)
@@ -136,7 +168,7 @@ printEngineOptions =
 
 move :: UnknownMove -> CommandM ()
 move mv = do
-  st <- get 
+  st <- get
   updatePosition $ makeUnknownMove mv st.position
 
 
@@ -174,20 +206,56 @@ withPosition f x = do
 
 modifyOptions :: (EngineOptions -> EngineOptions) -> CommandM ()
 modifyOptions f =
-  modify \x -> x { options = f x.options }
+  modify \st -> st { options = f st.options }
 
 
 modifyPosition :: (Position -> Position) -> CommandM ()
 modifyPosition f =
-  modify \x -> x { position = f x.position }
-  
-  
+  modify \st -> st { position = f st.position }
 
-timeItPure :: MonadIO m => a -> m a
-timeItPure x = timeIt do
-  !result <- pure x
-  pure result
+
+whenAvailable :: CommandM () -> CommandM ()
+whenAvailable action = do
+  task <- getTask
+  when (isNothing task) action
+
+
+runTask :: IO () -> CommandM ()
+runTask action = do
+  st <- get
+  let taskRef = st.task
+  task <- liftIO $ async (action *> writeIORef taskRef Nothing)
+  putTask task
+
+
+putTask :: Task -> CommandM ()
+putTask task = do
+  st <- get
+  writeIORef st.task $ Just task
+
+
+clearTask :: CommandM ()
+clearTask = do
+  st <- get
+  writeIORef st.task Nothing
+
+
+getTask :: CommandM (Maybe Task)
+getTask = do
+  st <- get
+  readIORef st.task
+
+
+getLastBestMove :: CommandM (Maybe Move)
+getLastBestMove = do
+  st <- get
+  readIORef st.bestMove
+
+
+clearBestMove :: CommandM ()
+clearBestMove = do
+  st <- get
+  writeIORef st.bestMove Nothing
 
 
 type CommandM = StateT EngineState IO
-

@@ -1,4 +1,4 @@
-module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverse, elem, notElem) where
+module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverseIndex, elem, notElem) where
 
 import           ClassyPrelude        hiding (Vector, elem, mask, notElem, (/),
                                        (>>), (^))
@@ -33,7 +33,6 @@ infixl 7 %
 (%) !x !y = rem x y
 
 
-{-# INLINE inRange  #-}
 inRange :: Int -> Int -> Int -> Bool
 inRange lo hi x = lo <= x && x <= hi
 
@@ -41,15 +40,15 @@ inRange lo hi x = lo <= x && x <= hi
 {-# INLINE maybeFilter  #-}
 maybeFilter :: (a -> Bool) -> Maybe a -> Maybe a
 maybeFilter !predicate ma = do
-  a <- ma
+  !a <- ma
   if predicate a
     then ma
     else Nothing
 
 
-{-# INLINE findTraverse  #-}
-findTraverse :: Monad m => (Int -> a -> m (Maybe b)) -> [a] -> m (Maybe b)
-findTraverse !f = go 0
+{-# INLINE findTraverseIndex  #-}
+findTraverseIndex :: Monad m => (Int -> a -> m (Maybe b)) -> [a] -> m (Maybe b)
+findTraverseIndex !f = go 0
   where
     go !i (x : xs) = do
       result <- f i x

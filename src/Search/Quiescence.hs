@@ -19,7 +19,7 @@ quiesceSearch !alpha !beta !ply pos
   | otherwise       = fromMaybe finalAlpha score
   where
     (score, finalAlpha) = runState scoreState newAlpha
-    scoreState = findTraverse (getMoveScore beta ply pos) captures
+    scoreState = findTraverseIndex (getMoveScore beta ply pos) captures
     captures   = getWinningCaptures pos
 
     newAlpha = max alpha standPat

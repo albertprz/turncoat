@@ -2,24 +2,27 @@ module Main where
 
 import           AppPrelude
 
-import           CommandLine.UciCommands (executeCommand)
-import           Control.Monad.State     (evalStateT)
-import           Models.Command          
-import           Parsers.Command         (parseCommand)
+import           Models.Command
+import           Parsers.Command     (parseCommand)
+import           Uci                 (executeCommand)
 
-import           Data.Char               (isSpace)
+import           Control.Monad.State
+import qualified Data.Char           as Char
 
 
 main :: IO ()
 main = do
   printHeader
-  evalStateT (forever repl) initialEngineState
+  st <- initialEngineState
+  evalStateT (forever repl) st
   where
-    repl = do input <- getLine
-              unless (all isSpace input)
-                     (eval input)
-    eval = either (const $ putStrLn parseErrorMsg) executeCommand
-           . parseCommand
+    repl = do
+      input <- getLine
+      unless (all Char.isSpace input)
+              (eval input)
+    eval =
+      either (const $ putStrLn parseErrorMsg) executeCommand
+      . parseCommand
 
 
 printHeader :: IO ()

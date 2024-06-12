@@ -2,6 +2,7 @@ module Models.Command where
 
 import           AppPrelude
 
+import           Models.Move     (Move)
 import           Models.Position
 import           Models.Score
 import           Utils.Board
@@ -33,6 +34,8 @@ data EngineInfo = EngineInfo
 data EngineState = EngineState
   { position :: Position
   , options  :: EngineOptions
+  , task     :: IORef (Maybe Task)
+  , bestMove :: IORef (Maybe Move)
   }
 
 newtype EngineOptions = EngineOptions
@@ -83,11 +86,16 @@ engineInfo = EngineInfo
   }
 
 
-initialEngineState :: EngineState
-initialEngineState = EngineState
-  { position = startPosition
-  , options  = defaultEngineOptions
-  }
+initialEngineState :: IO EngineState
+initialEngineState = do
+  taskRef     <- newIORef Nothing
+  bestMoveRef <- newIORef Nothing
+  pure EngineState
+    { position = startPosition
+    , options  = defaultEngineOptions
+    , task     = taskRef
+    , bestMove = bestMoveRef
+    }
 
 
 defaultEngineOptions :: EngineOptions
@@ -117,3 +125,5 @@ instance Show EngineOption where
   show = \case
     SpinOption {..} -> "type spin" <> " default " <> show deflt
                 <> " min " <> show lo <> " max " <> show hi
+
+type Task = Async ()

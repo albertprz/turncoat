@@ -26,6 +26,7 @@ parseCommand = runParser command
     <|> stringToken "position"   *> (SetPosition <$> positionSpec)
     <|> stringToken "setoption"  *> (SetOption   <$> optionSpec)
     <|> stringToken "move"       *> (MakeMove    <$> unknownMove)
+    <|> stringToken "ponderhit"  $> Ponderhit
     <|> stringToken "stop"       $> Stop
     <|> stringToken "quit"       $> Quit
     <|> stringToken "eval"       $> Evaluate
@@ -39,17 +40,17 @@ parseCommand = runParser command
   searchOption =
         setSearchMoves    <$> (stringToken "searchmoves" *>
                                 someSepBy space unknownMove)
-    <|> setInfinite       <$> (stringToken "infinite"  $> True)
+    <|> setInfinite       <$   stringToken "infinite"
     <|> setPonder         <$> (stringToken "ponder"    $> True)
     <|> setWhiteTime      <$> (stringToken "wtime"     *> unsignedInt)
     <|> setBlackTime      <$> (stringToken "btime"     *> unsignedInt)
     <|> setWhiteIncrement <$> (stringToken "winc"      *> unsignedInt)
     <|> setBlackIncrement <$> (stringToken "binc"      *> unsignedInt)
     <|> setMovesUntil     <$> (stringToken "movestogo" *> unsignedInt)
-    <|> setDepth          <$> (stringToken "depth"     *> depth)
+    <|> setTargetDepth    <$> (stringToken "depth"     *> depth)
     <|> setNodes          <$> (stringToken "nodes"     *> unsignedInt)
     <|> setFindMate       <$> (stringToken "mate"      *> unsignedInt)
-    <|> setMoveTime       <$> (stringToken "moveTime"  *> unsignedInt)
+    <|> setMoveTime       <$> (stringToken "movetime"  *> unsignedInt)
 
   positionSpec = PositionSpec
     <$> initialPositionSpec
@@ -67,19 +68,19 @@ parseCommand = runParser command
     <|> stringToken "fen"  *> positionFenParser
 
   unknownMove = UnknownMove <$> squareParser <*> squareParser
-  token = withTransform maybeBetweenSpacing
+  token       = withTransform maybeBetweenSpacing
   stringToken = token . string
-  depth = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
+  depth       = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
 
-  setSearchMoves x opts = opts { searchMoves = x }
-  setPonder x opts = opts { ponder = x }
-  setWhiteTime x opts = opts { whiteTime = x }
-  setWhiteIncrement x opts = opts { whiteIncrement = x }
-  setBlackTime x opts = opts { blackTime = x }
-  setBlackIncrement x opts = opts { blackIncrement = x }
-  setMovesUntil x opts = opts { movesUntilNextTime = x }
-  setDepth x opts = opts { depth = x }
-  setNodes x opts = opts { nodes = x }
-  setFindMate x opts = opts { findMate = x }
-  setMoveTime x opts = opts { moveTime = x }
-  setInfinite x opts = opts { infinite = x }
+  setSearchMoves x opts    = opts { searchMoves        = x }
+  setPonder x opts         = opts { ponder             = x }
+  setTargetDepth x opts    = opts { targetDepth        = x }
+  setInfinite opts         = opts { targetDepth        = maxBound }
+  setMoveTime x opts       = opts { moveTime           = Just x }
+  setWhiteTime x opts      = opts { whiteTime          = Just x }
+  setWhiteIncrement x opts = opts { whiteIncrement     = Just x }
+  setBlackTime x opts      = opts { blackTime          = Just x }
+  setBlackIncrement x opts = opts { blackIncrement     = Just x }
+  setMovesUntil x opts     = opts { movesUntilNextTime = Just x }
+  setNodes x opts          = opts { nodes              = Just x }
+  setFindMate x opts       = opts { findMate           = Just x }

@@ -30,7 +30,7 @@ import           MoveGen.PositionQueries
 -- Late killers / quiet moves
 
 getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable,
-                  ?options :: EngineOptions)
+                  ?opts :: EngineOptions)
   => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
   ttMove   <- toList <$> TTable.lookupBestMove (getZobristKey pos)

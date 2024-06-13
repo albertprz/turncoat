@@ -2,7 +2,6 @@ module Models.Command where
 
 import           AppPrelude
 
-import           Models.Move     (Move)
 import           Models.Position
 import           Models.Score
 import           Utils.Board
@@ -13,13 +12,14 @@ data Command
   | UciNewGame
   | IsReady
   | Search SearchOptions
-  | Perft Depth
-  | Divide Depth
   | SetPosition PositionSpec
   | SetOption OptionSpec
-  | MakeMove UnknownMove
+  | Ponderhit
   | Stop
   | Quit
+  | MakeMove UnknownMove
+  | Perft Depth
+  | Divide Depth
   | Evaluate
   | Display
   | Flip
@@ -35,7 +35,6 @@ data EngineState = EngineState
   { position :: Position
   , options  :: EngineOptions
   , task     :: IORef (Maybe Task)
-  , bestMove :: IORef (Maybe Move)
   }
 
 newtype EngineOptions = EngineOptions
@@ -53,16 +52,15 @@ newtype OptionSpec = HashSize Int
 data SearchOptions = SearchOptions
   { searchMoves        :: [UnknownMove]
   , ponder             :: Bool
-  , whiteTime          :: Int
-  , whiteIncrement     :: Int
-  , blackTime          :: Int
-  , blackIncrement     :: Int
-  , movesUntilNextTime :: Int
-  , depth              :: Depth
-  , nodes              :: Int
-  , findMate           :: Int
-  , moveTime           :: Int
-  , infinite           :: Bool
+  , targetDepth        :: Depth
+  , moveTime           :: Maybe Int
+  , whiteTime          :: Maybe Int
+  , whiteIncrement     :: Maybe Int
+  , blackTime          :: Maybe Int
+  , blackIncrement     :: Maybe Int
+  , movesUntilNextTime :: Maybe Int
+  , nodes              :: Maybe Int
+  , findMate           :: Maybe Int
   }
 
 
@@ -89,12 +87,10 @@ engineInfo = EngineInfo
 initialEngineState :: IO EngineState
 initialEngineState = do
   taskRef     <- newIORef Nothing
-  bestMoveRef <- newIORef Nothing
   pure EngineState
     { position = startPosition
     , options  = defaultEngineOptions
     , task     = taskRef
-    , bestMove = bestMoveRef
     }
 
 
@@ -107,17 +103,16 @@ defaultEngineOptions = EngineOptions
 defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions
   { searchMoves        = []
-  , infinite           = True
   , ponder             = False
-  , findMate           = 0
-  , whiteTime          = 0
-  , whiteIncrement     = 0
-  , blackTime          = 0
-  , blackIncrement     = 0
-  , movesUntilNextTime = 0
-  , depth              = 0
-  , nodes              = 0
-  , moveTime           = 0
+  , targetDepth        = 0
+  , findMate           = Nothing
+  , whiteTime          = Nothing
+  , whiteIncrement     = Nothing
+  , blackTime          = Nothing
+  , blackIncrement     = Nothing
+  , movesUntilNextTime = Nothing
+  , nodes              = Nothing
+  , moveTime           = Nothing
   }
 
 

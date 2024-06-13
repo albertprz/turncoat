@@ -34,8 +34,7 @@ encodeMove (Just Move {..}) = StorableMove
   (fromIntegral start
   .|. (fromIntegral end << 8)
   .|. (fromIntegral pieceN << 16)
-  .|. (fromIntegral promotionN << 24)
-  )
+  .|. (fromIntegral promotionN << 24))
   where
     Piece pieceN = piece
     Promotion promotionN = promotion

@@ -5,10 +5,10 @@ import           AppPrelude
 import           Models.Move
 import           Models.Position
 import           MoveGen.MakeMove
-import           MoveGen.PieceQuietMoves
 import           MoveGen.PieceCaptures
+import           MoveGen.PieceQuietMoves
 
-import qualified Data.Map           as Map
+import qualified Data.Map                as Map
 import           Models.Score
 
 
@@ -31,6 +31,7 @@ divide !depth !pos
   where
     getResults !mv = (mv, makeMove mv pos)
     moves = allMoves pos
+
 
 allMoves :: Position -> [Move]
 allMoves = allCaptures <> allQuietMoves

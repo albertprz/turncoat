@@ -1,7 +1,8 @@
-module Search.Search (getBestMove) where
+module Search.Search (search) where
 
 import           AppPrelude                hiding ((/))
 
+import           Models.Command
 import           Models.KillersTable       (KillersTable)
 import qualified Models.KillersTable       as KillersTable
 import           Models.Move
@@ -13,28 +14,29 @@ import           MoveGen.MakeMove
 import           MoveGen.MoveQueries
 import           MoveGen.PositionQueries
 import           Search.MoveOrdering
-import           Search.Perft              (allMoves)
+import           Search.Perft
 import           Search.Quiescence
+import           Search.TimeManagement
 
 import           Control.Monad.State
 import           GHC.Real                  ((/))
-import           Models.Command
 
 
 -- Features:
 -- - Iterative deepening
 
-getBestMove
+search
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?options :: EngineOptions)
-  => IORef (Maybe Move) -> Depth -> Position -> IO (Maybe Move)
-getBestMove bestMoveRef !depth pos =
-  lastEx <$> traverse getNodeBestMove [0 .. depth]
+     ?opts :: EngineOptions)
+  => SearchOptions -> IORef (Maybe Move) -> Position -> IO ()
+search searchOpts bestMoveRef pos =
+  maybeTimeout moveTime
+    $ traverse_ go [0 .. searchOpts.targetDepth]
   where
-  getNodeBestMove d = do
-    !bestMove <- snd <$> getNodeScore initialAlpha initialBeta d 0 pos
-    writeIORef bestMoveRef bestMove
-    pure bestMove
+    go depth = do
+      bestMove <- snd <$> getNodeScore initialAlpha initialBeta depth 0 pos
+      writeIORef bestMoveRef bestMove
+    moveTime = getMoveTime searchOpts pos.color
 
 
 -- Features:
@@ -43,7 +45,7 @@ getBestMove bestMoveRef !depth pos =
 
 negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?options :: EngineOptions)
+     ?opts :: EngineOptions)
   => Score -> Score -> Depth -> Ply -> Position -> IO Score
 negamax !alpha !beta !depth !ply pos
 
@@ -67,7 +69,7 @@ negamax !alpha !beta !depth !ply pos
 
 cacheNodeScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?options :: EngineOptions)
+     ?opts :: EngineOptions)
   => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO Score
 cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
   (!score, !bestMove) <- getNodeScore alpha beta depth ply pos
@@ -94,7 +96,7 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
 
 getNodeScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?options :: EngineOptions)
+     ?opts :: EngineOptions)
   => Score -> Score -> Depth -> Ply -> Position -> IO (Score, Maybe Move)
 getNodeScore !alpha !beta !depth !ply pos
 
@@ -123,7 +125,7 @@ getNodeScore !alpha !beta !depth !ply pos
 
 getMovesScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-    ?options :: EngineOptions)
+    ?opts :: EngineOptions)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
 getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
@@ -131,8 +133,8 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
   maybe reducedMovesSearch (pure . Just) mainSearchScore
 
   where
-    mainMovesSearch    = movesSearch False mainMoves
-    reducedMovesSearch = movesSearch True  reducedMoves
+    mainMovesSearch       = movesSearch False mainMoves
+    reducedMovesSearch    = movesSearch True  reducedMoves
     movesSearch isReduced =
       findTraverseIndex (getMoveScore beta depth ply isReduced hasTTMove pos)
 
@@ -143,7 +145,7 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
 
 getMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?options :: EngineOptions)
+     ?opts :: EngineOptions)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
@@ -153,7 +155,8 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
   | hasTTMove && mvIdx > 0 =
       nullWindowSearch depth
 
-  | otherwise = fullSearch
+  | otherwise =
+      fullSearch
 
   where
     nullWindowSearch !depth' = do
@@ -164,10 +167,10 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
        else pure Nothing
 
     fullSearch = do
-      !alpha <- gets fst
-      !score <- getNegamaxScore alpha beta depth
+      !alpha        <- gets fst
+      !score        <- getNegamaxScore alpha beta depth
       let !nodeType = getNodeType alpha beta score
-      !newScore <- advanceState beta score ply nodeType mv pos
+      !newScore     <- advanceState beta score ply nodeType mv pos
       pure newScore
 
     !lmrFactor = min @Double 1 (fromIntegral mvIdx / 40)
@@ -184,7 +187,7 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
 getNullMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?options :: EngineOptions)
+     ?opts :: EngineOptions)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
 

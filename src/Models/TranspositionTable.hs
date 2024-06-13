@@ -38,13 +38,13 @@ data StorableTEntry = StorableTEntry {
 instance GStorable StorableTEntry
 
 
-tTableSize :: (?options :: EngineOptions) => Word64
+tTableSize :: (?opts :: EngineOptions) => Word64
 tTableSize = bit bits
   where
-    bits = msb (fromIntegral ?options.hashSize) + 16
+    bits = msb (fromIntegral ?opts.hashSize) + 16
 
 
-hashZKey :: (?options :: EngineOptions) => ZKey -> Int
+hashZKey :: (?opts :: EngineOptions) => ZKey -> Int
 hashZKey (ZKey zKey) =
   fromIntegral (zKey % tTableSize)
 
@@ -75,14 +75,14 @@ decodeTEntry StorableTEntry {..}
 
 
 lookupEntry
-  :: (?tTable :: TTable, ?options :: EngineOptions) => ZKey -> IO (Maybe TEntry)
+  :: (?tTable :: TTable, ?opts :: EngineOptions) => ZKey -> IO (Maybe TEntry)
 lookupEntry !zKey = do
   entry <- decodeTEntry <$> Vector.unsafeRead ?tTable (hashZKey zKey)
   pure (maybeFilter ((== zKey) . (.zobristKey)) entry)
 
 
 lookupScore
-  :: (?tTable :: TTable, ?options :: EngineOptions)
+  :: (?tTable :: TTable, ?opts :: EngineOptions)
   => Score -> Score -> Depth -> ZKey -> IO (Maybe Score)
 lookupScore !alpha !beta !depth !zKey = do
   entry <- lookupEntry zKey
@@ -97,14 +97,14 @@ lookupScore !alpha !beta !depth !zKey = do
 
 
 lookupBestMove
-  :: (?tTable :: TTable, ?options :: EngineOptions) => ZKey -> IO (Maybe Move)
+  :: (?tTable :: TTable, ?opts :: EngineOptions) => ZKey -> IO (Maybe Move)
 lookupBestMove !zKey = do
   entry <- lookupEntry zKey
   pure ((.bestMove) =<< entry)
 
 
 insert
-  :: (?tTable :: TTable, ?options :: EngineOptions) => ZKey -> TEntry -> IO ()
+  :: (?tTable :: TTable, ?opts :: EngineOptions) => ZKey -> TEntry -> IO ()
 insert !zKey !entry =
   Vector.unsafeWrite ?tTable (hashZKey zKey) (encodeTEntry entry)
 
@@ -116,7 +116,7 @@ emptyTEntry = StorableTEntry {
 }
 
 
-create :: (?options :: EngineOptions) => IO TTable
+create :: (?opts :: EngineOptions) => IO TTable
 create = Vector.replicate (fromIntegral tTableSize) emptyTEntry
 
 

@@ -78,15 +78,15 @@ includePiece (square, (piece, pieceColor)) pos@Position {..} =
   if pieceColor == color then
     pos' { player = player .| board }
   else
-    pos' { enemy = enemy .| board }
+    pos' { enemy  = enemy  .| board }
   where
   pos' = case piece of
-    Pawn   -> pos { pawns = pawns .| board }
+    Pawn   -> pos { pawns   = pawns   .| board }
     Knight -> pos { knights = knights .| board }
     Bishop -> pos { bishops = bishops .| board }
-    Rook   -> pos { rooks = rooks .| board }
-    Queen  -> pos { queens = queens .| board }
-    King   -> pos { kings = kings .| board }
+    Rook   -> pos { rooks   = rooks   .| board }
+    Queen  -> pos { queens  = queens  .| board }
+    King   -> pos { kings   = kings   .| board }
   board = toBoard square
 
 

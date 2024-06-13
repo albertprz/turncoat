@@ -29,6 +29,7 @@ dependencies:
 - containers
 - derive-storable
 - random
+- unbounded-delays
 - QuickCheck
 - newtype
 - errors

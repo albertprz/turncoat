@@ -41,13 +41,13 @@ parseCommand = runParser command
         setSearchMoves    <$> (stringToken "searchmoves" *>
                                 someSepBy space unknownMove)
     <|> setInfinite       <$   stringToken "infinite"
-    <|> setPonder         <$> (stringToken "ponder"    $> True)
+    <|> setPonder         <$   stringToken "ponder"
+    <|> setTargetDepth    <$> (stringToken "depth"     *> depth)
     <|> setWhiteTime      <$> (stringToken "wtime"     *> unsignedInt)
     <|> setBlackTime      <$> (stringToken "btime"     *> unsignedInt)
     <|> setWhiteIncrement <$> (stringToken "winc"      *> unsignedInt)
     <|> setBlackIncrement <$> (stringToken "binc"      *> unsignedInt)
     <|> setMovesUntil     <$> (stringToken "movestogo" *> unsignedInt)
-    <|> setTargetDepth    <$> (stringToken "depth"     *> depth)
     <|> setNodes          <$> (stringToken "nodes"     *> unsignedInt)
     <|> setFindMate       <$> (stringToken "mate"      *> unsignedInt)
     <|> setMoveTime       <$> (stringToken "movetime"  *> unsignedInt)
@@ -73,9 +73,9 @@ parseCommand = runParser command
   depth       = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
 
   setSearchMoves x opts    = opts { searchMoves        = x }
-  setPonder x opts         = opts { ponder             = x }
+  setInfinite opts         = opts { infinite           = True }
+  setPonder opts           = opts { ponder             = True }
   setTargetDepth x opts    = opts { targetDepth        = x }
-  setInfinite opts         = opts { targetDepth        = maxBound }
   setMoveTime x opts       = opts { moveTime           = Just x }
   setWhiteTime x opts      = opts { whiteTime          = Just x }
   setWhiteIncrement x opts = opts { whiteIncrement     = Just x }

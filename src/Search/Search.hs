@@ -29,13 +29,14 @@ search
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions)
   => SearchOptions -> IORef (Maybe Move) -> Position -> IO ()
-search searchOpts bestMoveRef pos =
+search searchOpts bestMoveRef pos = do
   maybeTimeout moveTime
-    $ traverse_ go [0 .. searchOpts.targetDepth]
+    $ void $ findLastTraverse go [1 .. searchOpts.targetDepth]
+  when searchOpts.infinite (forever $ pure ())
   where
     go depth = do
       bestMove <- snd <$> getNodeScore initialAlpha initialBeta depth 0 pos
-      writeIORef bestMoveRef bestMove
+      traverse (writeIORef bestMoveRef . Just) bestMove
     moveTime = getMoveTime searchOpts pos.color
 
 

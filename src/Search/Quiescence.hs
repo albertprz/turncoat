@@ -14,7 +14,7 @@ import           MoveGen.PieceCaptures (allCaptures)
 
 
 quiesceSearch :: Score -> Score -> Ply -> Position -> Score
-quiesceSearch !alpha !beta !ply pos
+quiesceSearch !alpha !beta !ply !pos
   | standPat >= beta = beta
   | otherwise       = fromMaybe finalAlpha score
   where
@@ -22,11 +22,11 @@ quiesceSearch !alpha !beta !ply pos
     scoreState = findTraverseIndex (getMoveScore beta ply pos) captures
     captures   = getWinningCaptures pos
 
-    newAlpha = max alpha standPat
-    standPat = evaluatePosition pos
+    !newAlpha = max alpha standPat
+    !standPat = evaluatePosition pos
 
 getMoveScore :: Score -> Ply -> Position -> Int -> Move -> State Score (Maybe Score)
-getMoveScore !beta !ply pos _ mv =
+getMoveScore !beta !ply !pos _ mv =
   do !alpha <- get
      let !score = - quiesceSearch (-beta) (-alpha) (ply + 1)
                                   (makeMove mv pos)

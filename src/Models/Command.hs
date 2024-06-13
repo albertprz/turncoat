@@ -51,6 +51,7 @@ newtype OptionSpec = HashSize Int
 
 data SearchOptions = SearchOptions
   { searchMoves        :: [UnknownMove]
+  , infinite           :: Bool
   , ponder             :: Bool
   , targetDepth        :: Depth
   , moveTime           :: Maybe Int
@@ -103,8 +104,9 @@ defaultEngineOptions = EngineOptions
 defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions
   { searchMoves        = []
+  , infinite           = False
   , ponder             = False
-  , targetDepth        = 0
+  , targetDepth        = maxBound
   , findMate           = Nothing
   , whiteTime          = Nothing
   , whiteIncrement     = Nothing

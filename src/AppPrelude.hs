@@ -1,4 +1,4 @@
-module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverseIndex, elem, notElem) where
+module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverseIndex, findLastTraverse, elem, notElem) where
 
 import           ClassyPrelude        hiding (Vector, elem, mask, notElem, (/),
                                        (>>), (^))
@@ -50,8 +50,19 @@ maybeFilter !predicate ma = do
 findTraverseIndex :: Monad m => (Int -> a -> m (Maybe b)) -> [a] -> m (Maybe b)
 findTraverseIndex !f = go 0
   where
-    go !i (x : xs) = do
+    go !i (!x : xs) = do
       result <- f i x
       maybe (go (i + 1) xs) (pure . Just) result
     go _ [] =
       pure Nothing
+
+
+{-# INLINE findLastTraverse  #-}
+findLastTraverse :: Monad m => (a -> m (Maybe b)) -> [a] -> m (Maybe b)
+findLastTraverse !f = go Nothing
+  where
+    go !lastResult (!x : xs) = do
+      result <- f x
+      maybe (pure lastResult) ((`go` xs) . Just) result
+    go !lastResult [] =
+      pure lastResult

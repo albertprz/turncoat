@@ -1,4 +1,4 @@
-module Models.TranspositionTable where
+module Utils.TranspositionTable where
 
 import           AppPrelude
 

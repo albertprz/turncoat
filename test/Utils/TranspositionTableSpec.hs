@@ -1,10 +1,10 @@
-module Models.TranspositionTableSpec where
+module Utils.TranspositionTableSpec where
 
 import           AppPrelude
 
 import           Test.QuickCheck.Property
 
-import           Models.TranspositionTable
+import           Utils.TranspositionTable
 import           Test.Hspec                (Spec, it, shouldBe)
 import           Test.QuickCheck           (Args (maxSuccess), quickCheckWith,
                                             stdArgs)

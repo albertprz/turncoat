@@ -4,18 +4,18 @@ import           AppPrelude
 
 import           Evaluation.Evaluation
 import           Models.Command
-import qualified Models.KillersTable       as KillersTable
 import           Models.Move
 import           Models.Position
 import           Models.Score
-import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           Search.Perft
 import           Search.Search
+import qualified Utils.KillersTable       as KillersTable
+import qualified Utils.TranspositionTable as TTable
 
 import           Control.Monad.State
 import           Data.Composition
-import qualified Data.Map                  as Map
+import qualified Data.Map                 as Map
 import           System.Exit
 
 

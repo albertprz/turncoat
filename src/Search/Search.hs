@@ -1,16 +1,12 @@
 module Search.Search (search, emptySearchResult, SearchResult(..)) where
 
-import           AppPrelude                hiding ((/))
-import           ClassyPrelude             ((/))
+import           AppPrelude               hiding ((/))
+import           ClassyPrelude            ((/))
 
 import           Models.Command
-import           Models.KillersTable       (KillersTable)
-import qualified Models.KillersTable       as KillersTable
 import           Models.Move
 import           Models.Position
 import           Models.Score
-import           Models.TranspositionTable (TEntry (..), TTable)
-import qualified Models.TranspositionTable as TTable
 import           MoveGen.MakeMove
 import           MoveGen.MoveQueries
 import           MoveGen.PositionQueries
@@ -18,6 +14,10 @@ import           Search.MoveOrdering
 import           Search.Perft
 import           Search.Quiescence
 import           Search.TimeManagement
+import qualified Utils.KillersTable       as KillersTable
+import           Utils.KillersTable       (KillersTable)
+import qualified Utils.TranspositionTable as TTable
+import           Utils.TranspositionTable (TEntry (..), TTable)
 
 import           Control.Concurrent
 import           Control.Monad.State

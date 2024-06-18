@@ -1,4 +1,4 @@
-module Models.KillersTable where
+module Utils.KillersTable where
 
 import           AppPrelude
 

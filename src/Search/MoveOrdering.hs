@@ -3,19 +3,19 @@ module Search.MoveOrdering (getSortedMoves ) where
 import           AppPrelude
 
 import           Evaluation.Evaluation
-import           Models.Command            (EngineOptions)
-import           Models.KillersTable       (KillersTable)
-import qualified Models.KillersTable       as KillersTable
+import           Models.Command           (EngineOptions)
 import           Models.Move
 import           Models.Position
 import           Models.Score
-import           Models.TranspositionTable (TTable)
-import qualified Models.TranspositionTable as TTable
-import           MoveGen.MakeMove          (makeMove)
+import           MoveGen.MakeMove         (makeMove)
 import           MoveGen.MoveQueries
-import           MoveGen.PieceCaptures     (allCaptures)
-import           MoveGen.PieceQuietMoves   (allQuietMoves)
+import           MoveGen.PieceCaptures    (allCaptures)
+import           MoveGen.PieceQuietMoves  (allQuietMoves)
 import           MoveGen.PositionQueries
+import qualified Utils.KillersTable       as KillersTable
+import           Utils.KillersTable       (KillersTable)
+import qualified Utils.TranspositionTable as TTable
+import           Utils.TranspositionTable (TTable)
 
 
 

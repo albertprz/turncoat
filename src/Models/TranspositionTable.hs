@@ -2,18 +2,18 @@ module Models.TranspositionTable where
 
 import           AppPrelude
 
-import           Foreign.Storable.Generic
-
-import           Data.Vector.Storable.Mutable (IOVector)
-import qualified Data.Vector.Storable.Mutable as Vector
-import           GHC.Bits
-import           GHC.Word                     (Word16)
 import           Models.Command
 import           Models.Move
 import           Models.Position              (ZKey (..))
 import           Models.Score
-import           Test.QuickCheck              (Arbitrary (..))
 import           Utils.Board
+
+import           Data.Vector.Storable.Mutable (IOVector)
+import qualified Data.Vector.Storable.Mutable as Vector
+import           Data.Word
+import           Foreign.Storable.Generic
+import           Test.QuickCheck
+
 
 type TTable = IOVector StorableTEntry
 
@@ -39,7 +39,7 @@ instance GStorable StorableTEntry
 
 
 tTableSize :: (?opts :: EngineOptions) => Word64
-tTableSize = bit bits
+tTableSize = toBoard bits
   where
     bits = msb (fromIntegral ?opts.hashSize) + 16
 
@@ -53,9 +53,9 @@ encodeTEntry :: TEntry -> StorableTEntry
 encodeTEntry TEntry {..} = StorableTEntry {
   zobristKey = zobristKey,
   info = fromIntegral bestMoveN
-    .|. fromIntegral (fromIntegral score :: Word16) << 32
-    .|. fromIntegral depth << 48
-    .|. fromIntegral nodeTypeN << 56
+    .| fromIntegral (fromIntegral score :: Word16) << 32
+    .| fromIntegral depth << 48
+    .| fromIntegral nodeTypeN << 56
 }
   where
     StorableMove bestMoveN = encodeMove bestMove
@@ -70,7 +70,7 @@ decodeTEntry StorableTEntry {..}
       bestMove = decodeMove $ fromIntegral info,
       score = fromIntegral (info >> 32),
       depth = fromIntegral (info >> 48),
-      nodeType = fromIntegral ((info >> 56) .&. 3)
+      nodeType = fromIntegral ((info >> 56) & 3)
     }
 
 
@@ -83,10 +83,12 @@ lookupEntry !zKey = do
 
 lookupScore
   :: (?tTable :: TTable, ?opts :: EngineOptions)
-  => Score -> Score -> Depth -> ZKey -> IO (Maybe Score)
+  => Score -> Score -> Depth -> ZKey -> IO (Maybe (Score, Maybe Move))
 lookupScore !alpha !beta !depth !zKey = do
-  entry <- lookupEntry zKey
-  pure (getScore =<< maybeFilter ((>= depth) . (.depth)) entry)
+  entry <- maybeFilter ((>= depth) . (.depth)) <$> lookupEntry zKey
+  let !score = getScore =<< entry
+      !bestMove = (.bestMove) =<< entry
+  pure ((, bestMove) <$> score)
   where
     getScore TEntry {score, nodeType} =
       case nodeType of
@@ -112,7 +114,7 @@ insert !zKey !entry =
 emptyTEntry :: StorableTEntry
 emptyTEntry = StorableTEntry {
   zobristKey = 0,
-  info = bit 63
+  info = toBoard 63
 }
 
 

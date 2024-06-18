@@ -6,6 +6,8 @@ import           Models.Position
 import           Models.Score
 import           Utils.Board
 
+import           Data.Word
+
 
 data Command
   = Uci
@@ -37,22 +39,26 @@ data EngineState = EngineState
   , task     :: IORef (Maybe Task)
   }
 
-newtype EngineOptions = EngineOptions
-  { hashSize :: Int
+data EngineOptions = EngineOptions
+  { hashSize :: Word16
+  , ponder   :: Bool
   }
 
 data EngineOption = SpinOption
-  { deflt :: Int
-  , lo    :: Int
-  , hi    :: Int
+  { deflt :: Word16
+  , lo    :: Word16
+  , hi    :: Word16
   }
+  | CheckOption Bool
 
-newtype OptionSpec = HashSize Int
+
+data OptionSpec
+  = HashSize Int
+  | Ponder Bool
 
 data SearchOptions = SearchOptions
   { searchMoves        :: [UnknownMove]
   , infinite           :: Bool
-  , ponder             :: Bool
   , targetDepth        :: Depth
   , moveTime           :: Maybe Int
   , whiteTime          :: Maybe Int
@@ -87,7 +93,7 @@ engineInfo = EngineInfo
 
 initialEngineState :: IO EngineState
 initialEngineState = do
-  taskRef     <- newIORef Nothing
+  taskRef <- newIORef Nothing
   pure EngineState
     { position = startPosition
     , options  = defaultEngineOptions
@@ -98,6 +104,7 @@ initialEngineState = do
 defaultEngineOptions :: EngineOptions
 defaultEngineOptions = EngineOptions
   { hashSize = 1024
+  , ponder = False
   }
 
 
@@ -105,7 +112,6 @@ defaultSearchOptions :: SearchOptions
 defaultSearchOptions = SearchOptions
   { searchMoves        = []
   , infinite           = False
-  , ponder             = False
   , targetDepth        = maxBound
   , findMate           = Nothing
   , whiteTime          = Nothing
@@ -120,7 +126,8 @@ defaultSearchOptions = SearchOptions
 
 instance Show EngineOption where
   show = \case
-    SpinOption {..} -> "type spin" <> " default " <> show deflt
-                <> " min " <> show lo <> " max " <> show hi
+    SpinOption {..}    -> "type spin" <> " default " <> show deflt
+                        <> " min " <> show lo <> " max " <> show hi
+    CheckOption deflt -> "type check" <> " default " <> toLower (show deflt)
 
 type Task = Async ()

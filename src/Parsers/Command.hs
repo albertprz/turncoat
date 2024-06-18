@@ -57,9 +57,10 @@ parseCommand = runParser command
     <*> (stringToken "moves" *> (token unknownMove |+) <|> pure [])
 
   optionSpec = stringToken "name" *>
-    ((stringToken "Hash" $> HashSize) <*>
-     (stringToken "value" *> unsignedInt))
-
+    ((stringToken "Hash" $> HashSize)
+     <*> (stringToken "value" *> unsignedInt)
+     <|> (stringToken "Ponder" $> Ponder)
+     <*> (stringToken "value" *> boolean))
   searchOptions =
     ($ defaultSearchOptions) . ala Endo foldMap <$> (searchOption |*)
 
@@ -71,10 +72,12 @@ parseCommand = runParser command
   token       = withTransform maybeBetweenSpacing
   stringToken = token . string
   depth       = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
+  boolean     = stringToken "true"  $> True
+            <|> stringToken "false" $> False
 
   setSearchMoves x opts    = opts { searchMoves        = x }
   setInfinite opts         = opts { infinite           = True }
-  setPonder opts           = opts { ponder             = True }
+  setPonder opts           = opts { infinite           = True }
   setTargetDepth x opts    = opts { targetDepth        = x }
   setMoveTime x opts       = opts { moveTime           = Just x }
   setWhiteTime x opts      = opts { whiteTime          = Just x }

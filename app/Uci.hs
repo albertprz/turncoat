@@ -62,19 +62,19 @@ printSearch searchOpts pos =
   bracket acquire release go
   where
     acquire = do
-      tTable       <- TTable.create
-      killersTable <- KillersTable.create
-      bestMoveRef  <- newIORef Nothing
-      pure (tTable, killersTable, bestMoveRef)
+      tTable          <- TTable.create
+      killersTable    <- KillersTable.create
+      searchResultRef <- newIORef emptySearchResult
+      pure (tTable, killersTable, searchResultRef)
 
-    release (tTable, killersTable, bestMoveRef) = do
+    release (tTable, killersTable, searchResultRef) = do
       liftIO $ TTable.clear tTable
       liftIO $ KillersTable.clear killersTable
-      bestMove <- readIORef bestMoveRef
-      traverse_ printBestMove bestMove
+      searchResult <- readIORef searchResultRef
+      printBestMove searchResult
 
-    go (tTable, killersTable, bestMoveRef) =
-      search searchOpts bestMoveRef pos
+    go (tTable, killersTable, searchResultRef) =
+      search searchOpts searchResultRef pos
       where
         ?tTable       = tTable
         ?killersTable = killersTable
@@ -139,11 +139,19 @@ setPosition PositionSpec {..} =
 
 setOption :: OptionSpec -> CommandM ()
 setOption = \case
-  HashSize size -> modifyOptions \x -> x { hashSize = size }
+  HashSize size -> modifyOptions \x -> x { hashSize = fromIntegral size }
+  Ponder ponder -> modifyOptions \x -> x { ponder = ponder }
 
 
-printBestMove :: MonadIO m => Move -> m ()
-printBestMove = putStrLn . ("bestmove " ++) . tshow
+printBestMove :: MonadIO m => SearchResult -> m ()
+printBestMove SearchResult {..}
+  | Just mv  <- bestMove
+  , Just mv2 <- ponderMove
+    = putStrLn ("bestmove " <> tshow mv <> " ponder " <> tshow mv2)
+  | Just mv  <- bestMove
+    = putStrLn ("bestmove " <> tshow mv)
+  | otherwise
+    = putStrLn mempty
 
 
 printUciReady :: CommandM ()
@@ -165,8 +173,9 @@ printEngineInfo = do
 
 
 printEngineOptions :: CommandM ()
-printEngineOptions =
-  go "Hash" (SpinOption hashSize 1 1_048_576)
+printEngineOptions = do
+  go "Hash"   (SpinOption hashSize 1 maxBound)
+  go "Ponder" (CheckOption ponder)
   where
     EngineOptions {..} = defaultEngineOptions
     go param option =
@@ -199,10 +208,8 @@ updatePosition = \case
 
 makeUnknownMove :: UnknownMove -> Position -> Maybe Position
 makeUnknownMove UnknownMove {..} pos =
-  (`makeMove` pos) <$> mv
-  where
-  mv = find (\x -> x.start == start && x.end == end)
-            (allMoves pos)
+  (`makeMove` pos)
+  <$> find (\x -> x.start == start && x.end == end) (allMoves pos)
 
 
 whenAvailable :: CommandM () -> CommandM ()
@@ -239,6 +246,5 @@ modifyOptions f =
 modifyPosition :: (Position -> Position) -> CommandM ()
 modifyPosition f =
   modify' \st -> st { position = f st.position }
-
 
 type CommandM = StateT EngineState IO

@@ -1,15 +1,18 @@
-module Search.TimeManagement (getMoveTime, maybeTimeout)  where
+module Search.TimeManagement (getMoveTime, maybeTimeout, isTimeOver)  where
 
 import           AppPrelude                 hiding (timeout)
 import           Control.Concurrent.Timeout (timeout)
 import           Models.Command
 import           Models.Piece
 
+import           Data.Time.Clock.System
+
 
 getMoveTime :: SearchOptions -> Color -> Maybe MicroSeconds
 getMoveTime SearchOptions {..} color =
-  map (fromIntegral . (* 1000))
-      (moveTime <|> timeToMove)
+  maybeFilter (const $ not infinite)
+  $ map (fromIntegral . (* 1000))
+        (moveTime <|> timeToMove)
   where
     timeToMove
       | Just t <- time
@@ -28,8 +31,27 @@ getMoveTime SearchOptions {..} color =
 
 
 maybeTimeout :: Maybe MicroSeconds -> IO () -> IO ()
-maybeTimeout (Just duration) action = timeout duration action $> ()
-maybeTimeout Nothing action         = action
+maybeTimeout (Just duration) action =
+  timeout (fromIntegral duration) action $> ()
+maybeTimeout Nothing action         =
+  action
 
 
-type MicroSeconds = Integer
+isTimeOver :: SystemTime -> SystemTime -> Maybe MicroSeconds -> Bool
+isTimeOver endTime startTime (Just moveTime) =
+  endTime |-| startTime > moveTime / 3
+isTimeOver _ _ Nothing =
+  False
+
+
+infixl 9 |-|
+(|-|) :: SystemTime -> SystemTime -> MicroSeconds
+(|-|) endTime startTime =
+  systemTimeToMicros endTime - systemTimeToMicros startTime
+  where
+  systemTimeToMicros MkSystemTime {..} =
+    fromIntegral systemSeconds * 1_000_000
+    + fromIntegral systemNanoseconds / 1000
+
+
+type MicroSeconds = Word64

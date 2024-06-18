@@ -2,12 +2,13 @@ module Models.KillersTable where
 
 import           AppPrelude
 
-import           Data.Vector.Storable.Mutable (IOVector)
-import qualified Data.Vector.Storable.Mutable as Vector
 import           Models.Move
 import           Models.Position
 import           Models.Score
-import           MoveGen.MoveQueries          (isQuietMove)
+import           MoveGen.MoveQueries
+
+import           Data.Vector.Storable.Mutable (IOVector)
+import qualified Data.Vector.Storable.Mutable as Vector
 
 
 type KillersTable = IOVector StorableMove

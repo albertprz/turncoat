@@ -32,7 +32,7 @@ executeCommand = \case
   Quit             -> quit
   SetPosition pos  -> setPosition pos
   SetOption option -> setOption   option
-  MakeMove mv      -> move        mv
+  MakeMoves mvs    -> makeMoves   mvs
   Evaluate         -> printStaticEval
   Display          -> displayBoard
   Flip             -> flipPosition
@@ -182,10 +182,10 @@ printEngineOptions = do
       putStrLn ("option name " <> param <> " " <> tshow option)
 
 
-move :: UnknownMove -> CommandM ()
-move mv = do
+makeMoves :: [UnknownMove] -> CommandM ()
+makeMoves mvs = do
   st <- get
-  updatePosition $ makeUnknownMove mv st.position
+  setPosition $ PositionSpec st.position mvs
 
 
 flipPosition :: CommandM ()

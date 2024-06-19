@@ -13,7 +13,6 @@ import           MoveGen.PositionQueries
 import           Utils.Board
 
 
-
 isCheckOrWinningCapture :: Move -> Position -> Bool
 isCheckOrWinningCapture mv pos =
   isCheckMove mv pos

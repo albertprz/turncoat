@@ -22,6 +22,8 @@ import           Utils.TranspositionTable (TEntry (..), TTable)
 import           Control.Concurrent
 import           Control.Monad.State
 import           Data.Time.Clock.System
+import           Evaluation.Evaluation    (evaluatePosition)
+import           Evaluation.Parameters    (pawnScore)
 
 
 -- Features:
@@ -33,15 +35,20 @@ search
   => SearchOptions -> IORef SearchResult -> Position -> IO ()
 search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
   startTime <- getSystemTime
-  maybeTimeout moveTime $ traverseUntil_ (go startTime) [1 .. targetDepth]
+  nodesRef <- newIORef 0
+  let ?nodes = nodesRef
+  maybeTimeout moveTime
+    $ traverseUntil_ (go startTime nodesRef) [1 .. targetDepth]
   when infinite $ forever $ threadDelay maxBound
   where
-    go startTime depth = do
-      result <- snd <$> getNodeScore initialAlpha initialBeta depth 0 pos
+    moveTime = getMoveTime searchOpts pos.color
+    go startTime nodesRef depth = do
+      (score, result) <- getNodeScore initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime
+      nodes <- readIORef nodesRef
+      printSearchInfo depth score nodes (endTime |-| startTime) result
       unless (null result.bestMove) $ writeIORef resultRef result
       pure (null result.bestMove || isTimeOver endTime startTime moveTime)
-    moveTime = getMoveTime searchOpts pos.color
 
 
 -- Features:
@@ -50,7 +57,7 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
 
 negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64)
   => Score -> Score -> Depth -> Ply -> Position -> IO (Score, Maybe Move)
 negamax !alpha !beta !depth !ply pos
 
@@ -75,9 +82,10 @@ negamax !alpha !beta !depth !ply pos
 
 cacheNodeScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64)
   => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO (Score, Maybe Move)
 cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
+  modifyIORef' ?nodes (+ 1)
   (!score, SearchResult{bestMove}) <- getNodeScore alpha beta depth ply pos
   let
     !nodeType = getNodeType alpha beta score
@@ -86,10 +94,10 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
       Cut -> beta
       All -> alpha
     !newTEntry = TEntry {
-      depth = depth,
-      bestMove = bestMove,
-      score = ttScore,
-      nodeType = nodeType,
+      depth      = depth,
+      bestMove   = bestMove,
+      score      = ttScore,
+      nodeType   = nodeType,
       zobristKey = zKey
     }
   TTable.insert zKey newTEntry
@@ -99,14 +107,18 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
 -- Features:
 -- - Quiescence search
 -- - Null move prunning (R = 2)
+-- - Futility prunning
 
 getNodeScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64)
   => Score -> Score -> Depth -> Ply -> Position -> IO (Score, SearchResult)
 getNodeScore !alpha !beta !depth !ply pos
 
-  | depth == 0 = pure (quiesceSearch alpha beta 0 pos, emptySearchResult)
+  | depth == 0
+  || depth == 1 && not (isKingInCheck pos)
+              && evaluatePosition pos + futilityMargin <= alpha
+  = (, emptySearchResult) <$> quiesceSearch alpha beta 0 pos
 
   | otherwise = do
     nullMoveScore <- getNullMoveScore beta depth ply pos
@@ -115,23 +127,24 @@ getNodeScore !alpha !beta !depth !ply pos
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
+    futilityMargin = 3 * pawnScore
     traverseMoves (!moves, !hasTTMove)
       | null $ uncurry (<>) moves =
           if isKingInCheck pos
              then pure (minBound, emptySearchResult)
              else pure (       0, emptySearchResult)
-      | otherwise =
-        do
-          let !movesSearch = getMovesScore beta depth ply moves hasTTMove pos
+      | otherwise = do
+          let movesSearch = getMovesScore beta depth ply moves hasTTMove pos
           (!score, (!newAlpha, !searchResult)) <-
             runStateT movesSearch (alpha, emptySearchResult)
           let !newScore = fromMaybe newAlpha score
           pure (newScore, searchResult)
 
 
+
 getMovesScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-    ?opts :: EngineOptions)
+    ?opts :: EngineOptions, ?nodes :: IORef Word64)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
 getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
@@ -151,7 +164,7 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
 
 getMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move
   -> SearchM (Maybe Score)
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
@@ -194,7 +207,7 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
 getNullMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
 
@@ -231,6 +244,23 @@ initialAlpha = minBound + 1
 
 initialBeta :: Score
 initialBeta = maxBound - 1
+
+
+printSearchInfo
+  :: Depth -> Score -> Word64 -> MicroSeconds -> SearchResult -> IO ()
+printSearchInfo depth score nodes timePassed SearchResult{..} =
+  putStrLn (
+         "info depth "    <> tshow depth
+      <> " score cp "     <> tshow score
+      <> " nodes "        <> tshow nodes
+      <> " nps "          <> tshow nps
+      <> " time "         <> tshow timeMillis
+      <> " pv "           <> unwords (tshow <$> pv))
+  where
+    nps        = nodes * 1_000_000 `div` timePassed
+    timeMillis = timePassed `div` 1_000
+    pv         = catMaybes [bestMove, ponderMove]
+
 
 emptySearchResult :: SearchResult
 emptySearchResult = SearchResult Nothing Nothing

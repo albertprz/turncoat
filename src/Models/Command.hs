@@ -19,7 +19,7 @@ data Command
   | Ponderhit
   | Stop
   | Quit
-  | MakeMove UnknownMove
+  | MakeMoves [UnknownMove]
   | Perft Depth
   | Divide Depth
   | Evaluate

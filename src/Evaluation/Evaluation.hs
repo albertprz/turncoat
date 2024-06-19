@@ -34,18 +34,6 @@ evaluatePosition pos =
     ?phase = pos.phase
 
 
-evaluateCaptureExchange :: Move -> Position -> Score
-evaluateCaptureExchange initialMv initialPos =
-  evaluateExchange initialMv.end (makeMove initialMv initialPos)
-    - initialPos.materialScore
-  where
-    evaluateExchange !square pos =
-      case headMay $ staticExchangeCaptures square pos of
-        Just mv -> - (max pos.materialScore
-                        $! evaluateExchange square (makeMove mv pos))
-        Nothing -> - pos.materialScore
-
-
 getScoreBreakdown :: Position -> ScoreBreakdown
 getScoreBreakdown pos@Position{..} =
   let
@@ -209,6 +197,18 @@ getScoresBatch Position {..} = ScoresBatch {..}
     !unpinned      = player .\ pinnedPieces
     !allPieces     = player .| enemy
     !enemyKingArea = kingAttacks (lsb (enemy&kings))
+
+
+evaluateCaptureExchange :: Move -> Position -> Score
+evaluateCaptureExchange initialMv initialPos =
+  evaluateExchange initialMv.end (makeMove initialMv initialPos)
+    - initialPos.materialScore
+  where
+    evaluateExchange !square pos =
+      case headMay $ staticExchangeCaptures square pos of
+        Just mv -> - (max pos.materialScore
+                        $! evaluateExchange square (makeMove mv pos))
+        Nothing -> - pos.materialScore
 
 
 data ScoresBatch = ScoresBatch {

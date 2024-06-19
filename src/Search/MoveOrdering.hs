@@ -42,14 +42,14 @@ getSortedMoves !depth !ply pos = do
       <> killerMoves
     worstMoves = filter (`notElem` hashMoves) quietMoves
       <> filter (`notElem` ttMove) losingCaptures
+    hasTTMove = not $ null ttMove
 
   pure $ if not (isKingInCheck pos) && depth >= 3
-    then (second (<> worstMoves) $ splitAt 4 bestMoves, notNull ttMove)
-    else ((bestMoves <> worstMoves, []), notNull ttMove)
+    then (second (<> worstMoves) $ splitAt 4 bestMoves, hasTTMove)
+    else ((bestMoves <> worstMoves, [])               , hasTTMove)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves depth pos
-    notNull = not . null
 
 
 getSortedKillers :: (?killersTable :: KillersTable)

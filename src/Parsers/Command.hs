@@ -8,7 +8,6 @@ import           Parsers.Position
 
 import           Bookhound.Parser
 import           Bookhound.ParserCombinators
-import           Bookhound.Parsers.Char      (space)
 import           Bookhound.Parsers.Number
 import           Bookhound.Parsers.Text
 import           Control.Newtype
@@ -25,7 +24,7 @@ parseCommand = runParser command
     <|> stringToken "isready"    $> IsReady
     <|> stringToken "position"   *> (SetPosition <$> positionSpec)
     <|> stringToken "setoption"  *> (SetOption   <$> optionSpec)
-    <|> stringToken "move"       *> (MakeMove    <$> unknownMove)
+    <|> stringToken "move"       *> (MakeMoves   <$> unknownMoves)
     <|> stringToken "ponderhit"  $> Ponderhit
     <|> stringToken "stop"       $> Stop
     <|> stringToken "quit"       $> Quit
@@ -38,23 +37,22 @@ parseCommand = runParser command
       <|> (Search <$> searchOptions))
 
   searchOption =
-        setSearchMoves    <$> (stringToken "searchmoves" *>
-                                someSepBy space unknownMove)
-    <|> setInfinite       <$   stringToken "infinite"
+        setInfinite       <$   stringToken "infinite"
     <|> setPonder         <$   stringToken "ponder"
-    <|> setTargetDepth    <$> (stringToken "depth"     *> depth)
-    <|> setWhiteTime      <$> (stringToken "wtime"     *> unsignedInt)
-    <|> setBlackTime      <$> (stringToken "btime"     *> unsignedInt)
-    <|> setWhiteIncrement <$> (stringToken "winc"      *> unsignedInt)
-    <|> setBlackIncrement <$> (stringToken "binc"      *> unsignedInt)
-    <|> setMovesUntil     <$> (stringToken "movestogo" *> unsignedInt)
-    <|> setNodes          <$> (stringToken "nodes"     *> unsignedInt)
-    <|> setFindMate       <$> (stringToken "mate"      *> unsignedInt)
-    <|> setMoveTime       <$> (stringToken "movetime"  *> unsignedInt)
+    <|> setSearchMoves    <$> (stringToken "searchmoves" *> unknownMoves)
+    <|> setTargetDepth    <$> (stringToken "depth"       *> depth)
+    <|> setWhiteTime      <$> (stringToken "wtime"       *> unsignedInt)
+    <|> setBlackTime      <$> (stringToken "btime"       *> unsignedInt)
+    <|> setWhiteIncrement <$> (stringToken "winc"        *> unsignedInt)
+    <|> setBlackIncrement <$> (stringToken "binc"        *> unsignedInt)
+    <|> setMovesUntil     <$> (stringToken "movestogo"   *> unsignedInt)
+    <|> setNodes          <$> (stringToken "nodes"       *> unsignedInt)
+    <|> setFindMate       <$> (stringToken "mate"        *> unsignedInt)
+    <|> setMoveTime       <$> (stringToken "movetime"    *> unsignedInt)
 
   positionSpec = PositionSpec
     <$> initialPositionSpec
-    <*> (stringToken "moves" *> (token unknownMove |+) <|> pure [])
+    <*> (stringToken "moves" *> unknownMoves <|> pure [])
 
   optionSpec = stringToken "name" *>
     ((stringToken "Hash" $> HashSize)
@@ -68,11 +66,12 @@ parseCommand = runParser command
     stringToken "startpos" $> startPosition
     <|> stringToken "fen"  *> positionFenParser
 
-  unknownMove = UnknownMove <$> squareParser <*> squareParser
-  token       = withTransform maybeBetweenSpacing
-  stringToken = token . string
-  depth       = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
-  boolean     = stringToken "true"  $> True
+  unknownMoves = (token unknownMove |+)
+  unknownMove  = UnknownMove <$> squareParser <*> squareParser
+  token        = withTransform maybeBetweenSpacing
+  stringToken  = token . string
+  depth        = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
+  boolean      = stringToken "true"  $> True
             <|> stringToken "false" $> False
 
   setSearchMoves x opts    = opts { searchMoves        = x }

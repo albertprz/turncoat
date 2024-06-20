@@ -2,15 +2,18 @@ module Search.Quiescence (quiesceSearch) where
 
 import           AppPrelude
 
+import           Evaluation.Evaluation
 import           Models.Move
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove
-
-import           Evaluation.Evaluation
+import           MoveGen.MoveQueries
+import           MoveGen.PieceCaptures
+import           MoveGen.PositionQueries
+import           Search.Perft
 
 import           Control.Monad.State
-import           MoveGen.PieceCaptures (allCaptures)
+
 
 
 quiesceSearch :: (?nodes :: IORef Word64)
@@ -22,10 +25,13 @@ quiesceSearch !alpha !beta !ply !pos
       (score, finalAlpha) <- runStateT scoreState newAlpha
       pure $! fromMaybe finalAlpha score
   where
-    scoreState = findTraverseIndex (getMoveScore beta ply pos) captures
-    captures   = getWinningCaptures pos
-    !newAlpha = max alpha standPat
-    !standPat = evaluatePosition pos
+    scoreState = findTraverseIndex (getMoveScore beta ply pos) moves
+    moves
+      | isKingInCheck pos = allMoves pos
+      | ply <= 1           = getWinningCapturesAndChecks pos
+      | otherwise         = getWinningCaptures pos
+    !newAlpha  = max alpha standPat
+    !standPat  = evaluatePosition pos
 
 
 getMoveScore :: (?nodes :: IORef Word64)
@@ -48,7 +54,14 @@ advanceState !beta !score !nodeType =
 
 getWinningCaptures :: Position -> [Move]
 getWinningCaptures pos =
-  filter ((>= 0) . (`evaluateCaptureExchange` pos))
+  filter (`isWinningCapture` pos)
     $ allCaptures pos
+
+
+getWinningCapturesAndChecks :: Position -> [Move]
+getWinningCapturesAndChecks pos =
+  filter (`isCheckOrWinningCapture` pos)
+  $ allMoves pos
+
 
 type QuiesceM = StateT Score IO

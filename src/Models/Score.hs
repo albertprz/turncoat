@@ -13,6 +13,7 @@ type Depth = Word8
 type Ply   = Word8
 
 
+
 newtype NodeType = NodeType Word8
   deriving (Eq, Ord, Num, Storable, Show)
 

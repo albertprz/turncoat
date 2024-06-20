@@ -45,7 +45,7 @@ getSortedMoves !depth !ply pos = do
     hasTTMove = not $ null ttMove
 
   pure $ if not (isKingInCheck pos) && depth >= 3
-    then (second (<> worstMoves) $ splitAt 4 bestMoves, hasTTMove)
+    then (second (<> worstMoves) $ splitAt 6 bestMoves, hasTTMove)
     else ((bestMoves <> worstMoves, [])               , hasTTMove)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos

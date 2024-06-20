@@ -1,4 +1,4 @@
-module MoveGen.MoveQueries (isQuietMove, isLegalQuietMove, isCheckOrWinningCapture) where
+module MoveGen.MoveQueries (isQuietMove, isLegalQuietMove, isCheckOrWinningCapture, isWinningCapture) where
 
 import           AppPrelude
 

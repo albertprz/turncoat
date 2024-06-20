@@ -64,7 +64,7 @@ printSearch searchOpts pos =
     acquire = do
       tTable          <- TTable.create
       killersTable    <- KillersTable.create
-      searchResultRef <- newIORef emptySearchResult
+      searchResultRef <- newIORef $ emptySearchResult 0
       pure (tTable, killersTable, searchResultRef)
 
     release (tTable, killersTable, searchResultRef) = do

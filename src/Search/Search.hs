@@ -1,8 +1,8 @@
 module Search.Search (search, emptySearchResult, SearchResult(..)) where
 
-import           AppPrelude               hiding ((/))
-import           ClassyPrelude            ((/))
+import           AppPrelude
 
+import           Evaluation.Evaluation
 import           Models.Command
 import           Models.Move
 import           Models.Position
@@ -11,19 +11,19 @@ import           MoveGen.MakeMove
 import           MoveGen.MoveQueries
 import           MoveGen.PositionQueries
 import           Search.MoveOrdering
+import           Search.Parameters
 import           Search.Perft
 import           Search.Quiescence
 import           Search.TimeManagement
 import qualified Utils.KillersTable       as KillersTable
 import           Utils.KillersTable       (KillersTable)
+import qualified Utils.TranspositionTable as TEntry (TEntry (..))
 import qualified Utils.TranspositionTable as TTable
-import           Utils.TranspositionTable (TEntry (..), TTable)
+import           Utils.TranspositionTable (TEntry (TEntry), TTable)
 
 import           Control.Concurrent
 import           Control.Monad.State
 import           Data.Time.Clock.System
-import           Evaluation.Evaluation    (evaluatePosition)
-import           Evaluation.Parameters    (pawnScore)
 
 
 -- Features:
@@ -43,10 +43,10 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
   where
     moveTime = getMoveTime searchOpts pos.color
     go startTime nodesRef depth = do
-      (score, result) <- getNodeScore initialAlpha initialBeta depth 0 pos
+      result <- getNodeResult initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime
       nodes <- readIORef nodesRef
-      printSearchInfo depth score nodes (endTime |-| startTime) result
+      printSearchInfo depth nodes (endTime |-| startTime) result
       unless (null result.bestMove) $ writeIORef resultRef result
       pure (null result.bestMove || isTimeOver endTime startTime moveTime)
 
@@ -58,17 +58,17 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
 negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64)
-  => Score -> Score -> Depth -> Ply -> Position -> IO (Score, Maybe Move)
+  => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 negamax !alpha !beta !depth !ply pos
 
   | pos.halfMoveClock == 50 || isRepeatedPosition zKey pos
-  = pure (0, Nothing)
+  = pure $! emptySearchResult 0
 
   | otherwise = do
     ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
     case ttResult of
-      Just (!score, !bestMove) -> pure (score, bestMove)
-      Nothing     -> cacheNodeScore alpha beta extendedDepth ply zKey pos
+      Just (!score, !bestMove) -> pure $! SearchResult score bestMove Nothing
+      Nothing -> cacheNodeResult alpha beta extendedDepth ply zKey pos
    where
      zKey = getZobristKey pos
      extendedDepth =
@@ -80,13 +80,13 @@ negamax !alpha !beta !depth !ply pos
      hasOne _   = False
 
 
-cacheNodeScore
+cacheNodeResult
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64)
-  => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO (Score, Maybe Move)
-cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
+  => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO SearchResult
+cacheNodeResult !alpha !beta !depth !ply !zKey pos = do
   modifyIORef' ?nodes (+ 1)
-  (!score, SearchResult{bestMove}) <- getNodeScore alpha beta depth ply pos
+  searchResult@SearchResult {..} <- getNodeResult alpha beta depth ply pos
   let
     !nodeType = getNodeType alpha beta score
     !ttScore = case nodeType of
@@ -94,52 +94,53 @@ cacheNodeScore !alpha !beta !depth !ply !zKey pos = do
       Cut -> beta
       All -> alpha
     !newTEntry = TEntry {
-      depth      = depth,
-      bestMove   = bestMove,
-      score      = ttScore,
-      nodeType   = nodeType,
-      zobristKey = zKey
+      TEntry.depth      = depth,
+      TEntry.bestMove   = bestMove,
+      TEntry.score      = ttScore,
+      TEntry.nodeType   = nodeType,
+      TEntry.zobristKey = zKey
     }
   TTable.insert zKey newTEntry
-  pure (score, bestMove)
+  pure searchResult
 
 
 -- Features:
 -- - Quiescence search
--- - Null move prunning (R = 2)
+-- - Null move prunning
 -- - Futility prunning
 
-getNodeScore
+getNodeResult
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64)
-  => Score -> Score -> Depth -> Ply -> Position -> IO (Score, SearchResult)
-getNodeScore !alpha !beta !depth !ply pos
+  => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
+getNodeResult !alpha !beta !depth !ply pos
 
   | depth == 0
-  || depth == 1 && not (isKingInCheck pos)
+  || depth <= 2 && not (isKingInCheck pos)
               && evaluatePosition pos + futilityMargin <= alpha
-  = (, emptySearchResult) <$> quiesceSearch alpha beta 0 pos
+  = emptySearchResult <$> quiesceSearch alpha beta 0 pos
 
   | otherwise = do
     nullMoveScore <- getNullMoveScore beta depth ply pos
     if any (>= beta) nullMoveScore
-      then pure (beta, emptySearchResult)
+      then pure $! emptySearchResult beta
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
-    futilityMargin = 3 * pawnScore
+    !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
     traverseMoves (!moves, !hasTTMove)
       | null $ uncurry (<>) moves =
           if isKingInCheck pos
-             then pure (minBound, emptySearchResult)
-             else pure (       0, emptySearchResult)
+             then pure $! emptySearchResult minBound
+             else pure $! emptySearchResult 0
       | otherwise = do
           let movesSearch = getMovesScore beta depth ply moves hasTTMove pos
-          (!score, (!newAlpha, !searchResult)) <-
-            runStateT movesSearch (alpha, emptySearchResult)
-          let !newScore = fromMaybe newAlpha score
-          pure (newScore, searchResult)
-
+          (!score, !searchResult) <-
+            runStateT movesSearch (emptySearchResult alpha)
+          let
+            !newAlpha = searchResult.score
+            !newScore = fromMaybe newAlpha score
+          pure $! searchResult {score = newScore}
 
 
 getMovesScore
@@ -170,7 +171,7 @@ getMoveScore
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
   | isReduced && not (isCheckOrWinningCapture mv pos) =
-      nullWindowSearch lmrDepth
+      nullWindowSearch $! getLmrDepth mvIdx depth
 
   | hasTTMove && mvIdx > 0 =
       nullWindowSearch depth
@@ -180,28 +181,24 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
   where
     nullWindowSearch !depth' = do
-     !alpha <- gets fst
+     SearchResult {score = alpha} <- get
      !score <- fst <$> getNegamaxScore alpha (alpha + 1) depth'
      if score > alpha
        then fullSearch
        else pure Nothing
 
     fullSearch = do
-      !alpha             <- gets fst
-      (!score, !enemyMv) <- getNegamaxScore alpha beta depth
-      let !nodeType      = getNodeType alpha beta score
-      !newScore          <-
+      SearchResult {score = alpha} <- get
+      (!score, !enemyMv)           <- getNegamaxScore alpha beta depth
+      let !nodeType                = getNodeType alpha beta score
+      !newScore                    <-
         advanceState beta score ply nodeType mv enemyMv pos
       pure newScore
 
-    !lmrFactor = min @Double 1 (fromIntegral mvIdx / 40)
-    !lmrDepth  = min (depth - 1) $ ceiling
-      (lmrFactor * (fromIntegral depth * 4 / 5)
-        + (1 - lmrFactor) * (fromIntegral depth - 1))
 
     getNegamaxScore !alpha' !beta' !depth' = liftIO do
-      (!score, !bestMove) <- negamax (-beta') (-alpha') (depth' - 1)
-                                    (ply + 1) (makeMove mv pos)
+      SearchResult {..} <- negamax (-beta') (-alpha') (depth' - 1)
+                                 (ply + 1) (makeMove mv pos)
       pure (negate score, bestMove)
 
 
@@ -213,15 +210,16 @@ getNullMoveScore !beta !depth !ply pos
 
   | depth > r && not (isKingInCheck pos)
               && not (isEndgame pos)
-              && pos.materialScore >= beta =
-    Just . negate . fst <$> negamax (-beta) (-alpha) (depth - r - 1)
-                              (ply + 1) (makeNullMove pos)
+              && pos.materialScore >= beta = do
+    SearchResult {..} <- negamax (-beta) (-alpha) (depth - r - 1)
+                               (ply + 1) (makeNullMove pos)
+    pure $! Just $! negate score
 
   | otherwise = pure Nothing
 
   where
-    !r = 2
-    !alpha = beta - 1
+    r = 2
+    alpha = beta - 1
 
 
 advanceState :: (?killersTable :: KillersTable)
@@ -229,26 +227,19 @@ advanceState :: (?killersTable :: KillersTable)
   -> SearchM (Maybe Score)
 advanceState !beta !score !ply nodeType !mv !enemyMv pos =
   case nodeType of
-    PV  -> put (score, searchResult)
+    PV  -> put searchResult
             $> Nothing
-    Cut -> modify' (second $ const searchResult)
+    Cut -> put searchResult
             *> liftIO (KillersTable.insert ply pos mv)
             $> Just beta
     All -> pure Nothing
     where
-      !searchResult = SearchResult (Just mv) enemyMv
-
-
-initialAlpha :: Score
-initialAlpha = minBound + 1
-
-initialBeta :: Score
-initialBeta = maxBound - 1
+      !searchResult = SearchResult score (Just mv) enemyMv
 
 
 printSearchInfo
-  :: Depth -> Score -> Word64 -> MicroSeconds -> SearchResult -> IO ()
-printSearchInfo depth score nodes timePassed SearchResult{..} =
+  :: Depth -> Word64 -> MicroSeconds -> SearchResult -> IO ()
+printSearchInfo depth nodes timePassed SearchResult{..} =
   putStrLn (
          "info depth "    <> tshow depth
       <> " score cp "     <> tshow score
@@ -262,13 +253,15 @@ printSearchInfo depth score nodes timePassed SearchResult{..} =
     pv         = catMaybes [bestMove, ponderMove]
 
 
-emptySearchResult :: SearchResult
-emptySearchResult = SearchResult Nothing Nothing
+emptySearchResult :: Score -> SearchResult
+emptySearchResult score = SearchResult score Nothing Nothing
 
 
 data SearchResult = SearchResult {
-    bestMove   :: Maybe Move
+    score      :: Score
+  , bestMove   :: Maybe Move
   , ponderMove :: Maybe Move
 }
 
-type SearchM = StateT (Score, SearchResult) IO
+
+type SearchM = StateT SearchResult IO

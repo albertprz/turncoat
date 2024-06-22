@@ -15,13 +15,13 @@ pawnScore :: Score
 pawnScore = 100
 
 knightScore :: Score
-knightScore = 320
+knightScore = 330
 
 bishopScore :: Score
-bishopScore = 330
+bishopScore = 340
 
 rookScore :: Score
-rookScore = 500
+rookScore = 520
 
 queenScore :: Score
 queenScore = 950
@@ -37,7 +37,7 @@ knightOutpostBonus = taperScore $ ScorePair 50 0
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
   [(0, 0), (0, 0), (10, 20), (20, 40),
-   (30, 60), (40, 80), (50, 100)]
+   (30, 60), (50, 100), (70, 140)]
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
@@ -82,7 +82,6 @@ kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
   [0, 0, 50, 75, 88, 94, 97, 99, 100,
    100, 100, 100, 100, 100, 100, 100]
-
 
 
 -- Piece Square Tables

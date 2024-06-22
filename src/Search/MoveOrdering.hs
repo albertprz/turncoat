@@ -1,4 +1,4 @@
-module Search.MoveOrdering (getSortedMoves ) where
+module Search.MoveOrdering (getSortedMoves) where
 
 import           AppPrelude
 
@@ -34,30 +34,36 @@ getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable,
   => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
   ttMove   <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  killerMoves <- filter (`notElem` ttMove) <$> getSortedKillers ply pos
+  killerMoves <- filter (`notElem` ttMove) <$> getKillers ply pos
   let
     hashMoves = ttMove <> killerMoves
-    bestMoves = ttMove
+
+    bestMoves =
+         ttMove
       <> filter (`notElem` ttMove) winningCaptures
       <> killerMoves
-    worstMoves = filter (`notElem` hashMoves) quietMoves
-      <> filter (`notElem` ttMove) losingCaptures
-    hasTTMove = not $ null ttMove
 
-  pure $ if not (isKingInCheck pos) && depth >= 3
-    then (second (<> worstMoves) $ splitAt 6 bestMoves, hasTTMove)
-    else ((bestMoves <> worstMoves, [])               , hasTTMove)
+    worstMoves =
+         filter (`notElem` hashMoves) quietMoves
+      <> filter (`notElem` ttMove) losingCaptures
+
+    !hasTTMove = not $ null ttMove
+
+  pure if not (isKingInCheck pos) && depth >= 3
+    then ((bestMoves, worstMoves),
+          hasTTMove)
+    else ((bestMoves <> worstMoves, []),
+          hasTTMove)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves depth pos
 
 
-getSortedKillers :: (?killersTable :: KillersTable)
+getKillers :: (?killersTable :: KillersTable)
   => Ply -> Position -> IO [Move]
-getSortedKillers !ply pos = sortMoves pos <$> killerMoves
-  where
-    killerMoves =
-      filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
+getKillers !ply pos =
+   filter (`isLegalQuietMove` pos)
+   <$> KillersTable.lookupMoves ply
 
 
 getSortedCaptures :: Position -> ([Move], [Move])

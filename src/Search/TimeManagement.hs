@@ -39,7 +39,7 @@ maybeTimeout Nothing action         =
 
 isTimeOver :: SystemTime -> SystemTime -> Maybe MicroSeconds -> Bool
 isTimeOver endTime startTime (Just moveTime) =
-  endTime |-| startTime > moveTime / 3
+  endTime |-| startTime > moveTime * 2 / 5
 isTimeOver _ _ Nothing =
   False
 

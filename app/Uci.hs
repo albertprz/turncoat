@@ -120,7 +120,7 @@ quit = do
 
 
 handleNewGame :: CommandM ()
-handleNewGame = pure ()
+handleNewGame = updatePosition $ Just startPosition
 
 
 handleStart :: CommandM ()

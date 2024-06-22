@@ -13,7 +13,7 @@ import           MoveGen.PositionQueries
 import           Search.Perft
 
 import           Control.Monad.State
-
+import           MoveGen.PieceQuietMoves
 
 
 quiesceSearch :: (?nodes :: IORef Word64)
@@ -60,8 +60,8 @@ getWinningCaptures pos =
 
 getWinningCapturesAndChecks :: Position -> [Move]
 getWinningCapturesAndChecks pos =
-  filter (`isCheckOrWinningCapture` pos)
-  $ allMoves pos
+     filter (`isWinningCapture` pos) (allCaptures pos)
+  <> filter (`isCheckMove` pos)      (allQuietMoves pos)
 
 
 type QuiesceM = StateT Score IO

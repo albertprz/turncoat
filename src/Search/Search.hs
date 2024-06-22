@@ -24,6 +24,7 @@ import           Utils.TranspositionTable (TEntry (TEntry), TTable)
 import           Control.Concurrent
 import           Control.Monad.State
 import           Data.Time.Clock.System
+import           Models.Piece
 
 
 -- Features:
@@ -46,7 +47,7 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
       result <- getNodeResult initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime
       nodes <- readIORef nodesRef
-      printSearchInfo depth nodes (endTime |-| startTime) result
+      printSearchInfo pos.color depth nodes (endTime |-| startTime) result
       unless (null result.bestMove) $ writeIORef resultRef result
       pure (null result.bestMove || isTimeOver endTime startTime moveTime)
 
@@ -116,7 +117,7 @@ getNodeResult
 getNodeResult !alpha !beta !depth !ply pos
 
   | depth == 0
-  || depth <= 2 && not (isKingInCheck pos)
+  || depth <= 3 && not (isKingInCheck pos)
               && evaluatePosition pos + futilityMargin <= alpha
   = emptySearchResult <$> quiesceSearch alpha beta 0 pos
 
@@ -128,11 +129,11 @@ getNodeResult !alpha !beta !depth !ply pos
 
   where
     !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
-    traverseMoves (!moves, !hasTTMove)
+    traverseMoves (moves, hasTTMove)
       | null $ uncurry (<>) moves =
-          if isKingInCheck pos
-             then pure $! emptySearchResult minBound
-             else pure $! emptySearchResult 0
+          let score | isKingInCheck pos = minBound
+                    | otherwise         = 0
+          in pure $! emptySearchResult score
       | otherwise = do
           let movesSearch = getMovesScore beta depth ply moves hasTTMove pos
           (!score, !searchResult) <-
@@ -170,7 +171,7 @@ getMoveScore
   -> SearchM (Maybe Score)
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
-  | isReduced && not (isCheckOrWinningCapture mv pos) =
+  | isReduced && not (isCheckMove mv pos) =
       nullWindowSearch $! getLmrDepth mvIdx depth
 
   | hasTTMove && mvIdx > 0 =
@@ -195,11 +196,10 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
         advanceState beta score ply nodeType mv enemyMv pos
       pure newScore
 
-
     getNegamaxScore !alpha' !beta' !depth' = liftIO do
       SearchResult {..} <- negamax (-beta') (-alpha') (depth' - 1)
                                  (ply + 1) (makeMove mv pos)
-      pure (negate score, bestMove)
+      pure (negate $! score, bestMove)
 
 
 getNullMoveScore
@@ -225,7 +225,7 @@ getNullMoveScore !beta !depth !ply pos
 advanceState :: (?killersTable :: KillersTable)
   => Score -> Score -> Ply -> NodeType -> Move -> Maybe Move -> Position
   -> SearchM (Maybe Score)
-advanceState !beta !score !ply nodeType !mv !enemyMv pos =
+advanceState !beta !score !ply !nodeType !mv !enemyMv pos =
   case nodeType of
     PV  -> put searchResult
             $> Nothing
@@ -238,16 +238,19 @@ advanceState !beta !score !ply nodeType !mv !enemyMv pos =
 
 
 printSearchInfo
-  :: Depth -> Word64 -> MicroSeconds -> SearchResult -> IO ()
-printSearchInfo depth nodes timePassed SearchResult{..} =
+  :: Color -> Depth -> Word64 -> MicroSeconds -> SearchResult -> IO ()
+printSearchInfo color depth nodes timePassed SearchResult{..} =
   putStrLn (
          "info depth "    <> tshow depth
-      <> " score cp "     <> tshow score
+      <> " score cp "     <> tshow colorScore
       <> " nodes "        <> tshow nodes
       <> " nps "          <> tshow nps
       <> " time "         <> tshow timeMillis
       <> " pv "           <> unwords (tshow <$> pv))
   where
+    colorScore
+      | White <- color =   score
+      | Black <- color = - score
     nps        = nodes * 1_000_000 `div` timePassed
     timeMillis = timePassed `div` 1_000
     pv         = catMaybes [bestMove, ponderMove]

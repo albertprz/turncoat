@@ -76,10 +76,10 @@ parseCommand = runParser command
     <*> (fromMaybe NoProm <$> (promotionParser |?))
 
   promotionParser =
-        stringToken "k" $> KnightProm
-    <|> stringToken "b" $> BishopProm
-    <|> stringToken "r" $> RookProm
-    <|> stringToken "q" $> QueenProm
+        string "k" $> KnightProm
+    <|> string "b" $> BishopProm
+    <|> string "r" $> RookProm
+    <|> string "q" $> QueenProm
 
   boolean      =
         stringToken "true"  $> True

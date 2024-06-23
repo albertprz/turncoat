@@ -29,7 +29,7 @@ evaluatePosition pos =
     + evalScore
       (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
     - evalScore
-      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch  enemyPos)
+      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
   where
     ?phase = pos.phase
 

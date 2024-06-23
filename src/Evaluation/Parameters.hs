@@ -21,7 +21,7 @@ bishopScore :: Score
 bishopScore = 340
 
 rookScore :: Score
-rookScore = 520
+rookScore = 510
 
 queenScore :: Score
 queenScore = 950

@@ -33,27 +33,23 @@ getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable,
                   ?opts :: EngineOptions)
   => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
-  ttMove   <- toList <$> TTable.lookupBestMove (getZobristKey pos)
-  killerMoves <- filter (`notElem` ttMove) <$> getKillers ply pos
+  ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
+  killerMoves <- getKillers ply pos
   let
-    hashMoves = ttMove <> killerMoves
-
     bestMoves =
          ttMove
       <> filter (`notElem` ttMove) winningCaptures
-      <> killerMoves
+      <> filter (`notElem` ttMove) killerMoves
 
     worstMoves =
-         filter (`notElem` hashMoves) quietMoves
-      <> filter (`notElem` ttMove) losingCaptures
+         filter (`notElem` (ttMove <> killerMoves)) quietMoves
+      <> filter (`notElem` ttMove)                  losingCaptures
 
     !hasTTMove = not $ null ttMove
 
   pure if not (isKingInCheck pos) && depth >= 3
-    then ((bestMoves, worstMoves),
-          hasTTMove)
-    else ((bestMoves <> worstMoves, []),
-          hasTTMove)
+    then ((bestMoves, worstMoves)      , hasTTMove)
+    else ((bestMoves <> worstMoves, []), hasTTMove)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
     quietMoves                        = getSortedQuietMoves depth pos

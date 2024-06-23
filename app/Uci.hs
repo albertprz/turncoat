@@ -189,9 +189,9 @@ printEngineInfo = do
 
 printEngineOptions :: CommandM ()
 printEngineOptions = do
-  go "Hash"   (SpinOption hashSize 1 maxBound)
+  go "Hash"       (SpinOption hashSize 1 maxBound)
   go "Clear Hash" ButtonOption
-  go "Ponder" (CheckOption ponder)
+  go "Ponder"     (CheckOption ponder)
   where
     EngineOptions {..} = defaultEngineOptions
     go param option =

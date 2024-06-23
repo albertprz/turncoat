@@ -224,8 +224,10 @@ updatePosition = \case
 
 makeUnknownMove :: UnknownMove -> Position -> Maybe Position
 makeUnknownMove UnknownMove {..} pos =
-  (`makeMove` pos)
-  <$> find (\x -> x.start == start && x.end == end) (allMoves pos)
+  (`makeMove` pos) <$> find isSameMove (allMoves pos)
+  where
+    isSameMove mv =
+      mv.start == start && mv.end == end && mv.promotion == promotion
 
 
 whenAvailable :: CommandM () -> CommandM ()

@@ -1,2 +1,2 @@
 # turncoat
-Elegant chess engine in Haskell
+Elegant UCI chess engine in Haskell

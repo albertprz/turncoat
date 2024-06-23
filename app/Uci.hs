@@ -1,4 +1,4 @@
-module Uci (executeCommand, initialEngineState) where
+module Uci (executeCommand, initialEngineState, putStrLnFlush) where
 
 import           AppPrelude
 
@@ -82,20 +82,20 @@ printSearch searchOpts pos = do
 
 
 printPerft :: Depth -> Position -> IO ()
-printPerft = putStrLn . tshow .: perft
+printPerft = putStrLnFlush . tshow .: perft
 
 
 printDivide :: Depth -> Position -> IO ()
 printDivide =
   void
-  . Map.traverseWithKey (\k v -> putStrLn (tshow k <> ": " <> tshow v))
+  . Map.traverseWithKey (\k v -> putStrLnFlush (tshow k <> ": " <> tshow v))
   .: divide
 
 
 printStaticEval :: CommandM ()
 printStaticEval = withPosition go
   where
-    go = putStrLn
+    go = putStrLnFlush
          . ("\n" <>)
          . tshow
          . getScoreBreakdown
@@ -131,7 +131,7 @@ handleNewGame = do
 handleStart :: CommandM ()
 handleStart = do
   printEngineInfo
-  putStrLn mempty
+  putStrLnFlush mempty
   printEngineOptions
   printUciReady
 
@@ -162,19 +162,19 @@ printBestMove :: MonadIO m => SearchResult -> m ()
 printBestMove SearchResult {..}
   | Just mv  <- bestMove
   , Just mv2 <- ponderMove
-    = putStrLn ("bestmove " <> tshow mv <> " ponder " <> tshow mv2)
+    = putStrLnFlush ("bestmove " <> tshow mv <> " ponder " <> tshow mv2)
   | Just mv  <- bestMove
-    = putStrLn ("bestmove " <> tshow mv)
+    = putStrLnFlush ("bestmove " <> tshow mv)
   | otherwise
-    = putStrLn mempty
+    = putStrLnFlush mempty
 
 
 printUciReady :: CommandM ()
-printUciReady = putStrLn "uciok"
+printUciReady = putStrLnFlush "uciok"
 
 
 printReady :: CommandM ()
-printReady = putStrLn "readyok"
+printReady = putStrLnFlush "readyok"
 
 
 printEngineInfo :: CommandM ()
@@ -184,7 +184,7 @@ printEngineInfo = do
   where
     EngineInfo {..} = engineInfo
     go param value =
-      putStrLn ("id" <> " " <> param <> " " <> value)
+      putStrLnFlush ("id" <> " " <> param <> " " <> value)
 
 
 printEngineOptions :: CommandM ()
@@ -195,7 +195,7 @@ printEngineOptions = do
   where
     EngineOptions {..} = defaultEngineOptions
     go param option =
-      putStrLn ("option name " <> param <> " " <> tshow option)
+      putStrLnFlush ("option name " <> param <> " " <> tshow option)
 
 
 makeMoves :: [UnknownMove] -> CommandM ()
@@ -211,15 +211,15 @@ flipPosition =
 
 displayBoard :: CommandM ()
 displayBoard = do
-  putStrLn mempty
+  putStrLnFlush mempty
   withPosition print
-  putStrLn mempty
+  putStrLnFlush mempty
 
 
 updatePosition :: Maybe Position -> CommandM ()
 updatePosition = \case
   Just pos -> modifyPosition $ const pos
-  Nothing  -> putStrLn "Error: Invalid Position"
+  Nothing  -> putStrLnFlush "Error: Invalid Position"
 
 
 makeUnknownMove :: UnknownMove -> Position -> Maybe Position
@@ -292,3 +292,9 @@ initialEngineState = do
 
 
 type CommandM = StateT EngineState IO
+
+
+putStrLnFlush :: MonadIO m => Text -> m ()
+putStrLnFlush message = do
+  putStrLn message
+  hFlush stdout

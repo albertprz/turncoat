@@ -240,7 +240,7 @@ advanceState !beta !score !ply !nodeType !mv !enemyMv pos =
 
 printSearchInfo
   :: Color -> Depth -> Word64 -> MicroSeconds -> SearchResult -> IO ()
-printSearchInfo color depth nodes timePassed SearchResult{..} =
+printSearchInfo color depth nodes timePassed SearchResult{..} = do
   putStrLn (
          "info depth "    <> tshow depth
       <> " score cp "     <> tshow colorScore
@@ -248,6 +248,7 @@ printSearchInfo color depth nodes timePassed SearchResult{..} =
       <> " nps "          <> tshow nps
       <> " time "         <> tshow timeMillis
       <> " pv "           <> unwords (tshow <$> pv))
+  hFlush stdout
   where
     colorScore
       | White <- color =   score

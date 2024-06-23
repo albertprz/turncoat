@@ -4,7 +4,8 @@ import           AppPrelude
 
 import           Models.Command
 import           Parsers.Command     (parseCommand)
-import           Uci                 (executeCommand, initialEngineState)
+import           Uci                 (executeCommand, initialEngineState,
+                                      putStrLnFlush)
 
 import           Control.Monad.State
 import qualified Data.Char           as Char
@@ -21,13 +22,13 @@ main = do
       unless (all Char.isSpace input)
              (eval input)
     eval =
-      either (const $ putStrLn parseErrorMsg) executeCommand
+      either (const $ putStrLnFlush parseErrorMsg) executeCommand
       . parseCommand
 
 
 printHeader :: IO ()
 printHeader =
-  putStrLn (name <> " " <> version <> " by " <> author)
+  putStrLnFlush (name <> " " <> version <> " by " <> author)
   where
     EngineInfo {..} = engineInfo
 

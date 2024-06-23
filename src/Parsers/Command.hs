@@ -12,6 +12,7 @@ import           Bookhound.Parsers.Number
 import           Bookhound.Parsers.Text
 import           Control.Newtype
 import           Data.Monoid
+import           Models.Piece
 
 
 parseCommand :: Text -> Either [ParseError] Command
@@ -65,16 +66,29 @@ parseCommand = runParser command
     ($ defaultSearchOptions) . ala Endo foldMap <$> (searchOption |*)
 
   initialPositionSpec =
-    stringToken "startpos" $> startPosition
+        stringToken "startpos" $> startPosition
     <|> stringToken "fen"  *> positionFenParser
 
   unknownMoves = (token unknownMove |+)
-  unknownMove  = UnknownMove <$> squareParser <*> squareParser
+  unknownMove  = UnknownMove
+    <$> squareParser
+    <*> squareParser
+    <*> (fromMaybe NoProm <$> (promotionParser |?))
+
+  promotionParser =
+        stringToken "k" $> KnightProm
+    <|> stringToken "b" $> BishopProm
+    <|> stringToken "r" $> RookProm
+    <|> stringToken "q" $> QueenProm
+
+  boolean      =
+        stringToken "true"  $> True
+    <|> stringToken "false" $> False
+
   token        = withTransform maybeBetweenSpacing
   stringToken  = token . string
   depth        = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
-  boolean      = stringToken "true"  $> True
-            <|> stringToken "false" $> False
+
 
   setSearchMoves x opts    = opts { searchMoves        = x }
   setInfinite opts         = opts { infinite           = True }

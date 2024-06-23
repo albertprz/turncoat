@@ -2,6 +2,7 @@ module Models.Command where
 
 import           AppPrelude
 
+import           Models.Piece
 import           Models.Position
 import           Models.Score
 import           Utils.Board
@@ -74,8 +75,9 @@ data PositionSpec = PositionSpec
 
 
 data UnknownMove = UnknownMove
-  { start :: Square,
-    end   :: Square
+  { start     :: Square,
+    end       :: Square,
+    promotion :: Promotion
   }
 
 

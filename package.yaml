@@ -1,6 +1,6 @@
-name:                apostate
+name:                turncoat
 version:             1.0
-github:              "albertprz/apostate"
+github:              "albertprz/turncoat"
 license:             BSD3
 author:              "Alberto Perez"
 maintainer:          "albertoperez1994@gmail.com"
@@ -16,7 +16,7 @@ category:            Chess Engine
 # To avoid duplicated efforts in documentation and dealing with the
 # complications of embedding Haddock markup inside cabal files, it is
 # common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/albertprz/apostate#readme>
+description:         Please see the README on GitHub at <https://github.com/albertprz/turncoat#readme>
 
 dependencies:
 - base >= 4 && < 5
@@ -105,12 +105,12 @@ tests:
     main: Spec.hs
     dependencies:
     - hspec
-    - apostate
+    - turncoat
     ghc-options:
     - -Wno-type-defaults
 
 executables:
-  apostate:
+  turncoat:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
@@ -119,4 +119,4 @@ executables:
     - -with-rtsopts=-N
 
     dependencies:
-    - apostate
+    - turncoat

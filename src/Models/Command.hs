@@ -81,7 +81,7 @@ data UnknownMove = UnknownMove
 
 engineInfo :: EngineInfo
 engineInfo = EngineInfo
-  { name    = "Apostate"
+  { name    = "Turncoat"
   , version = "1.0"
   , author  = "Alberto Perez"
   }

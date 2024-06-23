@@ -1,10 +1,9 @@
 module Search.Parameters where
 
-import           AppPrelude            hiding ((/))
-import           ClassyPrelude         ((/))
+import           AppPrelude           hiding ((/))
+import           ClassyPrelude        ((/))
 
-import qualified Data.Vector.Storable  as Vector
-import           Evaluation.Parameters
+import qualified Data.Vector.Storable as Vector
 import           Models.Score
 
 

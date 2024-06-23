@@ -1,2 +1,2 @@
-# apostate
-Minimalistic chess engine in Haskell
+# turncoat
+Elegant chess engine in Haskell

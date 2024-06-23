@@ -53,6 +53,14 @@ rookPhase = 2
 queenPhase :: Phase
 queenPhase = 4
 
+
 totalPhase :: Phase
 totalPhase =
   minorPiecePhase * 8 + rookPhase * 4 + queenPhase * 2
+
+
+minScore :: Score
+minScore = minBound + 1
+
+maxScore :: Score
+maxScore = maxBound - 1

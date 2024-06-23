@@ -8,11 +8,11 @@ import           Models.Score
 
 
 initialAlpha :: Score
-initialAlpha = minBound + 1
+initialAlpha = minScore
 
 
 initialBeta :: Score
-initialBeta = maxBound - 1
+initialBeta = maxScore
 
 
 futilityMargins :: Vector Score

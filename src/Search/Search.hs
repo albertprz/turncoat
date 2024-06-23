@@ -132,7 +132,7 @@ getNodeResult !alpha !beta !depth !ply pos
     !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
     traverseMoves (moves, hasTTMove)
       | null $ uncurry (<>) moves =
-          let score | isKingInCheck pos = minBound
+          let score | isKingInCheck pos = minScore
                     | otherwise         = 0
           in pure $! emptySearchResult score
       | otherwise = do

@@ -58,9 +58,9 @@ encodeTEntry TEntry {..} = StorableTEntry {
   info = fromIntegral bestMoveN
     .| fromIntegral (fromIntegral score :: Word16) << 32
     .| fromIntegral depth << 48
-    .| fromIntegral nodeTypeN << 54
-    .| fromIntegral age << 56
-}
+    .| fromIntegral nodeTypeN << 56
+    .| fromIntegral age << 58
+  }
   where
     StorableMove bestMoveN = encodeMove bestMove
     NodeType nodeTypeN     = nodeType
@@ -73,10 +73,10 @@ decodeTEntry StorableTEntry {..}
       zobristKey = zobristKey
       , bestMove   = decodeMove $ fromIntegral info
       , score      = fromIntegral (info >> 32)
-      , depth      = fromIntegral ((info >> 48) & 63)
-      , nodeType   = fromIntegral ((info >> 54) & 3)
-      , age        = fromIntegral ((info >> 56) & 127)
-    }
+      , depth      = fromIntegral (info >> 48)
+      , nodeType   = fromIntegral ((info >> 56) & 3)
+      , age        = fromIntegral ((info >> 58) & 31)
+  }
 
 
 lookupEntry
@@ -126,7 +126,7 @@ insert !zKey !newEntry
 
 isStaleEntry :: Maybe TEntry -> TEntry -> Bool
 isStaleEntry (Just entry) newEntry =
-  newEntry.age - entry.age > 3
+  newEntry.age - entry.age > 2
   || newEntry.depth >= entry.depth
   && (newEntry.nodeType == PV || entry.nodeType /= PV)
 isStaleEntry Nothing _ =

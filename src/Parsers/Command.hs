@@ -19,8 +19,8 @@ parseCommand = runParser command
   where
 
   command =
-        stringToken "uci"        $> Uci
-    <|> stringToken "ucinewgame" $> UciNewGame
+        stringToken "ucinewgame" $> UciNewGame
+    <|> stringToken "uci"        $> Uci
     <|> stringToken "isready"    $> IsReady
     <|> stringToken "position"   *> (SetPosition <$> positionSpec)
     <|> stringToken "setoption"  *> (SetOption   <$> optionSpec)
@@ -58,7 +58,9 @@ parseCommand = runParser command
     ((stringToken "Hash" $> HashSize)
      <*> (stringToken "value" *> unsignedInt)
      <|> (stringToken "Ponder" $> Ponder)
-     <*> (stringToken "value" *> boolean))
+     <*> (stringToken "value" *> boolean)
+     <|> stringToken "Clear Hash" $> ClearHash)
+
   searchOptions =
     ($ defaultSearchOptions) . ala Endo foldMap <$> (searchOption |*)
 

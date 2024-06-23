@@ -32,14 +32,14 @@ import           Models.Piece
 
 search
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions)
+     ?opts :: EngineOptions, ?age :: Age)
   => SearchOptions -> IORef SearchResult -> Position -> IO ()
 search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
   startTime <- getSystemTime
   nodesRef <- newIORef 0
   let ?nodes = nodesRef
   maybeTimeout moveTime
-    $ traverseUntil_ (go startTime nodesRef) [1 .. targetDepth]
+    $ untilM (go startTime nodesRef) [1 .. targetDepth]
   when infinite $ forever $ threadDelay maxBound
   where
     moveTime = getMoveTime searchOpts pos.color
@@ -58,7 +58,7 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
 
 negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions, ?nodes :: IORef Word64)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 negamax !alpha !beta !depth !ply pos
 
@@ -83,7 +83,7 @@ negamax !alpha !beta !depth !ply pos
 
 cacheNodeResult
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions, ?nodes :: IORef Word64)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Score -> Depth -> Ply -> ZKey -> Position -> IO SearchResult
 cacheNodeResult !alpha !beta !depth !ply !zKey pos = do
   modifyIORef' ?nodes (+ 1)
@@ -95,11 +95,12 @@ cacheNodeResult !alpha !beta !depth !ply !zKey pos = do
       Cut -> beta
       All -> alpha
     !newTEntry = TEntry {
-      TEntry.depth      = depth,
-      TEntry.bestMove   = bestMove,
-      TEntry.score      = ttScore,
-      TEntry.nodeType   = nodeType,
-      TEntry.zobristKey = zKey
+        TEntry.depth      = depth
+      , TEntry.bestMove   = bestMove
+      , TEntry.score      = ttScore
+      , TEntry.nodeType   = nodeType
+      , TEntry.zobristKey = zKey
+      , TEntry.age        = ?age
     }
   TTable.insert zKey newTEntry
   pure searchResult
@@ -112,7 +113,7 @@ cacheNodeResult !alpha !beta !depth !ply !zKey pos = do
 
 getNodeResult
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions, ?nodes :: IORef Word64)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 getNodeResult !alpha !beta !depth !ply pos
 
@@ -146,7 +147,7 @@ getNodeResult !alpha !beta !depth !ply pos
 
 getMovesScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-    ?opts :: EngineOptions, ?nodes :: IORef Word64)
+    ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
 getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
@@ -166,7 +167,7 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
 
 getMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions, ?nodes :: IORef Word64)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move
   -> SearchM (Maybe Score)
 getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
@@ -204,7 +205,7 @@ getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
 
 getNullMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
-     ?opts :: EngineOptions, ?nodes :: IORef Word64)
+     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> Position -> IO (Maybe Score)
 getNullMoveScore !beta !depth !ply pos
 

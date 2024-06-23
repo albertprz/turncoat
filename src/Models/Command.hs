@@ -33,12 +33,6 @@ data EngineInfo = EngineInfo
   , author  :: Text
   }
 
-data EngineState = EngineState
-  { position :: Position
-  , options  :: EngineOptions
-  , task     :: IORef (Maybe Task)
-  }
-
 data EngineOptions = EngineOptions
   { hashSize :: Word16
   , ponder   :: Bool
@@ -50,11 +44,13 @@ data EngineOption = SpinOption
   , hi    :: Word16
   }
   | CheckOption Bool
+  | ButtonOption
 
 
 data OptionSpec
   = HashSize Int
   | Ponder Bool
+  | ClearHash
 
 data SearchOptions = SearchOptions
   { searchMoves        :: [UnknownMove]
@@ -86,25 +82,15 @@ data UnknownMove = UnknownMove
 engineInfo :: EngineInfo
 engineInfo = EngineInfo
   { name    = "Apostate"
-  , version = "0.1.0"
+  , version = "1.0"
   , author  = "Alberto Perez"
   }
 
 
-initialEngineState :: IO EngineState
-initialEngineState = do
-  taskRef <- newIORef Nothing
-  pure EngineState
-    { position = startPosition
-    , options  = defaultEngineOptions
-    , task     = taskRef
-    }
-
-
 defaultEngineOptions :: EngineOptions
 defaultEngineOptions = EngineOptions
-  { hashSize = 1024
-  , ponder = False
+  { hashSize = 16
+  , ponder   = False
   }
 
 
@@ -129,6 +115,7 @@ instance Show EngineOption where
     SpinOption {..}    -> "type spin" <> " default " <> show deflt
                         <> " min " <> show lo <> " max " <> show hi
     CheckOption deflt -> "type check" <> " default " <> toLower (show deflt)
+    ButtonOption      -> "type button"
 
 
 type Task = Async ()

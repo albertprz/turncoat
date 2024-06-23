@@ -1,4 +1,4 @@
-module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverseIndex, traverseUntil_, elem, notElem) where
+module AppPrelude (module ClassyPrelude, module Data.Ord, Vector, (!!), (/), (%), inRange, maybeFilter, findTraverseIndex, untilM, elem, notElem) where
 
 import           ClassyPrelude        hiding (Vector, elem, mask, notElem, (/),
                                        (>>), (^))
@@ -57,9 +57,9 @@ findTraverseIndex !f = go 0
       pure Nothing
 
 
-{-# INLINE traverseUntil_  #-}
-traverseUntil_ :: Monad m => (a -> m Bool) -> [a] -> m ()
-traverseUntil_ f = go
+{-# INLINE untilM  #-}
+untilM :: Monad m => (a -> m Bool) -> [a] -> m ()
+untilM !f = go
   where
     go (!x : xs) = unlessM (f x) (go xs)
     go []        = pure ()

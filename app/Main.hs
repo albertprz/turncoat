@@ -4,7 +4,7 @@ import           AppPrelude
 
 import           Models.Command
 import           Parsers.Command     (parseCommand)
-import           Uci                 (executeCommand)
+import           Uci                 (executeCommand, initialEngineState)
 
 import           Control.Monad.State
 import qualified Data.Char           as Char
@@ -19,7 +19,7 @@ main = do
     repl = do
       input <- getLine
       unless (all Char.isSpace input)
-              (eval input)
+             (eval input)
     eval =
       either (const $ putStrLn parseErrorMsg) executeCommand
       . parseCommand

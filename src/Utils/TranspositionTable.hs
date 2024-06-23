@@ -23,12 +23,14 @@ data TEntry = TEntry {
   bestMove   :: Maybe Move,
   score      :: Score,
   depth      :: Depth,
-  nodeType   :: NodeType
+  nodeType   :: NodeType,
+  age        :: Age
 } deriving (Eq, Show, Generic)
 
 instance Arbitrary TEntry where
   arbitrary = TEntry <$> arbitrary <*> arbitrary
-                     <*> arbitrary <*> arbitrary <*> arbitrary
+                     <*> arbitrary <*> arbitrary
+                     <*> arbitrary <*> arbitrary
 
 data StorableTEntry = StorableTEntry {
   zobristKey :: ZKey,
@@ -39,7 +41,8 @@ instance GStorable StorableTEntry
 
 
 tTableSize :: (?opts :: EngineOptions) => Word64
-tTableSize = toBoard bits
+tTableSize | ?opts.hashSize == 0 = 0
+           | otherwise          = toBoard bits
   where
     bits = msb (fromIntegral ?opts.hashSize) + 16
 
@@ -55,28 +58,32 @@ encodeTEntry TEntry {..} = StorableTEntry {
   info = fromIntegral bestMoveN
     .| fromIntegral (fromIntegral score :: Word16) << 32
     .| fromIntegral depth << 48
-    .| fromIntegral nodeTypeN << 56
+    .| fromIntegral nodeTypeN << 54
+    .| fromIntegral age << 56
 }
   where
     StorableMove bestMoveN = encodeMove bestMove
-    NodeType nodeTypeN = nodeType
+    NodeType nodeTypeN     = nodeType
 
 
 decodeTEntry :: StorableTEntry -> Maybe TEntry
 decodeTEntry StorableTEntry {..}
   | testSquare info 63 = Nothing
-  | otherwise = Just TEntry {
-      zobristKey = zobristKey,
-      bestMove = decodeMove $ fromIntegral info,
-      score = fromIntegral (info >> 32),
-      depth = fromIntegral (info >> 48),
-      nodeType = fromIntegral ((info >> 56) & 3)
+  | otherwise          = Just TEntry {
+      zobristKey = zobristKey
+      , bestMove   = decodeMove $ fromIntegral info
+      , score      = fromIntegral (info >> 32)
+      , depth      = fromIntegral ((info >> 48) & 63)
+      , nodeType   = fromIntegral ((info >> 54) & 3)
+      , age        = fromIntegral ((info >> 56) & 127)
     }
 
 
 lookupEntry
   :: (?tTable :: TTable, ?opts :: EngineOptions) => ZKey -> IO (Maybe TEntry)
-lookupEntry !zKey = do
+lookupEntry !zKey
+  | tTableSize == 0 = pure Nothing
+  | otherwise      = do
   entry <- decodeTEntry <$> Vector.unsafeRead ?tTable (hashZKey zKey)
   pure (maybeFilter ((== zKey) . (.zobristKey)) entry)
 
@@ -107,20 +114,41 @@ lookupBestMove !zKey = do
 
 insert
   :: (?tTable :: TTable, ?opts :: EngineOptions) => ZKey -> TEntry -> IO ()
-insert !zKey !entry =
-  Vector.unsafeWrite ?tTable (hashZKey zKey) (encodeTEntry entry)
+insert !zKey !newEntry
+ | tTableSize == 0 = pure ()
+ | otherwise       = do
+  entry <- decodeTEntry <$> Vector.unsafeRead ?tTable hashKey
+  when (isStaleEntry entry newEntry)
+    $ Vector.unsafeWrite ?tTable hashKey (encodeTEntry newEntry)
+  where
+    hashKey = hashZKey zKey
+
+
+isStaleEntry :: Maybe TEntry -> TEntry -> Bool
+isStaleEntry (Just entry) newEntry =
+  newEntry.age - entry.age > 3
+  || newEntry.depth >= entry.depth
+  && (newEntry.nodeType == PV || entry.nodeType /= PV)
+isStaleEntry Nothing _ =
+  True
 
 
 emptyTEntry :: StorableTEntry
 emptyTEntry = StorableTEntry {
   zobristKey = 0,
-  info = toBoard 63
+  info       = toBoard 63
 }
 
 
-create :: (?opts :: EngineOptions) => IO TTable
-create = Vector.replicate (fromIntegral tTableSize) emptyTEntry
+create ::  EngineOptions -> IO TTable
+create opts = Vector.replicate (fromIntegral tTableSize) emptyTEntry
+  where
+    ?opts = opts
 
 
-clear ::  TTable -> IO ()
+reset :: TTable -> IO ()
+reset = flip Vector.set emptyTEntry
+
+
+clear :: TTable -> IO ()
 clear = Vector.clear

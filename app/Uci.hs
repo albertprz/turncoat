@@ -1,4 +1,4 @@
-module Uci (executeCommand) where
+module Uci (executeCommand, initialEngineState) where
 
 import           AppPrelude
 
@@ -11,7 +11,9 @@ import           MoveGen.MakeMove
 import           Search.Perft
 import           Search.Search
 import qualified Utils.KillersTable       as KillersTable
+import           Utils.KillersTable       (KillersTable)
 import qualified Utils.TranspositionTable as TTable
+import           Utils.TranspositionTable (TTable)
 
 import           Control.Monad.State
 import           Data.Composition
@@ -41,8 +43,13 @@ executeCommand = \case
 runSearch :: SearchOptions -> CommandM ()
 runSearch searchOpts = do
   EngineState{..} <- get
-  let ?opts      = options
+  killersTable   <- liftIO KillersTable.create
+  let ?opts         = options
+      ?tTable       = tTable
+      ?killersTable = killersTable
+      ?age          = age
   runTask $ printSearch searchOpts position
+  incrementAge
 
 
 runPerft :: Depth -> CommandM ()
@@ -57,27 +64,21 @@ runDivide depth = do
   runTask $ printDivide depth position
 
 
-printSearch :: (?opts :: EngineOptions) => SearchOptions -> Position -> IO ()
-printSearch searchOpts pos =
+printSearch
+  :: (?opts :: EngineOptions, ?tTable :: TTable,
+     ?killersTable :: KillersTable, ?age :: Age)
+  => SearchOptions -> Position -> IO ()
+printSearch searchOpts pos = do
   bracket acquire release go
   where
-    acquire = do
-      tTable          <- TTable.create
-      killersTable    <- KillersTable.create
-      searchResultRef <- newIORef $ emptySearchResult 0
-      pure (tTable, killersTable, searchResultRef)
+    acquire =
+      newIORef $ emptySearchResult 0
 
-    release (tTable, killersTable, searchResultRef) = do
-      liftIO $ TTable.clear tTable
-      liftIO $ KillersTable.clear killersTable
-      searchResult <- readIORef searchResultRef
-      printBestMove searchResult
+    release searchResultRef =
+      printBestMove =<< readIORef searchResultRef
 
-    go (tTable, killersTable, searchResultRef) =
+    go searchResultRef =
       search searchOpts searchResultRef pos
-      where
-        ?tTable       = tTable
-        ?killersTable = killersTable
 
 
 printPerft :: Depth -> Position -> IO ()
@@ -120,7 +121,11 @@ quit = do
 
 
 handleNewGame :: CommandM ()
-handleNewGame = updatePosition $ Just startPosition
+handleNewGame = do
+  EngineState {tTable} <- get
+  liftIO $ TTable.reset tTable
+  updatePosition $ Just startPosition
+  modify' \st -> st {age = 0}
 
 
 handleStart :: CommandM ()
@@ -139,8 +144,18 @@ setPosition PositionSpec {..} =
 
 setOption :: OptionSpec -> CommandM ()
 setOption = \case
-  HashSize size -> modifyOptions \x -> x { hashSize = fromIntegral size }
-  Ponder ponder -> modifyOptions \x -> x { ponder = ponder }
+  Ponder ponder ->
+    modifyOptions \x -> x { ponder = ponder }
+
+  HashSize size -> do
+    modifyOptions \x -> x { hashSize = fromIntegral size }
+    EngineState {options} <- get
+    newTTable <- liftIO $ TTable.create options
+    modify' \st -> st { tTable = newTTable }
+
+  ClearHash -> do
+    EngineState {tTable} <- get
+    liftIO $ TTable.reset tTable
 
 
 printBestMove :: MonadIO m => SearchResult -> m ()
@@ -175,6 +190,7 @@ printEngineInfo = do
 printEngineOptions :: CommandM ()
 printEngineOptions = do
   go "Hash"   (SpinOption hashSize 1 maxBound)
+  go "Clear Hash" ButtonOption
   go "Ponder" (CheckOption ponder)
   where
     EngineOptions {..} = defaultEngineOptions
@@ -246,5 +262,33 @@ modifyOptions f =
 modifyPosition :: (Position -> Position) -> CommandM ()
 modifyPosition f =
   modify' \st -> st { position = f st.position }
+
+
+incrementAge :: CommandM ()
+incrementAge =
+  modify' \st -> st {age = if st.age == 127 then 0 else st.age + 1}
+
+
+data EngineState = EngineState
+  { position :: Position
+  , options  :: EngineOptions
+  , task     :: IORef (Maybe Task)
+  , tTable   :: TTable
+  , age      :: Word8
+  }
+
+
+initialEngineState :: IO EngineState
+initialEngineState = do
+  taskRef <- newIORef Nothing
+  tTable  <- TTable.create defaultEngineOptions
+  pure EngineState
+    { position = startPosition
+    , options  = defaultEngineOptions
+    , task     = taskRef
+    , tTable   = tTable
+    , age      = 0
+    }
+
 
 type CommandM = StateT EngineState IO

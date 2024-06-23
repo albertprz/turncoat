@@ -11,7 +11,7 @@ type Score = Int16
 type Phase = Int16
 type Depth = Word8
 type Ply   = Word8
-
+type Age   = Word8
 
 
 newtype NodeType = NodeType Word8

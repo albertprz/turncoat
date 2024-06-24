@@ -152,9 +152,7 @@ getScoresBatch Position {..} = ScoresBatch {..}
         knightsMobility + bishopsMobility + rooksMobility + queensMobility
 
     kingThreats     =
-      (kingThreatPiecesTable !! piecesCount)
-      * taperScore (ScorePair kingThreatScore 0)
-      / 100
+      (kingThreatPiecesTable !! piecesCount) * kingThreatScore / 100
 
     piecesCount     =
       knightsCount + bishopsCount + rooksCount + queensCount

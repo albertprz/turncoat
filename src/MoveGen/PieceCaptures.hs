@@ -25,18 +25,18 @@ allCaptures pos@Position {..}
   where
     genCaptures =
       allCapturesHelper allPieces king allKingCaptures pos
+    pawnCaptureChecker board =
+      board & (allCheckers .| enPassantChecker)
     captureChecker board = board & allCheckers
-    pawnCaptureChecker board = board
-      & (allCheckers .| enPassantChecker)
     allKingCaptures =
       foldBoardSquares King (kingCaptures enemy attacked) [] kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
     enPassantChecker =
       let checker = allCheckers & pawns
       in enPassant & (checker << 8 .| checker >> 8)
-    allPieces = player .| enemy
+    allPieces  = player .| enemy
     kingSquare = lsb king
-    king = player&kings
+    king       = player&kings
 
 
 allCapturesHelper :: Board -> Board -> [Move] -> Position -> (Board -> Board) -> (Board -> Board) -> [Move]
@@ -73,16 +73,16 @@ allCapturesHelper allPieces king allKingCaptures Position {..} !f !g =
     allKingCaptures
 
     where
-    unpinned = player .\ pinnedPieces
-    pinnedPawns = pinnedPieces & pawns
-    filePinnedPawns = pinnedPawns & kingFile
-    diagPinnedPawns = pinnedPawns & kingDiag
+    unpinned            = player .\ pinnedPieces
+    pinnedPawns         = pinnedPieces & pawns
+    filePinnedPawns     = pinnedPawns & kingFile
+    diagPinnedPawns     = pinnedPawns & kingDiag
     antiDiagPinnedPawns = pinnedPawns & kingAntiDiag
-    kingFile = rankMovesVec !! kingSquare
-    kingDiag = antiDiagMovesVec !! kingSquare
-    kingAntiDiag = diagMovesVec !! kingSquare
-    kingSquare = lsb king
-    noPieces = (~) allPieces
+    kingFile            = rankMovesVec !! kingSquare
+    kingDiag            = antiDiagMovesVec !! kingSquare
+    kingAntiDiag        = diagMovesVec !! kingSquare
+    kingSquare          = lsb king
+    noPieces            = (~) allPieces
 
 
 staticExchangeCaptures :: Square -> Position -> [Move]
@@ -99,10 +99,10 @@ staticExchangeCaptures target pos@Position {..}
     allKingCaptures =
       foldBoardSquares King (kingCaptures (toBoard target) attacked)
       [] kingSquare
-    allCheckers = leapingCheckers .| sliderCheckers
-    allPieces = player .| enemy
-    kingSquare = lsb king
-    king = player&kings
+    allCheckers     = leapingCheckers .| sliderCheckers
+    allPieces       = player .| enemy
+    kingSquare      = lsb king
+    king            = player&kings
 
 
 staticExchangeCapturesHelper
@@ -146,13 +146,13 @@ getPinningRay !target !king
   kingRank        = fileMovesVec !! king
 
 
-
 pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board
 pawnCapturesAndPromotions enemy noPieces enPassant color n =
   pawnPromotions noPieces color board
   .| pawnCaptures enemy enPassant color board
   where
     board = toBoard n
+
 
 pawnPromotions :: Board -> Color -> Board -> Board
 pawnPromotions noPieces color board =

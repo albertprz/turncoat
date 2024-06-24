@@ -40,10 +40,10 @@ getSortedMoves !depth !ply pos = do
     bestMoves =
          ttMove
       <> filter (`notElem` ttMove) winningCaptures
-      <> filter (`notElem` ttMove) killerMoves
 
     worstMoves =
-         filter (`notElem` (ttMove <> killerMoves)) quietMoves
+         filter (`notElem` ttMove) killerMoves
+      <> filter (`notElem` (ttMove <> killerMoves)) quietMoves
       <> filter (`notElem` ttMove)                  losingCaptures
 
     !hasTTMove = not $ null ttMove

@@ -1,9 +1,10 @@
 module Search.Parameters where
 
-import           AppPrelude           hiding ((/))
-import           ClassyPrelude        ((/))
+import           AppPrelude            hiding ((/))
+import           ClassyPrelude         ((/))
 
-import qualified Data.Vector.Storable as Vector
+import qualified Data.Vector.Storable  as Vector
+import           Evaluation.Parameters
 import           Models.Score
 
 
@@ -17,7 +18,7 @@ initialBeta = maxScore
 
 futilityMargins :: Vector Score
 futilityMargins = Vector.fromList
-  [150, 250, 500]
+  [knightScore, rookScore, queenScore]
 
 
 getLmrDepth :: Int -> Depth -> Depth

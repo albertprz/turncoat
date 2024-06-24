@@ -111,7 +111,7 @@ handlePonderhit = do
   EngineState {..} <- get
   now <- liftIO getSystemTime
   let elapsedTime = now |-| searchStart
-  case getMoveTime searchOptions position.color of
+  case getMoveTime searchOptions position of
     Just moveTime
       | elapsedTime > moveTime -> stop
       | otherwise -> liftIO $ void $ async do
@@ -315,10 +315,10 @@ initialEngineState = do
     }
 
 
-type CommandM = StateT EngineState IO
-
-
 putStrLnFlush :: MonadIO m => Text -> m ()
 putStrLnFlush message = do
   putStrLn message
   hFlush stdout
+
+
+type CommandM = StateT EngineState IO

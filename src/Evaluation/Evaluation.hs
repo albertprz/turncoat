@@ -78,7 +78,8 @@ evaluatePositionBonuses ScoresBatch {mobility} pos =
   }
 
 
-evaluatePositionPenalties :: ScoresBatch -> Position -> PenaltyBreakdown
+evaluatePositionPenalties
+  :: (?phase :: Phase) => ScoresBatch -> Position -> PenaltyBreakdown
 evaluatePositionPenalties
   ScoresBatch {kingThreats} Position {player, pawns} =
   PenaltyBreakdown {
@@ -122,7 +123,7 @@ evaluatePassedPawns Position {..} =
       | Black <- color = (\n -> 7 - toRank n, blackPassedPawnBlockersVec)
 
 
-evaluateIsolatedPawns :: Board -> Score
+evaluateIsolatedPawns :: (?phase :: Phase) => Board -> Score
 evaluateIsolatedPawns pawns =
   isolatedPawnPenalty * fromIntegral isolatedPawnsCount
   where
@@ -151,7 +152,9 @@ getScoresBatch Position {..} = ScoresBatch {..}
         knightsMobility + bishopsMobility + rooksMobility + queensMobility
 
     kingThreats     =
-      (kingThreatPiecesTable !! piecesCount) * kingThreatScore `div` 100
+      (kingThreatPiecesTable !! piecesCount)
+      * taperScore (ScorePair kingThreatScore 0)
+      / 100
 
     piecesCount     =
       knightsCount + bishopsCount + rooksCount + queensCount

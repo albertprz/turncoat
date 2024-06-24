@@ -1,15 +1,18 @@
 module Search.TimeManagement (MicroSeconds, getMoveTime, maybeTimeout, isTimeOver, (|-|))  where
 
 import           AppPrelude                 hiding (timeout)
-import           Control.Concurrent.Timeout (timeout)
+import           Evaluation.Parameters
+import           Evaluation.ScoreBreakdown
 import           Models.Command
 import           Models.Piece
+import           Models.Position
 
+import           Control.Concurrent.Timeout (timeout)
 import           Data.Time.Clock.System
 
 
-getMoveTime :: SearchOptions -> Color -> Maybe MicroSeconds
-getMoveTime SearchOptions {..} color =
+getMoveTime :: SearchOptions -> Position -> Maybe MicroSeconds
+getMoveTime SearchOptions {..} Position {phase, color} =
   fromIntegral . (* 1000) <$> (moveTime <|> timeToMove)
   where
     timeToMove
@@ -25,7 +28,9 @@ getMoveTime SearchOptions {..} color =
     (time, inc)
       | White <- color = (whiteTime, whiteIncrement)
       | Black <- color = (blackTime, blackIncrement)
-    movesUntil = fromMaybe 40 movesUntilNextTime
+    !movesUntil = fromMaybe movesUntilDefault movesUntilNextTime
+    !movesUntilDefault =
+      let ?phase = phase in fromIntegral $ taperScore (ScorePair 40 10)
 
 
 maybeTimeout :: Maybe MicroSeconds -> IO () -> IO ()

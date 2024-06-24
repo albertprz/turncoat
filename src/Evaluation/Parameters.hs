@@ -37,7 +37,7 @@ knightOutpostBonus = taperScore $ ScorePair 50 0
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
   [(0, 0), (0, 0), (10, 20), (20, 40),
-   (30, 60), (50, 100), (70, 140)]
+   (30, 60), (40, 80), (50, 100)]
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
@@ -75,8 +75,8 @@ threatByRookPenalty = 40
 threatByQueenPenalty :: Score
 threatByQueenPenalty = 80
 
-isolatedPawnPenalty :: Score
-isolatedPawnPenalty = 25
+isolatedPawnPenalty :: (?phase :: Phase) => Score
+isolatedPawnPenalty = taperScore $ ScorePair 25 50
 
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
@@ -204,6 +204,7 @@ kingSquareTable =
 infixl 9 !!%
 (!!%) :: (?phase::Phase) => Vector ScorePair -> Int -> Score
 (!!%) table idx = taperScore (table !! idx)
+
 
 taperScore :: (?phase :: Phase) => ScorePair -> Score
 taperScore (ScorePair mgScore egScore) =

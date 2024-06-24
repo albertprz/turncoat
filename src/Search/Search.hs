@@ -24,7 +24,6 @@ import           Utils.TranspositionTable (TEntry (TEntry), TTable)
 import           Control.Concurrent
 import           Control.Monad.State
 import           Data.Time.Clock.System
-import           Models.Piece
 
 
 -- Features:
@@ -43,14 +42,18 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
   when infinite $ forever $ threadDelay maxBound
   where
     moveTime =
-      maybeFilter (const $ not infinite) $ getMoveTime searchOpts pos.color
-    go startTime nodesRef depth = do
+      maybeFilter (const $ not infinite) $ getMoveTime searchOpts pos
+
+    go !startTime nodesRef !depth = do
       result <- getNodeResult initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime
       nodes <- readIORef nodesRef
-      printSearchInfo pos.color depth nodes (endTime |-| startTime) result
-      unless (null result.bestMove) $ writeIORef resultRef result
-      pure (null result.bestMove || isTimeOver endTime startTime moveTime)
+      printSearchInfo depth nodes (endTime |-| startTime) result
+      let bestMove = result.bestMove <|> headMay (allMoves pos)
+      unless (null bestMove)
+         $ writeIORef resultRef result {bestMove = bestMove}
+      pure (isTimeOver endTime startTime moveTime
+            || getGameResult result.score `elem` [Victory, Defeat])
 
 
 -- Features:
@@ -239,24 +242,31 @@ advanceState !beta !score !ply !nodeType !mv !enemyMv pos =
       !searchResult = SearchResult score (Just mv) enemyMv
 
 
-printSearchInfo
-  :: Color -> Depth -> Word64 -> MicroSeconds -> SearchResult -> IO ()
-printSearchInfo color depth nodes timePassed SearchResult{..} = do
-  putStrLn (
-         "info depth "    <> tshow depth
-      <> " score cp "     <> tshow colorScore
-      <> " nodes "        <> tshow nodes
-      <> " nps "          <> tshow nps
-      <> " time "         <> tshow timeMillis
-      <> " pv "           <> unwords (tshow <$> pv))
+getGameResult :: Score -> GameResult
+getGameResult score
+  | score == maxScore = Victory
+  | score == minScore = Defeat
+  | otherwise        = InProgress
+
+
+printSearchInfo :: Depth -> Word64 -> MicroSeconds -> SearchResult -> IO ()
+printSearchInfo depth nodes elapsedTime SearchResult{..} = do
+  putStrLn ("info"
+    <> " depth " <> tshow depth
+    <> " score " <> showScore
+    <> " nodes " <> tshow nodes
+    <> " nps "   <> tshow nps
+    <> " time "  <> tshow timeMillis
+    <> " pv "    <> unwords (tshow <$> pv))
   hFlush stdout
   where
-    colorScore
-      | White <- color =   score
-      | Black <- color = - score
-    nps        = nodes * 1_000_000 `div` timePassed
-    timeMillis = timePassed `div` 1_000
+    nps        = nodes * 1_000_000 `div` elapsedTime
+    timeMillis = elapsedTime `div` 1_000
     pv         = catMaybes [bestMove, ponderMove]
+    showScore = case getGameResult score of
+      InProgress -> "cp "   <> tshow score
+      Victory    -> "mate " <> tshow @Int 1
+      Defeat     -> "mate " <> tshow @Int (-1)
 
 
 emptySearchResult :: Score -> SearchResult
@@ -268,6 +278,13 @@ data SearchResult = SearchResult {
   , bestMove   :: Maybe Move
   , ponderMove :: Maybe Move
 }
+
+
+data GameResult
+  = InProgress
+  | Victory
+  | Defeat
+  deriving (Eq)
 
 
 type SearchM = StateT SearchResult IO

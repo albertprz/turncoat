@@ -5,6 +5,7 @@ import           AppPrelude
 import           Evaluation.Evaluation
 import           Models.Command           (EngineOptions)
 import           Models.Move
+import           Models.Piece
 import           Models.Position
 import           Models.Score
 import           MoveGen.MakeMove         (makeMove)
@@ -67,6 +68,7 @@ getSortedCaptures pos =
   bimap mapFn mapFn
     $ partition ((>= 0) . snd)
     $ map attachEval
+    $ filter (\x -> x.promotion `elem` [NoProm, QueenProm])
     $ allCaptures pos
   where
     !mapFn        = map fst . sortBy (comparing (Down . snd))

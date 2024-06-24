@@ -79,7 +79,10 @@ foldBoardPawnMovesConst :: Square -> Board -> [Move] -> [Move]
 foldBoardPawnMovesConst !end !board moves =
   foldlBoard moves genMoves id board
   where
-    genMoves xs start = genPawnMoves start end xs
+    genMoves xs start = Move Pawn promotion start end : xs
+    !promotion
+      | testSquare (rank_1 .| rank_8) end = QueenProm
+      | otherwise                         = NoProm
 
 
 {-# INLINE  foldBoardSquares #-}

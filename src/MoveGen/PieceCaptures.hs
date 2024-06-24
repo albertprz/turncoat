@@ -94,7 +94,7 @@ staticExchangeCaptures target pos@Position {..}
 
   where
     genCaptures =
-      staticExchangeCapturesHelper target allPieces king allKingCaptures pos
+      staticExchangeCapturesHelper target allPieces allKingCaptures pos
     allKingCaptures =
       foldBoardSquares King (kingCaptures enemy attacked) [] kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
@@ -104,34 +104,25 @@ staticExchangeCaptures target pos@Position {..}
 
 
 staticExchangeCapturesHelper
-  :: Square -> Board -> Board -> [Move] -> Position -> [Move]
-staticExchangeCapturesHelper target allPieces king allKingCaptures Position {..} =
+  :: Square -> Board -> [Move] -> Position -> [Move]
+staticExchangeCapturesHelper target allPieces allKingCaptures Position {..} =
       foldBoardPawnMovesConst    target (unpinned&pawnAttackers)
-    $ foldBoardPawnMovesConst    target (diagPinnedPawns&pawnAttackers)
-    $ foldBoardPawnMovesConst    target (antiDiagPinnedPawns&pawnAttackers)
     $ foldBoardMovesConst Knight target (unpinned&knightAttackers)
-    $ foldBoardMovesConst Bishop target (player&bishopAttackers)
-    $ foldBoardMovesConst Rook   target (player&rookAttackers)
-    $ foldBoardMovesConst Queen  target (player&queenAttackers)
+    $ foldBoardMovesConst Bishop target (unpinned&bishopAttackers)
+    $ foldBoardMovesConst Rook   target (unpinned&rookAttackers)
+    $ foldBoardMovesConst Queen  target (unpinned&queenAttackers)
       allKingCaptures
 
     where
-    pawnAttackers = pawns & pawnAttacks (reverseColor color) targetBoard
+    pawnAttackers   = pawns & pawnAttacks (reverseColor color) targetBoard
     knightAttackers = knights & knightAttacks target
     bishopAttackers = bishops & bishopRays
-    rookAttackers = rooks & rookRays
-    queenAttackers = queens & (bishopRays .| rookRays)
-    bishopRays = bishopAttacks allPieces target
-    rookRays = rookAttacks allPieces target
-
-    targetBoard = toBoard target
-    unpinned = player .\ pinnedPieces
-    pinnedPawns = pinnedPieces & pawns
-    diagPinnedPawns = pinnedPawns & kingDiag
-    antiDiagPinnedPawns = pinnedPawns & kingAntiDiag
-    kingDiag = antiDiagMovesVec !! kingSquare
-    kingAntiDiag = diagMovesVec !! kingSquare
-    kingSquare = lsb king
+    rookAttackers   = rooks & rookRays
+    queenAttackers  = queens & (bishopRays .| rookRays)
+    bishopRays      = bishopAttacks allPieces target
+    rookRays        = rookAttacks allPieces target
+    targetBoard     = toBoard target
+    unpinned        = player .\ pinnedPieces
 
 
 pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board

@@ -94,9 +94,11 @@ staticExchangeCaptures target pos@Position {..}
 
   where
     genCaptures =
-      staticExchangeCapturesHelper target allPieces allKingCaptures pos
+      staticExchangeCapturesHelper target kingSquare allPieces
+                                   allKingCaptures pos
     allKingCaptures =
-      foldBoardSquares King (kingCaptures enemy attacked) [] kingSquare
+      foldBoardSquares King (kingCaptures (toBoard target) attacked)
+      [] kingSquare
     allCheckers = leapingCheckers .| sliderCheckers
     allPieces = player .| enemy
     kingSquare = lsb king
@@ -104,13 +106,14 @@ staticExchangeCaptures target pos@Position {..}
 
 
 staticExchangeCapturesHelper
-  :: Square -> Board -> [Move] -> Position -> [Move]
-staticExchangeCapturesHelper target allPieces allKingCaptures Position {..} =
-      foldBoardPawnMovesConst    target (unpinned&pawnAttackers)
+  :: Square -> Square -> Board -> [Move] -> Position -> [Move]
+staticExchangeCapturesHelper
+  target king allPieces allKingCaptures Position {..} =
+      foldBoardPawnMovesConst    target (validSliders&pawnAttackers)
     $ foldBoardMovesConst Knight target (unpinned&knightAttackers)
-    $ foldBoardMovesConst Bishop target (unpinned&bishopAttackers)
-    $ foldBoardMovesConst Rook   target (unpinned&rookAttackers)
-    $ foldBoardMovesConst Queen  target (unpinned&queenAttackers)
+    $ foldBoardMovesConst Bishop target (validSliders&bishopAttackers)
+    $ foldBoardMovesConst Rook   target (validSliders&rookAttackers)
+    $ foldBoardMovesConst Queen  target (validSliders&queenAttackers)
       allKingCaptures
 
     where
@@ -123,6 +126,25 @@ staticExchangeCapturesHelper target allPieces allKingCaptures Position {..} =
     rookRays        = rookAttacks allPieces target
     targetBoard     = toBoard target
     unpinned        = player .\ pinnedPieces
+
+    validSliders
+      | pinnedPieces .\ knights == 0 = player
+      | otherwise = unpinned .| pinnedPieces & getPinningRay target king
+
+
+getPinningRay :: Square -> Square -> Board
+getPinningRay !target !king
+    | testSquare kingDiag target     = kingDiag
+    | testSquare kingAntiDiag target = kingAntiDiag
+    | testSquare kingFile target     = kingFile
+    | testSquare kingRank target     = kingRank
+    | otherwise                      = 0
+  where
+  kingDiag        = antiDiagMovesVec !! king
+  kingAntiDiag    = diagMovesVec !! king
+  kingFile        = rankMovesVec !! king
+  kingRank        = fileMovesVec !! king
+
 
 
 pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board

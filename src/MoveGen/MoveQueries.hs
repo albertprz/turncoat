@@ -32,6 +32,7 @@ isCapture Move {..} Position {..} =
 isWinningCapture :: Move -> Position -> Bool
 isWinningCapture mv pos =
   isCapture mv pos
+    && mv.promotion `elem` [NoProm, QueenProm]
     && evaluateCaptureExchange mv pos >= 0
 
 

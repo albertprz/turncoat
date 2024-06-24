@@ -1,4 +1,4 @@
-module Search.TimeManagement (MicroSeconds, getMoveTime, getTimeOver, maybeTimeout, isTimeOver, (|-|))  where
+module Search.TimeManagement (MicroSeconds, getMoveTime, maybeTimeout, isTimeOver, (|-|))  where
 
 import           AppPrelude                 hiding (timeout)
 import           Control.Concurrent.Timeout (timeout)

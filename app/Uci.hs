@@ -111,14 +111,13 @@ handlePonderhit = do
   EngineState {..} <- get
   now <- liftIO getSystemTime
   let elapsedTime = now |-| searchStart
-      moveTime    = getMoveTime searchOptions position.color
-  if isTimeOver now searchStart moveTime
-    then stop
-    else liftIO do
-      let timeOver = getTimeOver $ fromMaybe 0 moveTime
-      void $ async do
-        delay $ fromIntegral (timeOver - elapsedTime)
-        stopTask taskRef
+  case getMoveTime searchOptions position.color of
+    Just moveTime
+      | elapsedTime > moveTime -> stop
+      | otherwise -> liftIO $ void $ async do
+          delay $ fromIntegral (moveTime - elapsedTime)
+          stopTask taskRef
+    Nothing -> pure ()
 
 
 stop :: CommandM ()

@@ -10,14 +10,17 @@ import           Models.Score
 import           MoveGen.MakeMove
 import           Search.Perft
 import           Search.Search
-import qualified Utils.KillersTable       as KillersTable
-import           Utils.KillersTable       (KillersTable)
-import qualified Utils.TranspositionTable as TTable
-import           Utils.TranspositionTable (TTable)
+import           Search.TimeManagement
+import qualified Utils.KillersTable              as KillersTable
+import           Utils.KillersTable              (KillersTable)
+import qualified Utils.TranspositionTable        as TTable
+import           Utils.TranspositionTable        (TTable)
 
+import           Control.Concurrent.Thread.Delay
 import           Control.Monad.State
 import           Data.Composition
-import qualified Data.Map                 as Map
+import qualified Data.Map                        as Map
+import           Data.Time.Clock.System
 import           System.Exit
 
 
@@ -29,7 +32,7 @@ executeCommand = \case
   Search opts      -> whenAvailable $ runSearch opts
   Perft  depth     -> whenAvailable $ runPerft  depth
   Divide depth     -> whenAvailable $ runDivide depth
-  Ponderhit        -> stop
+  Ponderhit        -> handlePonderhit
   Stop             -> stop
   Quit             -> quit
   SetPosition pos  -> setPosition pos
@@ -49,6 +52,8 @@ runSearch searchOpts = do
       ?killersTable = killersTable
       ?age          = age
   runTask $ printSearch searchOpts position
+  startTime <- liftIO getSystemTime
+  modify' \st -> st { searchStart = startTime, searchOptions = searchOpts }
   incrementAge
 
 
@@ -101,17 +106,25 @@ printStaticEval = withPosition go
          . getScoreBreakdown
 
 
+handlePonderhit :: CommandM ()
+handlePonderhit = do
+  EngineState {..} <- get
+  now <- liftIO getSystemTime
+  let elapsedTime = now |-| searchStart
+      moveTime    = getMoveTime searchOptions position.color
+  if isTimeOver now searchStart moveTime
+    then stop
+    else liftIO do
+      let timeOver = getTimeOver $ fromMaybe 0 moveTime
+      void $ async do
+        delay $ fromIntegral (timeOver - elapsedTime)
+        stopTask taskRef
+
+
 stop :: CommandM ()
 stop = do
-  cancelTask
-  clearTask
-  where
-    cancelTask = do
-      task <- getTask
-      traverse_ cancel task
-    clearTask = do
-      st <- get
-      writeIORef st.task Nothing
+  st <- get
+  liftIO $ stopTask st.taskRef
 
 
 quit :: CommandM ()
@@ -238,16 +251,22 @@ whenAvailable action = do
 
 runTask :: IO () -> CommandM ()
 runTask action = do
-  st          <- get
-  let taskRef = st.task
-  task        <- liftIO $ async (action *> writeIORef taskRef Nothing)
-  writeIORef st.task $ Just task
+  st <- get
+  task        <- liftIO $ async (action *> writeIORef st.taskRef Nothing)
+  writeIORef st.taskRef $ Just task
+
+
+stopTask :: IORef (Maybe Task) -> IO ()
+stopTask taskRef = do
+  task <- readIORef taskRef
+  traverse_ cancel task
+  writeIORef taskRef Nothing
 
 
 getTask :: CommandM (Maybe Task)
 getTask = do
   st <- get
-  readIORef st.task
+  readIORef st.taskRef
 
 
 withPosition :: (Position -> CommandM a) -> CommandM a
@@ -272,11 +291,13 @@ incrementAge =
 
 
 data EngineState = EngineState
-  { position :: Position
-  , options  :: EngineOptions
-  , task     :: IORef (Maybe Task)
-  , tTable   :: TTable
-  , age      :: Word8
+  { position      :: Position
+  , options       :: EngineOptions
+  , taskRef       :: IORef (Maybe Task)
+  , searchStart   :: SystemTime
+  , searchOptions :: SearchOptions
+  , tTable        :: TTable
+  , age           :: Word8
   }
 
 
@@ -285,11 +306,13 @@ initialEngineState = do
   taskRef <- newIORef Nothing
   tTable  <- TTable.create defaultEngineOptions
   pure EngineState
-    { position = startPosition
-    , options  = defaultEngineOptions
-    , task     = taskRef
-    , tTable   = tTable
-    , age      = 0
+    { position      = startPosition
+    , options       = defaultEngineOptions
+    , taskRef       = taskRef
+    , searchStart   = MkSystemTime 0 0
+    , searchOptions = defaultSearchOptions
+    , tTable        = tTable
+    , age           = 0
     }
 
 

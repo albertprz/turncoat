@@ -42,7 +42,8 @@ search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
     $ untilM (go startTime nodesRef) [1 .. targetDepth]
   when infinite $ forever $ threadDelay maxBound
   where
-    moveTime = getMoveTime searchOpts pos.color
+    moveTime =
+      maybeFilter (const $ not infinite) $ getMoveTime searchOpts pos.color
     go startTime nodesRef depth = do
       result <- getNodeResult initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime

@@ -3,6 +3,7 @@ module Models.Piece where
 import           AppPrelude
 import           Data.Char                 (isUpper)
 import qualified Data.Char                 as Char
+import qualified Data.Set                  as Set
 import           Test.QuickCheck           (Arbitrary, elements)
 import           Test.QuickCheck.Arbitrary (Arbitrary (..))
 
@@ -26,6 +27,10 @@ newtype Color = Color Word8
   deriving (Eq, Ord, Enum, Num, Real, Integral)
 
 data CastlingRights = KingSide | QueenSide
+
+
+bestPromotions :: Set Promotion
+bestPromotions = Set.fromList [NoProm, QueenProm, KnightProm]
 
 
 {-# COMPLETE Pawn, Knight, Bishop, Rook, Queen, King #-}

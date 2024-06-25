@@ -69,11 +69,6 @@ newPosition = setInitialValues . makeNullMove . makeNullMove
     }
     where
       ?phase = getPhase pos
-  getPhase Position {..} = min totalPhase
-     (minorPiecePhase * fromIntegral (popCount (knights .| bishops))
-    + rookPhase       * fromIntegral (popCount rooks)
-    + queenPhase      * fromIntegral (popCount queens))
-
 
 includePiece :: (Square, (Piece, Color)) -> Position -> Position
 includePiece (square, (piece, pieceColor)) pos@Position {..} =

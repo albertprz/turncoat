@@ -155,6 +155,14 @@ isRepeatedPosition zKey Position {..} =
   hasMultiple $ filter (== zKey) previousPositions
 
 
+{-# INLINE  getPhase #-}
+getPhase :: Position -> Phase
+getPhase Position {..} = min totalPhase
+   (minorPiecePhase * fromIntegral (popCount (knights .| bishops))
+  + rookPhase       * fromIntegral (popCount rooks)
+  + queenPhase      * fromIntegral (popCount queens))
+
+
 instance Show Position where
   show pos =
     show pos.color <> " to play: \n\n" <> boardStr

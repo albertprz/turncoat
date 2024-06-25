@@ -30,7 +30,7 @@ data TEntry = TEntry {
 instance Arbitrary TEntry where
   arbitrary = TEntry <$> arbitrary <*> arbitrary
                      <*> arbitrary <*> arbitrary
-                     <*> arbitrary <*> arbitrary
+                     <*> arbitrary <*> choose (0, 31)
 
 data StorableTEntry = StorableTEntry {
   zobristKey :: ZKey,

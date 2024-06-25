@@ -36,8 +36,8 @@ knightOutpostBonus = taperScore $ ScorePair 50 0
 
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
-  [(0, 0), (0, 0), (10, 30), (20, 60),
-   (30, 90), (40, 120), (50, 150)]
+  [(0, 0), (0, 0), (10, 20), (20, 40),
+   (30, 60), (40, 80), (50, 100)]
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)

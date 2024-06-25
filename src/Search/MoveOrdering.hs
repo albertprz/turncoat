@@ -68,7 +68,7 @@ getSortedCaptures pos =
   bimap mapFn mapFn
     $ partition ((>= 0) . snd)
     $ map attachEval
-    $ filter (\x -> x.promotion `elem` [NoProm, QueenProm])
+    $ filter ((`member` bestPromotions) . (.promotion))
     $ allCaptures pos
   where
     !mapFn        = map fst . sortBy (comparing (Down . snd))

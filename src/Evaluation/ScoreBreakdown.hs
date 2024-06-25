@@ -8,12 +8,12 @@ import           Models.Score
 
 
 data ScoreBreakdown = ScoreBreakdown
-  { white :: PlayerScoreBreakdown
-  , black :: PlayerScoreBreakdown
+  { playerScores :: PlayerScoreBreakdown
+  , enemyScores  :: PlayerScoreBreakdown
   }
 
 data PlayerScoreBreakdown = PlayerScoreBreakdown
-  { material      :: Maybe MaterialBreakdown
+  { material      :: MaterialBreakdown
   , bonusScores   :: BonusBreakdown
   , penaltyScores :: PenaltyBreakdown
   }
@@ -50,12 +50,12 @@ class EvalScore a where
 
 instance EvalScore ScoreBreakdown where
   evalScore ScoreBreakdown {..} =
-    evalScore white - evalScore black
+    evalScore playerScores - evalScore enemyScores
 
 
 instance EvalScore PlayerScoreBreakdown where
   evalScore PlayerScoreBreakdown {..} =
-    maybe 0 evalScore material
+      evalScore material
     + evalScore bonusScores
     - evalScore penaltyScores
 
@@ -82,16 +82,17 @@ instance EvalScore ScorePair where
 
 instance Show ScoreBreakdown where
   show breakdown@ScoreBreakdown {..} = unlines
-    ["White: "       <> indentBreak (show white),
-     "Black: "       <> indentBreak (show black),
+    ["Player: " <> indentBreak (show playerScores),
+     "Enemy:  " <> indentBreak (show enemyScores),
      totalScoreLine,
-     "Total: "       <> show (evalScore breakdown),
+     "Total: "  <> show (evalScore breakdown),
      totalScoreLine]
+
 
 
 instance Show PlayerScoreBreakdown where
   show breakdown@PlayerScoreBreakdown {..} = unlines
-    ["Material:       " <> indentBreak (foldMap show material),
+    ["Material:       " <> indentBreak (show material),
      "Bonus Scores:   " <> indentBreak (show bonusScores),
      "Penalty Scores: " <> indentBreak (show penaltyScores),
      totalScoreLine,

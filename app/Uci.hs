@@ -103,7 +103,7 @@ printStaticEval = withPosition go
     go = putStrLnFlush
          . ("\n" <>)
          . tshow
-         . getScoreBreakdown
+         . evaluatePositionBreakdown
 
 
 handlePonderhit :: CommandM ()

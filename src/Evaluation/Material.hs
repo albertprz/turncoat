@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 module Evaluation.Material (evaluateMaterial, evaluatePlayerMaterial, evaluateCapturedPiece) where
 
 import           AppPrelude
@@ -12,28 +11,39 @@ import           Models.Score
 import           Utils.Board
 
 
-evaluateMaterial :: Position -> Score
-evaluateMaterial pos@Position {..} =
-    evalScore (evaluatePlayerMaterial pos player color)
-  - evalScore (evaluatePlayerMaterial pos enemy (reverseColor color))
+evaluateMaterial :: (?phase :: Phase) => Position -> Score
+evaluateMaterial pos@Position {player, enemy, color} =
+    go (evaluatePlayerMaterial pos player color)
+  - go (evaluatePlayerMaterial pos enemy (reverseColor color))
+  where
+    go MaterialBreakdown {..} =
+        queensMaterial  + rooksMaterial + bishopsMaterial
+      + knightsMaterial + pawnsMaterial
+      where
+        ScorePair queensMaterial  _ = queens
+        ScorePair rooksMaterial   _ = rooks
+        ScorePair bishopsMaterial _ = bishops
+        ScorePair knightsMaterial _ = knights
+        ScorePair pawnsMaterial   _ = pawns
 
 
-evaluatePlayerMaterial :: Position -> Board -> Color -> MaterialBreakdown
-evaluatePlayerMaterial Position {..} !board  = \case
+evaluatePlayerMaterial
+  :: (?phase :: Phase) => Position -> Board -> Color -> MaterialBreakdown
+evaluatePlayerMaterial Position {..} !board = \case
     White -> MaterialBreakdown
           (boardScore queenScore whiteQueenSquareTable   (board & queens))
           (boardScore rookScore whiteRookSquareTable     (board & rooks))
           (boardScore bishopScore whiteBishopSquareTable (board & bishops))
           (boardScore knightScore whiteKnightSquareTable (board & knights))
           (boardScore pawnScore whitePawnSquareTable     (board & pawns))
-          (ScorePair 0 (whiteKingSquareTable !! lsb      (board & kings)))
+          (ScorePair 0 (whiteKingSquareTable !!% lsb      (board & kings)))
     Black -> MaterialBreakdown
           (boardScore queenScore blackQueenSquareTable   (board & queens))
           (boardScore rookScore blackRookSquareTable     (board & rooks))
           (boardScore bishopScore blackBishopSquareTable (board & bishops))
           (boardScore knightScore blackKnightSquareTable (board & knights))
           (boardScore pawnScore blackPawnSquareTable     (board & pawns))
-          (ScorePair 0 (blackKingSquareTable !! lsb      (board & kings)))
+          (ScorePair 0 (blackKingSquareTable !!% lsb      (board & kings)))
 
 
 boardScore :: Score -> Vector Score -> Board -> ScorePair
@@ -44,12 +54,11 @@ boardScore !pieceTypeScore !pieceSquareTable !board =
     pieceToScores !n = ScorePair pieceTypeScore (pieceSquareTable !! n)
 
 
-evaluateCapturedPiece ::  Color -> Square -> Piece -> Score
-evaluateCapturedPiece !color !n = \case
-    Pawn   -> pawnScore   + pawnSquareTable   !! idx
-    Knight -> knightScore + knightSquareTable !! idx
-    Bishop -> bishopScore + bishopSquareTable !! idx
-    Rook   -> rookScore   + rookSquareTable   !! idx
-    Queen  -> queenScore  + queenSquareTable  !! idx
-  where
-    !idx = n + 64 * fromIntegral (reverseColor color)
+evaluateCapturedPiece :: Piece -> Score
+evaluateCapturedPiece = \case
+    Pawn   -> pawnScore
+    Knight -> knightScore
+    Bishop -> bishopScore
+    Rook   -> rookScore
+    Queen  -> queenScore
+    King   -> 0

@@ -174,7 +174,7 @@ getMoveScore
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move
   -> SearchM (Maybe Score)
-getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx mv
+getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx !mv
 
   | isReduced && not (isCheckMove mv pos) =
       nullWindowSearch $! getLmrDepth mvIdx depth

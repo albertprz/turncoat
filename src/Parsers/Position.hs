@@ -65,8 +65,10 @@ newPosition = setInitialValues . makeNullMove . makeNullMove
   where
   setInitialValues pos = pos {
       materialScore = evaluateMaterial pos
-    , phase         = getPhase pos
-  }
+    , phase         = ?phase
+    }
+    where
+      ?phase = getPhase pos
   getPhase Position {..} = min totalPhase
      (minorPiecePhase * fromIntegral (popCount (knights .| bishops))
     + rookPhase       * fromIntegral (popCount rooks)

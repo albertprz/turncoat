@@ -1,5 +1,4 @@
-module Evaluation.Evaluation (evaluateCaptureExchange, evaluatePosition,
-getScoreBreakdown)
+module Evaluation.Evaluation (evaluateCaptureExchange, evaluatePosition, evaluatePositionBreakdown)
 where
 
 import           AppPrelude
@@ -19,41 +18,22 @@ import           Utils.Board
 
 
 evaluatePosition :: Position -> Score
-evaluatePosition pos =
+evaluatePosition =
+ evalScore . evaluatePositionBreakdown
+
+
+evaluatePositionBreakdown :: Position -> ScoreBreakdown
+evaluatePositionBreakdown pos =
   let
-    enemyPos         = makeNullMove pos
-    scoresBatch      = getScoresBatch pos
-    enemyScoresBatch = getScoresBatch enemyPos
+    !enemyPos         = makeNullMove pos
+    !scoresBatch      = getScoresBatch pos
+    !enemyScoresBatch = getScoresBatch enemyPos
   in
-    pos.materialScore
-    + evalScore
+    ScoreBreakdown
       (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
-    - evalScore
       (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
   where
     ?phase = pos.phase
-
-
-getScoreBreakdown :: Position -> ScoreBreakdown
-getScoreBreakdown pos@Position{..} =
-  let
-    (white, black)
-      | White <- color = (playerBreakdown, enemyBreakdown)
-      | Black <- color = (enemyBreakdown, playerBreakdown)
-    playerBreakdown =
-      (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
-      { material = Just $ evaluatePlayerMaterial pos player color }
-    enemyBreakdown  =
-      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
-      { material = Just $ evaluatePlayerMaterial pos enemy enemyColor }
-    enemyPos         = makeNullMove pos
-    enemyColor       = reverseColor color
-    scoresBatch      = getScoresBatch pos
-    enemyScoresBatch = getScoresBatch enemyPos
-  in
-    ScoreBreakdown {..}
-  where
-    ?phase = phase
 
 
 evaluatePlayerBreakdown
@@ -61,7 +41,7 @@ evaluatePlayerBreakdown
   -> PlayerScoreBreakdown
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
-    material      = Nothing
+    material      = evaluatePlayerMaterial pos pos.player pos.color
   , bonusScores   = evaluatePositionBonuses   scoresBatch      pos
   , penaltyScores = evaluatePositionPenalties enemyScoresBatch pos
   }
@@ -110,17 +90,25 @@ evaluateKnightOutposts Position {..} =
 
 
 evaluatePassedPawns :: (?phase :: Phase) => Position -> Score
-evaluatePassedPawns Position {..} =
+evaluatePassedPawns pos@Position {..} =
   eval file_A + eval file_B + eval file_C + eval file_D
   + eval file_E + eval file_F + eval file_G + eval file_H
   where
     eval board = mapFn $ msb (player & pawns & board)
     mapFn n
       | n == 64 || blockersVec !! n & enemy&pawns /= 0 = 0
-      | otherwise = passedPawnTable !!% getRank n
-    (!getRank, !blockersVec)
-      | White <- color = (toRank           , whitePassedPawnBlockersVec)
-      | Black <- color = (\n -> 7 - toRank n, blackPassedPawnBlockersVec)
+      | otherwise =
+        let rank = getRank n
+        in passedPawnTable !!% rank
+           + if isFreePasser rank n then pawnScore else 0
+    isFreePasser rank n =
+        rank `elem` [6, 7]
+      && testSquare noPieces (nextRank n)
+      && evaluateCaptureExchange (Move Pawn NoProm n $ nextRank n) pos >= 0
+    (!getRank, !nextRank, !blockersVec) = case color of
+      White -> (toRank           , (+ 8)     , whitePassedPawnBlockersVec)
+      Black -> (\n -> 7 - toRank n, \n -> n - 8, blackPassedPawnBlockersVec)
+    !noPieces = (~) (player .| enemy)
 
 
 evaluateIsolatedPawns :: (?phase :: Phase) => Board -> Score

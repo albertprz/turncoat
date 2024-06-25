@@ -8,7 +8,6 @@ import           Models.Position
 import           Utils.Board
 
 
-
 getLeapingCheckers :: Position -> Board
 getLeapingCheckers Position {..} =
   player & checkers

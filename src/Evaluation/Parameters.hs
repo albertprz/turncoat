@@ -36,8 +36,8 @@ knightOutpostBonus = taperScore $ ScorePair 50 0
 
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
-  [(0, 0), (0, 0), (10, 20), (20, 40),
-   (30, 60), (40, 80), (50, 100)]
+  [(0, 0), (0, 0), (10, 30), (20, 60),
+   (30, 90), (40, 120), (50, 150)]
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
@@ -140,8 +140,8 @@ blackQueenSquareTable = Vector.fromList
    -10,  0,  5,  0,  0,  0,  0,-10,
    -20,-10,-10, -5, -5,-10,-10,-20]
 
-blackKingSquareTable :: Vector Score
-blackKingSquareTable = Vector.fromList
+blackKingMidgameSquareTable :: Vector Score
+blackKingMidgameSquareTable = Vector.fromList
   [-30,-40,-40,-50,-50,-40,-40,-30,
    -30,-40,-40,-50,-50,-40,-40,-30,
    -30,-40,-40,-50,-50,-40,-40,-30,
@@ -150,6 +150,24 @@ blackKingSquareTable = Vector.fromList
    -10,-20,-20,-20,-20,-20,-20,-10,
     20, 20,  0,  0,  0,  0, 20, 20,
     20, 30, 10,  0,  0, 10, 30, 20]
+
+blackKingEndgameSquareTable :: Vector Score
+blackKingEndgameSquareTable = Vector.fromList
+  [-50,-40,-30,-20,-20,-30,-40,-50,
+   -30,-20,-10,  0,  0,-10,-20,-30,
+   -30,-10, 20, 30, 30, 20,-10,-30,
+   -30,-10, 30, 40, 40, 30,-10,-30,
+   -30,-10, 30, 40, 40, 30,-10,-30,
+   -30,-10, 20, 30, 30, 20,-10,-30,
+   -30,-30,  0,  0,  0,  0,-30,-30,
+   -50,-30,-30,-30,-30,-30,-30,-50]
+
+
+blackKingSquareTable :: Vector ScorePair
+blackKingSquareTable =
+  Vector.zipWith ScorePair blackKingMidgameSquareTable
+                           blackKingEndgameSquareTable
+
 
 whitePawnSquareTable :: Vector Score
 whitePawnSquareTable =
@@ -171,34 +189,9 @@ whiteQueenSquareTable :: Vector Score
 whiteQueenSquareTable =
   reverseSquareTable blackQueenSquareTable
 
-whiteKingSquareTable :: Vector Score
+whiteKingSquareTable :: Vector ScorePair
 whiteKingSquareTable =
   reverseSquareTable blackKingSquareTable
-
-
-pawnSquareTable :: Vector Score
-pawnSquareTable =
-  whitePawnSquareTable <> blackPawnSquareTable
-
-knightSquareTable :: Vector Score
-knightSquareTable =
-  whiteKnightSquareTable <> blackKnightSquareTable
-
-bishopSquareTable :: Vector Score
-bishopSquareTable =
-  whiteBishopSquareTable <> blackBishopSquareTable
-
-rookSquareTable :: Vector Score
-rookSquareTable =
-  whiteRookSquareTable <> blackRookSquareTable
-
-queenSquareTable :: Vector Score
-queenSquareTable =
-  whiteQueenSquareTable <> blackQueenSquareTable
-
-kingSquareTable :: Vector Score
-kingSquareTable =
-  whiteKingSquareTable <> blackKingSquareTable
 
 
 infixl 9 !!%
@@ -216,6 +209,6 @@ getSquareTableIndex board color =
   lsb board + 64 * fromIntegral color
 
 
-reverseSquareTable :: Vector Score -> Vector Score
+reverseSquareTable :: Storable a => Vector a -> Vector a
 reverseSquareTable =
   fromList . fold . reverse . chunksOf 8 . toList

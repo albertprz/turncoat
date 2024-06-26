@@ -141,9 +141,9 @@ getPinningRay !target !king
     | otherwise                      = 0
   where
   kingDiag        = antiDiagMovesVec !! king
-  kingAntiDiag    = diagMovesVec !! king
-  kingFile        = rankMovesVec !! king
-  kingRank        = fileMovesVec !! king
+  kingAntiDiag    = diagMovesVec     !! king
+  kingFile        = rankMovesVec     !! king
+  kingRank        = fileMovesVec     !! king
 
 
 pawnCapturesAndPromotions :: Board -> Board -> Board -> Color -> Square -> Board

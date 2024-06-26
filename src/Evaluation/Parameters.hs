@@ -21,10 +21,10 @@ bishopScore :: Score
 bishopScore = 340
 
 rookScore :: Score
-rookScore = 510
+rookScore = 520
 
 queenScore :: Score
-queenScore = 950
+queenScore = 1000
 
 
 -- Bonuses
@@ -80,8 +80,8 @@ isolatedPawnPenalty = taperScore $ ScorePair 25 50
 
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
-  [0, 0, 50, 75, 88, 94, 97, 99, 100,
-   100, 100, 100, 100, 100, 100, 100]
+  [0, 0, 30, 50, 75, 88, 94, 97, 99,
+   100, 100, 100, 100, 100, 100]
 
 
 -- Piece Square Tables

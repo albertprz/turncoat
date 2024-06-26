@@ -134,13 +134,13 @@ getNodeResult !alpha !beta !depth !ply pos
 
   where
     !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
-    traverseMoves (moves, hasTTMove)
+    traverseMoves (moves, hasPVMove)
       | null $ uncurry (<>) moves =
           let score | isKingInCheck pos = minScore
                     | otherwise         = 0
           in pure $! emptySearchResult score
       | otherwise = do
-          let movesSearch = getMovesScore beta depth ply moves hasTTMove pos
+          let movesSearch = getMovesScore beta depth ply moves hasPVMove pos
           (!score, !searchResult) <-
             runStateT movesSearch (emptySearchResult alpha)
           let
@@ -154,7 +154,7 @@ getMovesScore
     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
-getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
+getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasPVMove pos = do
   mainSearchScore <- mainMovesSearch
   maybe reducedMovesSearch (pure . Just) mainSearchScore
 
@@ -162,47 +162,48 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasTTMove pos = do
     mainMovesSearch       = movesSearch False mainMoves
     reducedMovesSearch    = movesSearch True  reducedMoves
     movesSearch isReduced =
-      findTraverseIndex (getMoveScore beta depth ply isReduced hasTTMove pos)
+      findTraverseIndex (getMoveScore beta depth ply isReduced hasPVMove pos)
 
 
 -- Features:
--- - Late Move Reductions
 -- - Principal Variation Search
+-- - Late Move Reductions
 
 getMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move
   -> SearchM (Maybe Score)
-getMoveScore !beta !depth !ply !isReduced !hasTTMove pos !mvIdx !mv
+getMoveScore !beta !depth !ply !isReduced !hasPVMove pos !mvIdx !mv
 
-  | isReduced && not (isCheckMove mv pos) =
-      nullWindowSearch $! getLmrDepth mvIdx depth
-
-  | hasTTMove && mvIdx > 0 =
-      nullWindowSearch depth
-
-  | otherwise =
-      fullSearch
+  | hasPVMove && (mvIdx > 0 || isReduced) = nullWindowSearch
+  | otherwise                           = fullSearch
 
   where
-    nullWindowSearch !depth' = do
-     SearchResult {score = alpha} <- get
-     !score <- fst <$> getNegamaxScore alpha (alpha + 1) depth'
+    !lmrDepth
+      | isReduced && not (isCheckMove mv pos || isCapture mv pos)
+        = getLmrDepth mvIdx depth
+      | otherwise
+        = depth
+
+    nullWindowSearch = do
+     st@SearchResult {score = alpha} <- get
+     !score <- fst <$> getNegamaxScore alpha (alpha + 1)
+     put st
      if score > alpha
        then fullSearch
        else pure Nothing
 
     fullSearch = do
       SearchResult {score = alpha} <- get
-      (!score, !enemyMv)           <- getNegamaxScore alpha beta depth
+      (!score, !enemyMv)           <- getNegamaxScore alpha beta
       let !nodeType                = getNodeType alpha beta score
       !newScore                    <-
         advanceState beta score ply nodeType mv enemyMv pos
       pure newScore
 
-    getNegamaxScore !alpha' !beta' !depth' = liftIO do
-      SearchResult {..} <- negamax (-beta') (-alpha') (depth' - 1)
+    getNegamaxScore !alpha' !beta' = liftIO do
+      SearchResult {..} <- negamax (-beta') (-alpha') (lmrDepth - 1)
                                  (ply + 1) (makeMove mv pos)
       pure (negate $! score, bestMove)
 

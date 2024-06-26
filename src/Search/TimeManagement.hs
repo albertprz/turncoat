@@ -30,7 +30,7 @@ getMoveTime SearchOptions {..} Position {phase, color} =
       | Black <- color = (blackTime, blackIncrement)
     !movesUntil = fromMaybe movesUntilDefault movesUntilNextTime
     !movesUntilDefault =
-      let ?phase = phase in fromIntegral $ taperScore (ScorePair 20 10)
+      let ?phase = phase in fromIntegral $ taperScore (ScorePair 15 5)
 
 
 maybeTimeout :: Maybe MicroSeconds -> IO () -> IO ()

@@ -35,7 +35,7 @@ parseCommand = runParser command
     <|> stringToken "go" *>
          (stringToken "perft"    *> (Perft  <$> depth)
       <|> stringToken "divide"   *> (Divide <$> depth)
-      <|> (Search <$> searchOptions))
+      <|>                           (Search <$> searchOptions))
 
   searchOption =
         setInfinite       <$   stringToken "infinite"
@@ -56,10 +56,12 @@ parseCommand = runParser command
     <*> (stringToken "moves" *> unknownMoves <|> pure [])
 
   optionSpec = stringToken "name" *>
-    ((stringToken "Hash" $> HashSize)
-     <*> (stringToken "value" *> unsignedInt)
-     <|> (stringToken "Ponder" $> Ponder)
-     <*> (stringToken "value" *> boolean)
+    (    (stringToken "Hash"      $> HashSize)
+     <*> (stringToken "value"     *> unsignedInt)
+
+     <|> (stringToken "Ponder"    $> Ponder)
+     <*> (stringToken "value"     *> boolean)
+
      <|> stringToken "Clear Hash" $> ClearHash)
 
   searchOptions =
@@ -67,7 +69,7 @@ parseCommand = runParser command
 
   initialPositionSpec =
         stringToken "startpos" $> startPosition
-    <|> stringToken "fen"  *> positionFenParser
+    <|> stringToken "fen"      *> positionFenParser
 
   unknownMoves = (token unknownMove |+)
   unknownMove  = UnknownMove

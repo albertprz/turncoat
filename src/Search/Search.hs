@@ -134,13 +134,13 @@ getNodeResult !alpha !beta !depth !ply pos
 
   where
     !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
-    traverseMoves (moves, hasPVMove)
+    traverseMoves (moves, isPVNode)
       | null $ uncurry (<>) moves =
           let score | isKingInCheck pos = minScore
                     | otherwise         = 0
           in pure $! emptySearchResult score
       | otherwise = do
-          let movesSearch = getMovesScore beta depth ply moves hasPVMove pos
+          let movesSearch = getMovesScore beta depth ply moves isPVNode pos
           (!score, !searchResult) <-
             runStateT movesSearch (emptySearchResult alpha)
           let
@@ -154,7 +154,7 @@ getMovesScore
     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
   -> SearchM (Maybe Score)
-getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasPVMove pos = do
+getMovesScore !beta !depth !ply (mainMoves, reducedMoves) isPVNode pos = do
   mainSearchScore <- mainMovesSearch
   maybe reducedMovesSearch (pure . Just) mainSearchScore
 
@@ -162,7 +162,7 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) hasPVMove pos = do
     mainMovesSearch       = movesSearch False mainMoves
     reducedMovesSearch    = movesSearch True  reducedMoves
     movesSearch isReduced =
-      findTraverseIndex (getMoveScore beta depth ply isReduced hasPVMove pos)
+      findTraverseIndex (getMoveScore beta depth ply isReduced isPVNode pos)
 
 
 -- Features:
@@ -174,11 +174,11 @@ getMoveScore
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move
   -> SearchM (Maybe Score)
-getMoveScore !beta !depth !ply !isReduced !hasPVMove pos !mvIdx !mv
-
-  | hasPVMove && (mvIdx > 0 || isReduced) = nullWindowSearch
-  | otherwise                           = fullSearch
-
+getMoveScore !beta !depth !ply !isReduced !isPVNode pos !mvIdx !mv = do
+  SearchResult {bestMove} <- get
+  if isJust bestMove && isPVNode
+    then nullWindowSearch
+    else fullSearch
   where
     !lmrDepth
       | isReduced && not (isCheckMove mv pos || isCapture mv pos)

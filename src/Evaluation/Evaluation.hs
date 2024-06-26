@@ -82,11 +82,9 @@ evaluateKnightOutposts Position {..} =
   where
     defended = pawnAttacks color (player&pawns)
     mapFn !n = toReverseCondition (attackersVec !! n & enemy&pawns)
-    (!ranks, !attackersVec)
-      | White <- color =
-        (whiteKnightOutpostRanks , whiteKnightOutpostAttackersVec)
-      | Black <- color =
-         (blackKnightOutpostRanks, blackKnightOutpostAttackersVec)
+    (!ranks, !attackersVec) = case color of
+      White -> (whiteKnightOutpostRanks , whiteKnightOutpostAttackersVec)
+      Black -> (blackKnightOutpostRanks , blackKnightOutpostAttackersVec)
 
 
 evaluatePassedPawns :: (?phase :: Phase) => Position -> Score
@@ -100,11 +98,11 @@ evaluatePassedPawns pos@Position {..} =
       | otherwise =
         let rank = getRank n
         in passedPawnTable !!% rank
-           + if isFreePasser rank n then pawnScore else 0
+           + if isFreePasser rank n then freePasserBonus else 0
     isFreePasser rank n =
-        rank `elem` [6, 7]
+      rank == 7
       && testSquare noPieces (nextRank n)
-      && evaluateCaptureExchange (Move Pawn NoProm n $ nextRank n) pos >= 0
+      && evaluateCaptureExchange (Move Pawn QueenProm n $ nextRank n) pos >= 0
     (!getRank, !nextRank, !blockersVec) = case color of
       White -> (toRank           , (+ 8)     , whitePassedPawnBlockersVec)
       Black -> (\n -> 7 - toRank n, \n -> n - 8, blackPassedPawnBlockersVec)

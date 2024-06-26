@@ -22,7 +22,7 @@ makeMove Move {..} =
 
 
 makeNullMove :: Position -> Position
-makeNullMove pos@Position {materialScore, color, player, enemy, enPassant} =
+makeNullMove pos@Position {materialScore, color, player,  enemy, enPassant} =
   pos {
     materialScore   = - materialScore
   , color           = reverseColor color
@@ -87,74 +87,74 @@ movePiece Pawn KnightProm start end pos@Position {..} =
   pos {
       materialScore = materialScore + knightScore - pawnScore
     , halfMoveClock = 0
-    , pawns = pawns ^ start
-    , knights = knights .| end
-    , enPassant = 0
+    , pawns         = pawns ^ start
+    , knights       = knights .| end
+    , enPassant     = 0
   }
 
 movePiece Pawn BishopProm start end pos@Position {..} =
   pos {
       materialScore = materialScore + bishopScore - pawnScore
     , halfMoveClock = 0
-    , pawns = pawns ^ start
-    , bishops = bishops .| end
-    , enPassant = 0
+    , pawns         = pawns ^ start
+    , bishops       = bishops .| end
+    , enPassant     = 0
   }
 
 movePiece Pawn RookProm !start !end pos@Position {..} =
   pos {
       materialScore = materialScore + rookScore - pawnScore
     , halfMoveClock = 0
-    , pawns = pawns ^ start
-    , rooks = rooks .| end
-    , enPassant = 0
+    , pawns         = pawns ^ start
+    , rooks         = rooks .| end
+    , enPassant     = 0
   }
 
 movePiece Pawn QueenProm start end pos@Position {..} =
   pos {
       materialScore = materialScore + queenScore - pawnScore
     , halfMoveClock = 0
-    , pawns = pawns ^ start
-    , queens = queens .| end
-    , enPassant = 0
+    , pawns         = pawns ^ start
+    , queens        = queens .| end
+    , enPassant     = 0
   }
 
 movePiece Knight _ start end pos@Position {..} =
   pos {
-      knights = (knights ^ start) .| end
+      knights   = (knights ^ start) .| end
     , enPassant = 0
   }
 
 movePiece Bishop _ start end pos@Position {..} =
   pos {
-      bishops = (bishops ^ start) .| end
+      bishops   = (bishops ^ start) .| end
     , enPassant = 0
   }
 
 movePiece Rook _ start end pos@Position {..} =
   pos {
-      rooks = (rooks ^ start) .| end
-    , castling = castling .\ start
+      rooks     = (rooks ^ start) .| end
+    , castling  = castling .\ start
     , enPassant = 0
   }
 
 movePiece Queen _ start end pos@Position {..} =
   pos {
-      queens = (queens ^ start) .| end
+      queens    = (queens ^ start) .| end
     , enPassant = 0
   }
 
 movePiece King _ start end pos@Position {..} =
   pos {
-    kings = (kings ^ start) .| end
-    , castling = castling .\ kingRank
-    , player = (player ^ rookStart) .| rookEnd
-    , rooks = (rooks ^ rookStart) .| rookEnd
+      kings     = (kings ^ start) .| end
+    , castling  = castling .\ kingRank
+    , player    = (player ^ rookStart) .| rookEnd
+    , rooks     = (rooks ^ rookStart) .| rookEnd
     , enPassant = 0
   }
   where
-    rookStart = shortCastle << 1 .| longCastle >> 2
-    rookEnd = shortCastle >> 1 .| longCastle << 1
+    rookStart   = shortCastle << 1 .| longCastle >> 2
+    rookEnd     = shortCastle >> 1 .| longCastle << 1
     shortCastle = (start << 2) & end
-    longCastle = (start >> 2) & end
-    kingRank = fileMovesVec !! lsb start
+    longCastle  = (start >> 2) & end
+    kingRank    = fileMovesVec !! lsb start

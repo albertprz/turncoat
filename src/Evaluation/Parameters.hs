@@ -21,7 +21,7 @@ bishopScore :: Score
 bishopScore = 340
 
 rookScore :: Score
-rookScore = 520
+rookScore = 510
 
 queenScore :: Score
 queenScore = 1000
@@ -29,14 +29,17 @@ queenScore = 1000
 
 -- Bonuses
 bishopPairBonus :: (?phase :: Phase) => Score
-bishopPairBonus = taperScore $ ScorePair 25 75
+bishopPairBonus = taperScore $ ScorePair 50 100
 
 knightOutpostBonus :: (?phase :: Phase) => Score
 knightOutpostBonus = taperScore $ ScorePair 50 0
 
+freePasserBonus :: (?phase :: Phase) => Score
+freePasserBonus = taperScore $ ScorePair 0 100
+
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
-  [(0, 0), (0, 0), (10, 20), (20, 40),
+  [(0, 0), (0, 0), (10, 20), (20, 30),
    (30, 60), (40, 80), (50, 100)]
 
 knightMobilityTable :: Vector ScorePair

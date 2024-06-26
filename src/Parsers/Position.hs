@@ -42,9 +42,9 @@ positionFenParser = do
     $ manySepBy (is '/') (fold <$> ((emptySquaresN <|> piece) |+))
   colorP = mandatory (map charToColor anyChar)
   castlingP = (mandatory (map charToCastlingRights anyChar) |+)
-    <|> [] <$ is '-'
-  enPassantP = pure <$> squareParser
-    <|> Nothing <$ is '-'
+           <|> [] <$ is '-'
+  enPassantP = Just <$> squareParser
+           <|> Nothing <$ is '-'
   emptySquaresN = (`replicate` Nothing) . digitToInt <$> oneOf ['1' .. '8']
   piece = pure . pure <$> mandatory (map charToPiece anyChar)
   lengthCheck xs = length xs == 8

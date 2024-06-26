@@ -18,13 +18,13 @@ initialBeta = maxScore
 
 futilityMargins :: Vector Score
 futilityMargins = Vector.fromList
-  [2 * pawnScore, 4 * pawnScore, 8 * pawnScore]
+  [bishopScore, rookScore, queenScore]
 
 
 getLmrDepth :: Int -> Depth -> Depth
 getLmrDepth mvIdx depth =
     min (depth - 1)
-    $ ceiling (lmrFactor * (fromIntegral depth / 2)
+    $ ceiling (lmrFactor * (fromIntegral depth * 5 / 6)
     + (1 - lmrFactor) * (fromIntegral depth - 1))
   where
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 20)
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 15)

@@ -126,7 +126,7 @@ insert !zKey !newEntry
 
 isStaleEntry :: Maybe TEntry -> TEntry -> Bool
 isStaleEntry (Just entry) newEntry =
-  newEntry.age - entry.age > 2
+  newEntry.age - entry.age > 1
   || newEntry.depth >= entry.depth
   && (newEntry.nodeType == PV || entry.nodeType /= PV)
 isStaleEntry Nothing _ =

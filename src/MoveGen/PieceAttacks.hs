@@ -57,25 +57,26 @@ getPinnedPieces !bishopCheckerRays !rookCheckerRays !sliderRays Position {..} =
       & (bishopCheckerRays .| rookCheckerRays)
       & queenAttacks allPieces n
     attackers = sliderRays & player
-    !king = enemy & kings
+    !king     = enemy & kings
     allPieces = player .| enemy
 
 
 getEnPassantPinnedPawns :: Position -> Board
 getEnPassantPinnedPawns pos@Position {..} =
-  pawns & getPinnedPieces 0 rookCheckerRays sliderRays pos'
+  enemy & pawns & getPinnedPieces 0 rookCheckerRays sliderRays pos'
   where
-    rookCheckerRays = getRookCheckerRays pos'
-    sliderRays = getEnemyKingSliderRays pos' & enPassantRank
+    rookCheckerRays = getRookCheckerRays pos' & kingRank
+    kingRank        = fileMovesVec !! lsb (kings & enemy)
+    sliderRays      = getEnemyKingSliderRays pos' & enPassantRank
     pos' = pos {
-      pawns = pawns ^ enPassantPawn,
+      pawns  = pawns  ^ enPassantPawn,
       player = player ^ enPassantPawn
     }
-    enPassantPawn = case color of
+    enPassantPawn   = case color of
       White -> enPassant << 8
       Black -> enPassant >> 8
     enPassantSquare = lsb enPassantPawn
-    enPassantRank = fileMovesVec !! enPassantSquare
+    enPassantRank   = fileMovesVec !! enPassantSquare
 
 
 getKingQueenRay :: Board -> Square -> Board
@@ -86,10 +87,10 @@ getKingQueenRay !king !n
   | antiDiag & king /= 0 = antiDiag
   | otherwise           = 0
   where
-    file = rankMovesVec !! n
-    rank = fileMovesVec !! n
-    diag = antiDiagMovesVec !! n
-    antiDiag = diagMovesVec !! n
+    file     = rankMovesVec     !! n
+    rank     = fileMovesVec     !! n
+    diag     = antiDiagMovesVec !! n
+    antiDiag = diagMovesVec     !! n
 
 
 getKingBishopRay :: Board -> Square -> Board
@@ -98,8 +99,8 @@ getKingBishopRay !king !n
   | antiDiag & king /= 0 = antiDiag
   | otherwise           = 0
   where
-    diag = antiDiagMovesVec !! n
-    antiDiag = diagMovesVec !! n
+    diag     = antiDiagMovesVec !! n
+    antiDiag = diagMovesVec     !! n
 
 
 getKingRookRay :: Board -> Square -> Board
@@ -114,12 +115,12 @@ getKingRookRay !king !n
 
 allAttacks :: Position -> Board
 allAttacks Position {..} =
-     pawnAttacks  color                  (player&pawns)
+     pawnAttacks  color                         (player&pawns)
   .| foldBoardAttacks knightAttacks             (player&knights)
   .| foldBoardAttacks (bishopAttacks allPieces) (player&bishops)
   .| foldBoardAttacks (rookAttacks allPieces)   (player&rooks)
   .| foldBoardAttacks (queenAttacks allPieces)  (player&queens)
-  .| kingAttacks                    (lsb (player&kings))
+  .| kingAttacks                           (lsb (player&kings))
   where
     !allPieces = player .| (enemy .\ kings)
 
@@ -197,7 +198,7 @@ sliding :: (Board -> Square) -> Vector Board -> Board -> Square -> Board
 sliding !findBlocker !mask !allPieces !n =
    ray ^ blockerRay
   where
-    !blockerRay = mask !! firstBlocker
     !firstBlocker = findBlocker blockers
-    !blockers = ray & allPieces
-    !ray = mask !! n
+    !blockers     = ray & allPieces
+    !blockerRay   = mask !! firstBlocker
+    !ray          = mask !! n

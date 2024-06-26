@@ -34,7 +34,6 @@ getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable,
                   ?opts :: EngineOptions)
   => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
 getSortedMoves !depth !ply pos = do
-
   ttEntry     <- TTable.lookupEntry (getZobristKey pos)
   killerMoves <- getSortedKillers ply pos
   let
@@ -43,26 +42,26 @@ getSortedMoves !depth !ply pos = do
          ttMove
       <> filter (`notElem` ttMove) winningCaptures
       <> filter (`notElem` ttMove) killerMoves
+      <> filter (`notElem` (ttMove <> killerMoves)) quietChecks
 
     worstMoves =
          filter (`notElem` (ttMove <> killerMoves)) quietMoves
       <> filter (`notElem` ttMove)                  losingCaptures
 
-    !hasPVMove = any ((== PV) . (.nodeType)) ttEntry
+    !isPVNode = any ((== PV) . (.nodeType)) ttEntry
 
   pure if depth >= 3 && not (isKingInCheck pos)
-    then ((bestMoves, worstMoves)       , hasPVMove)
-    else ((bestMoves <> worstMoves, []) , hasPVMove)
+    then ((bestMoves, worstMoves)       , isPVNode)
+    else ((bestMoves <> worstMoves, []) , isPVNode)
   where
     (winningCaptures, losingCaptures) = getSortedCaptures pos
-    quietMoves                        = getSortedQuietMoves depth pos
+    (quietChecks, quietMoves)         = getSortedQuietMoves depth pos
 
 
 getSortedKillers :: (?killersTable :: KillersTable)
   => Ply -> Position -> IO [Move]
 getSortedKillers !ply pos =
-  sortMoves pos
-   . filter (`isLegalQuietMove` pos)
+   filter (`isLegalQuietMove` pos)
    <$> KillersTable.lookupMoves ply
 
 
@@ -78,10 +77,16 @@ getSortedCaptures pos =
     attachEval mv = (mv, evaluateCaptureExchange mv pos)
 
 
-getSortedQuietMoves :: Depth -> Position -> [Move]
+getSortedQuietMoves :: Depth -> Position -> ([Move], [Move])
 getSortedQuietMoves depth pos
-  | depth <= 2 = allQuietMoves pos
-  | otherwise = sortMoves pos $ allQuietMoves pos
+  | depth <= 2 =
+    partition (`isCheckMove` pos) $ allQuietMoves pos
+  | otherwise =
+      bimap mapFn mapFn
+    $ partition (`isCheckMove` pos)
+    $ allQuietMoves pos
+    where
+    !mapFn = sortMoves pos
 
 
 sortMoves :: Position -> [Move] -> [Move]

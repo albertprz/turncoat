@@ -215,8 +215,7 @@ getNullMoveScore
 getNullMoveScore !beta !depth !ply pos
 
   | depth > r && not (isKingInCheck pos)
-              && not (isEndgame pos)
-              && pos.materialScore >= beta = do
+              && not (isEndgame pos) = do
     SearchResult {..} <- negamax (-beta) (-alpha) (depth - r - 1)
                                (ply + 1) (makeNullMove pos)
     pure $! Just $! negate score

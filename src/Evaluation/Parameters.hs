@@ -11,20 +11,20 @@ import qualified Data.Vector.Storable      as Vector
 
 
 -- Material scores
-pawnScore :: Score
-pawnScore = 100
+pawnScore :: (?phase :: Phase) => Score
+pawnScore = taperScore $ ScorePair 90 110
 
-knightScore :: Score
-knightScore = 330
+knightScore :: (?phase :: Phase) => Score
+knightScore = taperScore $ ScorePair 330 310
 
-bishopScore :: Score
-bishopScore = 340
+bishopScore :: (?phase :: Phase) => Score
+bishopScore = taperScore $ ScorePair 330 310
 
-rookScore :: Score
-rookScore = 510
+rookScore :: (?phase :: Phase) => Score
+rookScore = taperScore $ ScorePair 500 600
 
-queenScore :: Score
-queenScore = 1000
+queenScore :: (?phase :: Phase) => Score
+queenScore = taperScore $ ScorePair 1000 1100
 
 
 -- Bonuses
@@ -39,7 +39,7 @@ freePasserBonus = taperScore $ ScorePair 0 100
 
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
-  [(0, 0), (0, 0), (10, 20), (20, 30),
+  [(0, 0), (0, 0), (10, 20), (20, 40),
    (30, 60), (40, 80), (50, 100)]
 
 knightMobilityTable :: Vector ScorePair
@@ -70,13 +70,13 @@ queenMobilityTable = Vector.fromList $ map (uncurry ScorePair)
 
 -- Penalties
 threatByMinorPenalty :: Score
-threatByMinorPenalty = 20
+threatByMinorPenalty = 40
 
 threatByRookPenalty :: Score
-threatByRookPenalty = 40
+threatByRookPenalty = 80
 
 threatByQueenPenalty :: Score
-threatByQueenPenalty = 80
+threatByQueenPenalty = 160
 
 isolatedPawnPenalty :: (?phase :: Phase) => Score
 isolatedPawnPenalty = taperScore $ ScorePair 25 50
@@ -118,30 +118,22 @@ blackBishopSquareTable = Vector.fromList
    -10,  5,  5, 10, 10,  5,  5,-10,
    -10,  0, 10, 10, 10, 10,  0,-10,
    -10, 10, 10, 10, 10, 10, 10,-10,
-   -10,  5,  0,  0,  0,  0,  5,-10,
+   -10, 10,  0,  0,  0,  0, 10,-10,
    -20,-10,-10,-10,-10,-10,-10,-20]
 
 blackRookSquareTable :: Vector Score
 blackRookSquareTable = Vector.fromList
   [0,  0,  0,  0,  0,  0,  0,  0,
-   5, 10, 10, 10, 10, 10, 10,  5,
+   10, 20, 20, 20, 20, 20, 20,  10,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
-   0,  0,  0,  5,  5,  0,  0,  0]
+   0,  0,  0,  10, 10,  0,  0,  0]
 
 blackQueenSquareTable :: Vector Score
-blackQueenSquareTable = Vector.fromList
-  [-20,-10,-10, -5, -5,-10,-10,-20,
-   -10,  0,  0,  0,  0,  0,  0,-10,
-   -10,  0,  5,  5,  5,  5,  0,-10,
-    -5,  0,  5,  5,  5,  5,  0, -5,
-     0,  0,  5,  5,  5,  5,  0, -5,
-   -10,  5,  5,  5,  5,  5,  0,-10,
-   -10,  0,  5,  0,  0,  0,  0,-10,
-   -20,-10,-10, -5, -5,-10,-10,-20]
+blackQueenSquareTable = Vector.replicate 64 0
 
 blackKingMidgameSquareTable :: Vector Score
 blackKingMidgameSquareTable = Vector.fromList
@@ -150,9 +142,9 @@ blackKingMidgameSquareTable = Vector.fromList
    -30,-40,-40,-50,-50,-40,-40,-30,
    -30,-40,-40,-50,-50,-40,-40,-30,
    -20,-30,-30,-40,-40,-30,-30,-20,
-   -10,-20,-20,-20,-20,-20,-20,-10,
-    20, 20,  0,  0,  0,  0, 20, 20,
-    20, 30, 10,  0,  0, 10, 30, 20]
+   -10,-20,-20,-30,-30,-20,-20,-10,
+     0,-10,-10,-20,-20,-10,-10,  0,
+    50, 30, 10,  0,  0, 10, 30, 50]
 
 blackKingEndgameSquareTable :: Vector Score
 blackKingEndgameSquareTable = Vector.fromList

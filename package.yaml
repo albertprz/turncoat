@@ -72,13 +72,12 @@ default-extensions:
 ghc-options:
 - -O2
 - -funbox-strict-fields
-# - -fllvm
-# - -fspecialize-aggressively
-# - -fexpose-all-unfoldings
-# - -funfolding-use-threshold=150
-# - -fspec-constr-count=20
-# - -flate-dmd-anal
-# - -flate-specialise
+- -fspecialize-aggressively
+- -fexpose-all-unfoldings
+- -funfolding-use-threshold=200
+- -fspec-constr-count=20
+- -flate-dmd-anal
+- -flate-specialise
 
 - -Wall
 - -Wcompat

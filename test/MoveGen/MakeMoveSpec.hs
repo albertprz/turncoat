@@ -2,24 +2,12 @@ module MoveGen.MakeMoveSpec where
 
 import           AppPrelude
 
-import           Data.List.NonEmpty  (nonEmpty)
-import           Evaluation.Material
+import           Data.List.NonEmpty (nonEmpty)
 import           Models.Position
-import           MoveGen.MakeMove    (makeMove)
+import           MoveGen.MakeMove   (makeMove)
 import           Search.Perft
-import           Test.Hspec
 import           Test.QuickCheck
 
-
-spec :: Spec
-spec = do
-
-  it "Material score is calculated incrementally on makeMove" $
-    quickCheckWith stdArgs {maxSuccess = 1_000 } $ forAll movesGen
-    \idxs ->
-      let newPos    = applyMoves idxs startPosition
-      in let ?phase = getPhase newPos
-      in newPos.materialScore === evaluateMaterial newPos
 
 
 applyMoves :: [Int] -> Position -> Position

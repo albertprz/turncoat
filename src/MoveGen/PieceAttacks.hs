@@ -62,21 +62,23 @@ getPinnedPieces !bishopCheckerRays !rookCheckerRays !sliderRays Position {..} =
 
 
 getEnPassantPinnedPawns :: Position -> Board
-getEnPassantPinnedPawns pos@Position {..} =
-  enemy & pawns & getPinnedPieces 0 rookCheckerRays sliderRays pos'
-  where
-    rookCheckerRays = getRookCheckerRays pos' & kingRank
-    kingRank        = fileMovesVec !! lsb (kings & enemy)
-    sliderRays      = getEnemyKingSliderRays pos' & enPassantRank
-    pos' = pos {
-      pawns  = pawns  ^ enPassantPawn,
-      player = player ^ enPassantPawn
-    }
-    enPassantPawn   = case color of
-      White -> enPassant << 8
-      Black -> enPassant >> 8
-    enPassantSquare = lsb enPassantPawn
-    enPassantRank   = fileMovesVec !! enPassantSquare
+getEnPassantPinnedPawns pos@Position {..}
+  | enPassant == 0 || enPassantRank & kingRank == 0 = 0
+  | otherwise =
+    enemy & pawns & getPinnedPieces 0 rookCheckerRays sliderRays pos'
+    where
+      rookCheckerRays = getRookCheckerRays pos' & kingRank
+      sliderRays      = getEnemyKingSliderRays pos' & enPassantRank
+      pos' = pos {
+        pawns  = pawns  ^ enPassantPawn,
+        player = player ^ enPassantPawn
+      }
+      enPassantPawn   = case color of
+        White -> enPassant << 8
+        Black -> enPassant >> 8
+      enPassantSquare = lsb enPassantPawn
+      kingRank        = fileMovesVec !! lsb (kings & enemy)
+      enPassantRank   = fileMovesVec !! enPassantSquare
 
 
 getKingQueenRay :: Board -> Square -> Board
@@ -126,19 +128,19 @@ allAttacks Position {..} =
 
 
 pawnAttacks :: Color -> Board -> Board
-pawnAttacks color !board = case color of
+pawnAttacks color board = case color of
   White -> (board .\ file_A) << 7 .| (board .\ file_H) << 9
   Black -> (board .\ file_A) >> 9 .| (board .\ file_H) >> 7
 
 
 pawnDiagAttacks :: Color -> Board -> Board
-pawnDiagAttacks color !board = case color of
+pawnDiagAttacks color board = case color of
   White -> (board .\ file_H) << 9
   Black -> (board .\ file_A) >> 9
 
 
 pawnAntiDiagAttacks :: Color -> Board -> Board
-pawnAntiDiagAttacks color !board = case color of
+pawnAntiDiagAttacks color board = case color of
   White -> (board .\ file_A) << 7
   Black -> (board .\ file_H) >> 7
 

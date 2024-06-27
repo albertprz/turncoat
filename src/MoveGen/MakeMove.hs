@@ -2,8 +2,6 @@ module MoveGen.MakeMove (makeMove, makeNullMove) where
 
 import           AppPrelude
 
-import           Evaluation.Material
-import           Evaluation.Parameters
 import           Models.Move
 import           Models.Piece
 import           Models.Position
@@ -12,46 +10,42 @@ import           Utils.Board
 
 
 makeMove :: Move -> Position -> Position
-makeMove Move {..} =
+makeMove Move {..} pos =
   makeNullMove
-  . movePiece piece promotion startBoard endBoard
-  . updatePlayerBoards startBoard endBoard end
+  $ movePiece piece promotion startBoard endBoard
+  $ updatePlayerBoards startBoard endBoard pos
   where
     !startBoard = toBoard start
     !endBoard = toBoard end
 
 
 makeNullMove :: Position -> Position
-makeNullMove pos@Position {materialScore, color, player,  enemy, enPassant} =
+makeNullMove pos@Position {color, player,  enemy, enPassant} =
   pos {
-    materialScore   = - materialScore
-  , color           = reverseColor color
+    color           = reverseColor color
   , phase           = getPhase pos
   , player          = enemy
   , enemy           = player
   , attacked        = allAttacks pos
   , enPassant       = toReverseCondition enPassantPinnedPawns * enPassant
   , leapingCheckers = getLeapingCheckers pos
-  , sliderCheckers  = getSliderCheckers bishopCheckerRays
-                        rookCheckerRays pos
-  , pinnedPieces    = getPinnedPieces bishopCheckerRays
-                        rookCheckerRays sliderRays pos
+  , sliderCheckers  = getSliderCheckers bishopCheckerRays rookCheckerRays
+                                        pos
+  , pinnedPieces    = getPinnedPieces bishopCheckerRays rookCheckerRays
+                                      sliderRays        pos
   }
   where
-    bishopCheckerRays = getBishopCheckerRays pos
-    rookCheckerRays   = getRookCheckerRays pos
-    sliderRays        = getEnemyKingSliderRays pos
-    enPassantPinnedPawns
-      | enPassant == 0 = 0
-      | otherwise     = getEnPassantPinnedPawns pos
+    bishopCheckerRays    = getBishopCheckerRays    pos
+    rookCheckerRays      = getRookCheckerRays      pos
+    sliderRays           = getEnemyKingSliderRays  pos
+    enPassantPinnedPawns = getEnPassantPinnedPawns pos
 
 
-updatePlayerBoards :: Board -> Board -> Square -> Position -> Position
-updatePlayerBoards start end endSquare pos@Position {..} =
+updatePlayerBoards :: Board -> Board -> Position -> Position
+updatePlayerBoards start end pos@Position {..} =
   pos {
       previousPositions    = getZobristKey pos
         : if halfMoveClock == 0 then [] else previousPositions
-    , materialScore        = materialScore + materialDiff
     , halfMoveClock        = fromIntegral
         (toReverseCondition (enemy & end)) * (halfMoveClock + 1)
     , player               = (player ^ start) .| end
@@ -62,17 +56,12 @@ updatePlayerBoards start end endSquare pos@Position {..} =
     , rooks                = rooks .\ end
     , queens               = queens .\ end
   }
-  where
-    !materialDiff =
-      maybe 0 evaluateCapturedPiece (maybeCapturedPieceAt endSquare pos)
 
 
 movePiece :: Piece -> Promotion -> Board -> Board -> Position -> Position
 movePiece Pawn NoProm start end pos@Position {..} =
   pos {
-      materialScore = materialScore
-        + pawnScore * fromIntegral (popCount enPassantCapture)
-    , halfMoveClock = 0
+      halfMoveClock = 0
     , pawns         = (pawns ^ (start .| enPassantCapture)) .| end
     , enemy         = enemy ^ enPassantCapture
     , enPassant     = start <<! 8 & end !>> 8
@@ -85,8 +74,7 @@ movePiece Pawn NoProm start end pos@Position {..} =
 
 movePiece Pawn KnightProm start end pos@Position {..} =
   pos {
-      materialScore = materialScore + knightScore - pawnScore
-    , halfMoveClock = 0
+      halfMoveClock = 0
     , pawns         = pawns ^ start
     , knights       = knights .| end
     , enPassant     = 0
@@ -94,8 +82,7 @@ movePiece Pawn KnightProm start end pos@Position {..} =
 
 movePiece Pawn BishopProm start end pos@Position {..} =
   pos {
-      materialScore = materialScore + bishopScore - pawnScore
-    , halfMoveClock = 0
+      halfMoveClock = 0
     , pawns         = pawns ^ start
     , bishops       = bishops .| end
     , enPassant     = 0
@@ -103,8 +90,7 @@ movePiece Pawn BishopProm start end pos@Position {..} =
 
 movePiece Pawn RookProm !start !end pos@Position {..} =
   pos {
-      materialScore = materialScore + rookScore - pawnScore
-    , halfMoveClock = 0
+      halfMoveClock = 0
     , pawns         = pawns ^ start
     , rooks         = rooks .| end
     , enPassant     = 0
@@ -112,8 +98,7 @@ movePiece Pawn RookProm !start !end pos@Position {..} =
 
 movePiece Pawn QueenProm start end pos@Position {..} =
   pos {
-      materialScore = materialScore + queenScore - pawnScore
-    , halfMoveClock = 0
+      halfMoveClock = 0
     , pawns         = pawns ^ start
     , queens        = queens .| end
     , enPassant     = 0

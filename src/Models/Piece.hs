@@ -42,7 +42,7 @@ pattern Rook   = Piece 3
 pattern Queen  = Piece 4
 pattern King   = Piece 5
 
-{-# COMPLETE  KnightProm, BishopProm, RookProm, QueenProm #-}
+{-# COMPLETE  NoProm, KnightProm, BishopProm, RookProm, QueenProm #-}
 pattern NoProm, KnightProm, BishopProm, RookProm, QueenProm :: Promotion
 pattern NoProm     = Promotion 0
 pattern KnightProm = Promotion 1

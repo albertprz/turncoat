@@ -49,7 +49,7 @@ isTimeOver _ _ Nothing =
 
 getTimeOver :: MicroSeconds -> MicroSeconds
 getTimeOver moveTime =
-  moveTime * 3 / 10
+  moveTime * 35 / 100
 
 
 infixl 9 |-|

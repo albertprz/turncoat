@@ -1,10 +1,9 @@
 module Search.Parameters where
 
-import           AppPrelude            hiding ((/))
-import           ClassyPrelude         ((/))
+import           AppPrelude           hiding ((/))
+import           ClassyPrelude        ((/))
 
-import qualified Data.Vector.Storable  as Vector
-import           Evaluation.Parameters
+import qualified Data.Vector.Storable as Vector
 import           Models.Score
 
 
@@ -15,16 +14,15 @@ initialAlpha = minScore
 initialBeta :: Score
 initialBeta = maxScore
 
-
 futilityMargins :: Vector Score
 futilityMargins = Vector.fromList
-  [bishopScore, rookScore, queenScore]
+  [300, 600, 1000]
 
 
 getLmrDepth :: Int -> Depth -> Depth
 getLmrDepth mvIdx depth =
     min (depth - 1)
-    $ ceiling (lmrFactor * (fromIntegral depth * 5 / 6)
+    $ ceiling (lmrFactor * (fromIntegral depth * 4 / 5)
     + (1 - lmrFactor) * (fromIntegral depth - 1))
   where
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 15)
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 20)

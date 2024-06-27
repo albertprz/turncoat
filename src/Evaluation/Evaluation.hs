@@ -1,4 +1,4 @@
-module Evaluation.Evaluation (evaluateCaptureExchange, evaluatePosition, evaluatePositionBreakdown)
+module Evaluation.Evaluation (evaluatePosition, evaluatePositionBreakdown, evaluateExchange, evaluateExchangeOnSquare)
 where
 
 import           AppPrelude
@@ -102,7 +102,7 @@ evaluatePassedPawns pos@Position {..} =
     isFreePasser rank n =
       rank == 7
       && testSquare noPieces (nextRank n)
-      && evaluateCaptureExchange (Move Pawn QueenProm n $ nextRank n) pos >= 0
+      && evaluateExchange (Move Pawn QueenProm n $ nextRank n) pos >= 0
     (!getRank, !nextRank, !blockersVec) = case color of
       White -> (toRank           , (+ 8)     , whitePassedPawnBlockersVec)
       Black -> (\n -> 7 - toRank n, \n -> n - 8, blackPassedPawnBlockersVec)
@@ -151,22 +151,22 @@ getScoresBatch Position {..} = ScoresBatch {..}
 
     (knightsMobility, byKnightThreats, knightsCount) =
       foldBoardScores knightMobilityTable
-        knightAttacks
+        ((.\ pawnDefended) . knightAttacks)
         (unpinned&knights)
 
     (bishopsMobility, byBishopThreats, bishopsCount) =
       foldBoardScores bishopMobilityTable
-        (bishopMoves allPieces pinnedPieces king)
+        ((.\ pawnDefended) . bishopMoves allPieces pinnedPieces king)
         (player&bishops)
 
     (rooksMobility, byRookThreats, rooksCount)       =
       foldBoardScores rookMobilityTable
-        (rookMoves allPieces pinnedPieces king)
+        ((.\ pawnDefended) . rookMoves allPieces pinnedPieces king)
         (player&rooks)
 
     (queensMobility, byQueenThreats, queensCount)    =
       foldBoardScores queenMobilityTable
-        (queenMoves allPieces pinnedPieces king)
+        ((.\ pawnDefended) . queenMoves allPieces pinnedPieces king)
         (player&queens)
 
 
@@ -184,18 +184,24 @@ getScoresBatch Position {..} = ScoresBatch {..}
     !unpinned      = player .\ pinnedPieces
     !allPieces     = player .| enemy
     !enemyKingArea = kingAttacks (lsb (enemy&kings))
+    !pawnDefended  = pawnAttacks (reverseColor color) (enemy&pawns)
 
 
-evaluateCaptureExchange :: Move -> Position -> Score
-evaluateCaptureExchange initialMv initialPos =
-  evaluateExchange initialMv.end (makeMove initialMv initialPos)
-    - initialPos.materialScore
-  where
-    evaluateExchange !square pos =
-      case headMay $ staticExchangeCaptures square pos of
-        Just mv -> - (max pos.materialScore
-                        $! evaluateExchange square (makeMove mv pos))
-        Nothing -> - pos.materialScore
+evaluateExchange :: Move -> Position -> Score
+evaluateExchange !mv !pos =
+    evaluateCapturedPiece mv pos
+      - case headMay $ staticExchangeCaptures mv.end pos of
+        Just newMv -> max 0 $ evaluateExchange newMv $ makeMove newMv pos
+        Nothing    -> 0
+      where
+        ?phase = getPhase pos
+
+
+evaluateExchangeOnSquare :: Square -> Position -> Score
+evaluateExchangeOnSquare square pos =
+  case headMay $ staticExchangeCaptures square pos of
+    Just mv -> max 0 $ evaluateExchange mv pos
+    Nothing -> 0
 
 
 data ScoresBatch = ScoresBatch {

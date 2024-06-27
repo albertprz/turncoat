@@ -16,7 +16,6 @@ import           Test.QuickCheck      (Arbitrary (..))
 
 data Position = Position {
     previousPositions :: ~[ZKey]
-  , materialScore     :: Score
   , halfMoveClock     :: Ply
   , phase             :: Phase
   , color             :: Color
@@ -60,7 +59,6 @@ emptyPosition :: Position
 emptyPosition = Position {
     previousPositions = []
   , color             = White
-  , materialScore     = 0
   , halfMoveClock     = 0
   , phase             = 0
   , player            = 0

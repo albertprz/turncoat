@@ -36,14 +36,14 @@ evaluatePlayerMaterial Position {..} !board = \case
           (boardScore bishopScore whiteBishopSquareTable (board & bishops))
           (boardScore knightScore whiteKnightSquareTable (board & knights))
           (boardScore pawnScore whitePawnSquareTable     (board & pawns))
-          (ScorePair 0 (whiteKingSquareTable !!% lsb      (board & kings)))
+          (ScorePair 0 (whiteKingSquareTable !!% lsb     (board & kings)))
     Black -> MaterialBreakdown
           (boardScore queenScore blackQueenSquareTable   (board & queens))
           (boardScore rookScore blackRookSquareTable     (board & rooks))
           (boardScore bishopScore blackBishopSquareTable (board & bishops))
           (boardScore knightScore blackKnightSquareTable (board & knights))
           (boardScore pawnScore blackPawnSquareTable     (board & pawns))
-          (ScorePair 0 (blackKingSquareTable !!% lsb      (board & kings)))
+          (ScorePair 0 (blackKingSquareTable !!% lsb     (board & kings)))
 
 
 boardScore :: Score -> Vector Score -> Board -> ScorePair
@@ -54,11 +54,27 @@ boardScore !pieceTypeScore !pieceSquareTable !board =
     pieceToScores !n = ScorePair pieceTypeScore (pieceSquareTable !! n)
 
 
-evaluateCapturedPiece :: Piece -> Score
-evaluateCapturedPiece = \case
-    Pawn   -> pawnScore
-    Knight -> knightScore
-    Bishop -> bishopScore
-    Rook   -> rookScore
-    Queen  -> queenScore
-    King   -> 0
+{-# INLINE  evaluateCapturedPiece #-}
+evaluateCapturedPiece :: (?phase :: Phase) => Move -> Position -> Score
+evaluateCapturedPiece Move {..} pos =
+  evaluatePromotion promotion
+  + maybe 0 evaluatePiece (maybeCapturedPieceAt end pos)
+
+
+evaluatePromotion :: (?phase :: Phase) => Promotion -> Score
+evaluatePromotion = \case
+  KnightProm -> knightScore
+  BishopProm -> bishopScore
+  RookProm   -> rookScore
+  QueenProm  -> queenScore
+  NoProm     -> 0
+
+
+evaluatePiece :: (?phase :: Phase) => Piece -> Score
+evaluatePiece = \case
+  Pawn   -> pawnScore
+  Knight -> knightScore
+  Bishop -> bishopScore
+  Rook   -> rookScore
+  Queen  -> queenScore
+  King   -> 0

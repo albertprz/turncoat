@@ -34,6 +34,9 @@ spec = do
     it "Extra Position 4" do
       perft 5 extraPos4 `shouldBe` 164_075_551
 
+    it "Extra Position 5" do
+      perft 5 extraPos5 `shouldBe` 73_007_159
+
 
 
 kiwipete :: Position
@@ -50,11 +53,15 @@ extraPos2 = fenPosition
 
 extraPos3 :: Position
 extraPos3 = fenPosition
-  "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
+  "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 0 1"
 
 extraPos4 :: Position
 extraPos4 = fenPosition
-  "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"
+  "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 1"
+
+extraPos5 :: Position
+extraPos5 = fenPosition
+  "1k1r2r1/1pp2p1p/np1p1pb1/3P2q1/1PPN4/P6Q/4BPPP/3RR1K1 b - - 0 1"
 
 
 fenPosition :: Text -> Position

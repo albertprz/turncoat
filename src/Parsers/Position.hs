@@ -8,7 +8,6 @@ import           Bookhound.Parsers.Char      (space)
 import           Bookhound.Parsers.Number    (unsignedInt)
 import           Data.Char                   (digitToInt)
 
-import           Evaluation.Material         (evaluateMaterial)
 import           Models.Piece
 import           Models.Position
 import           Models.Score
@@ -64,11 +63,9 @@ newPosition :: Position -> Position
 newPosition = setInitialValues . makeNullMove . makeNullMove
   where
   setInitialValues pos = pos {
-      materialScore = evaluateMaterial pos
-    , phase         = ?phase
-    }
-    where
-      ?phase = getPhase pos
+    phase         = getPhase pos
+  }
+
 
 includePiece :: (Square, (Piece, Color)) -> Position -> Position
 includePiece (square, (piece, pieceColor)) pos@Position {..} =

@@ -45,12 +45,12 @@ getSortedMoves !depth !ply pos = do
 
     worstMoves =
       filter (`notElem` (ttMove <> killerMoves)) quietMoves
-      <> filter (`notElem` ttMove)                  losingCaptures
+      <> filter (`notElem` ttMove)               losingCaptures
 
     !isPVNode = any ((== PV) . (.nodeType)) ttEntry
 
   pure if depth >= 3 && not (isKingInCheck pos)
-    then (second (<> worstMoves) $ splitAt 4 bestMoves, isPVNode)
+    then ((bestMoves, worstMoves)      , isPVNode)
     else ((bestMoves <> worstMoves, []), isPVNode)
   where
     quietMoves = getSortedQuietMoves depth pos
@@ -72,21 +72,14 @@ getSortedCaptures pos =
     $ filter ((`member` bestPromotions) . (.promotion))
     $ allCaptures pos
   where
-    mapFn        = map fst . sortOn (Down . snd)
+    mapFn         = map fst . sortOn (Down . snd)
     attachEval mv = (mv, evaluateExchange mv pos)
 
 
 getSortedQuietMoves :: Depth -> Position -> [Move]
 getSortedQuietMoves !depth pos
-  | depth <= 2 = quietMoves
-  | otherwise = uncurry (<>)
-    $ bimap sortSafeMoves sortUnsafeMoves
-    $ partition ((== 0) . snd)
-    $ map attachSee quietMoves
+  | depth == 1 = quietMoves
+  | otherwise = sortOn (Down. eval) quietMoves
   where
-    sortSafeMoves   = sortOn (Down . eval) . map fst
-    sortUnsafeMoves = map fst . sortOn (Down . snd)
-    attachSee mv    =
-      (mv, - evaluateExchangeOnSquare mv.end (makeMove mv pos))
-    eval mv         = - evaluatePosition (makeMove mv pos)
-    quietMoves      = allQuietMoves pos
+    eval mv    = - evaluatePosition (makeMove mv pos)
+    quietMoves = allQuietMoves pos

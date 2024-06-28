@@ -12,10 +12,10 @@ import qualified Data.Vector.Storable      as Vector
 
 -- Material scores
 pawnScore :: (?phase :: Phase) => Score
-pawnScore = taperScore $ ScorePair 90 110
+pawnScore = taperScore $ ScorePair 90 100
 
 knightScore :: (?phase :: Phase) => Score
-knightScore = taperScore $ ScorePair 330 310
+knightScore = taperScore $ ScorePair 320 300
 
 bishopScore :: (?phase :: Phase) => Score
 bishopScore = taperScore $ ScorePair 330 310
@@ -70,13 +70,13 @@ queenMobilityTable = Vector.fromList $ map (uncurry ScorePair)
 
 -- Penalties
 threatByMinorPenalty :: Score
-threatByMinorPenalty = 40
+threatByMinorPenalty = 20
 
 threatByRookPenalty :: Score
-threatByRookPenalty = 80
+threatByRookPenalty = 40
 
 threatByQueenPenalty :: Score
-threatByQueenPenalty = 160
+threatByQueenPenalty = 80
 
 isolatedPawnPenalty :: (?phase :: Phase) => Score
 isolatedPawnPenalty = taperScore $ ScorePair 25 50
@@ -84,7 +84,7 @@ isolatedPawnPenalty = taperScore $ ScorePair 25 50
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
   [0, 0, 30, 50, 75, 88, 94, 97, 99,
-   100, 100, 100, 100, 100, 100]
+   100, 100, 100, 100, 100, 100, 100]
 
 
 -- Piece Square Tables
@@ -124,13 +124,13 @@ blackBishopSquareTable = Vector.fromList
 blackRookSquareTable :: Vector Score
 blackRookSquareTable = Vector.fromList
   [0,  0,  0,  0,  0,  0,  0,  0,
-   10, 20, 20, 20, 20, 20, 20,  10,
+   10, 10, 10, 10, 10, 10, 10,  10,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
   -5,  0,  0,  0,  0,  0,  0, -5,
-   0,  0,  0,  10, 10,  0,  0,  0]
+   0,  0,  0,  20, 20,  0,  0,  0]
 
 blackQueenSquareTable :: Vector Score
 blackQueenSquareTable = Vector.replicate 64 0

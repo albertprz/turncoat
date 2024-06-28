@@ -188,19 +188,23 @@ getScoresBatch Position {..} = ScoresBatch {..}
 
 
 evaluateExchange :: Move -> Position -> Score
-evaluateExchange !mv !pos =
-    evaluateCapturedPiece mv pos
-      - case headMay $ staticExchangeCaptures mv.end pos of
-        Just newMv -> max 0 $ evaluateExchange newMv $ makeMove newMv pos
+evaluateExchange initialMv =
+  go initialMv
+  where
+    !square = initialMv.end
+    go !mv !pos =
+      let newPos = makeMove mv pos
+      in let ?phase = pos.phase
+      in evaluateCapturedPiece mv pos
+      - case headMay $ staticExchangeCaptures square newPos of
+        Just newMv -> max 0 $! go newMv newPos
         Nothing    -> 0
-      where
-        ?phase = getPhase pos
 
 
 evaluateExchangeOnSquare :: Square -> Position -> Score
-evaluateExchangeOnSquare square pos =
+evaluateExchangeOnSquare !square !pos =
   case headMay $ staticExchangeCaptures square pos of
-    Just mv -> max 0 $ evaluateExchange mv pos
+    Just mv -> max 0 $! evaluateExchange mv pos
     Nothing -> 0
 
 

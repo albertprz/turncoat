@@ -1,10 +1,11 @@
-module MoveGen.PositionQueries (isEndgame, isKingInCheck, isEnemyKingInCheck) where
+module MoveGen.PositionQueries (isEndgame, isKingInCheck, isEnemyKingInCheck, hasSingleMove) where
 
 import           AppPrelude
 
 import           Models.Piece
 import           Models.Position
 import           MoveGen.PieceAttacks
+import           Search.Perft
 import           Utils.Board
 
 
@@ -14,6 +15,13 @@ isEndgame Position {..} =
     || popCount (enemy  & allMinorPieces) < 3
   where
     allMinorPieces = bishops .| knights .| rooks .| queens
+
+
+hasSingleMove :: Position -> Bool
+hasSingleMove = hasOne . allMoves
+  where
+  hasOne [_] = True
+  hasOne _   = False
 
 
 isKingInCheck :: Position -> Bool

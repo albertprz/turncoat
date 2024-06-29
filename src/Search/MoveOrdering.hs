@@ -32,26 +32,23 @@ import           Utils.TranspositionTable (TTable)
 
 getSortedMoves :: (?killersTable :: KillersTable, ?tTable :: TTable,
                   ?opts :: EngineOptions)
-  => Depth -> Ply -> Position -> IO (([Move], [Move]), Bool)
+  => Depth -> Ply -> Position -> IO ([Move], [Move])
 getSortedMoves !depth !ply pos = do
-  ttEntry     <- TTable.lookupEntry (getZobristKey pos)
+  ttMove      <- toList <$> TTable.lookupBestMove (getZobristKey pos)
   killerMoves <- getKillers ply pos
   let
-    ttMove    = toList ((.bestMove) =<< ttEntry)
     bestMoves =
          ttMove
       <> filter (`notElem` ttMove) winningCaptures
       <> filter (`notElem` ttMove) killerMoves
 
     worstMoves =
-      filter (`notElem` (ttMove <> killerMoves)) quietMoves
+         filter (`notElem` (ttMove <> killerMoves)) quietMoves
       <> filter (`notElem` ttMove)               losingCaptures
 
-    !isPVNode = any ((== PV) . (.nodeType)) ttEntry
-
   pure if depth >= 3 && not (isKingInCheck pos)
-    then ((bestMoves, worstMoves)      , isPVNode)
-    else ((bestMoves <> worstMoves, []), isPVNode)
+    then (bestMoves, worstMoves)
+    else (bestMoves <> worstMoves, [])
   where
     quietMoves = getSortedQuietMoves depth pos
     (winningCaptures, losingCaptures) = getSortedCaptures pos
@@ -78,8 +75,8 @@ getSortedCaptures pos =
 
 getSortedQuietMoves :: Depth -> Position -> [Move]
 getSortedQuietMoves !depth pos
-  | depth == 1 = quietMoves
-  | otherwise = sortOn (Down. eval) quietMoves
-  where
-    eval mv    = - evaluatePosition (makeMove mv pos)
-    quietMoves = allQuietMoves pos
+  | depth <= 2 = quietMoves
+  | otherwise = sortOn (Down . eval) quietMoves
+   where
+    eval mv         = - evaluatePosition (makeMove mv pos)
+    quietMoves      = allQuietMoves pos

@@ -63,8 +63,8 @@ data SearchOptions = SearchOptions
   , blackTime          :: Maybe Int
   , blackIncrement     :: Maybe Int
   , movesUntilNextTime :: Maybe Int
-  , nodes              :: Maybe Int
   , findMate           :: Maybe Int
+  , maxNodes           :: Maybe Word64
   }
 
 
@@ -107,7 +107,7 @@ defaultSearchOptions = SearchOptions
   , blackTime          = Nothing
   , blackIncrement     = Nothing
   , movesUntilNextTime = Nothing
-  , nodes              = Nothing
+  , maxNodes           = Nothing
   , moveTime           = Nothing
   }
 

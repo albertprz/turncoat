@@ -18,7 +18,7 @@ getMoveTime SearchOptions {..} Position {phase, color} =
     timeToMove
       | Just t <- time
       , Just i <- inc
-        = Just (min (t / 2) (t / movesUntil + i))
+        = Just (min (t / 2) (3 * t / (2 * movesUntil) + i))
       | Just t <- time
         = Just (t / movesUntil)
       | Just i <- inc
@@ -30,7 +30,7 @@ getMoveTime SearchOptions {..} Position {phase, color} =
       Black -> (blackTime, blackIncrement)
     movesUntil = fromMaybe movesUntilDefault movesUntilNextTime
     movesUntilDefault =
-      let ?phase = phase in fromIntegral $ taperScore (ScorePair 20 5)
+      let ?phase = phase in fromIntegral $ taperScore (ScorePair 30 5)
 
 
 maybeTimeout :: Maybe MicroSeconds -> IO () -> IO ()
@@ -49,7 +49,7 @@ isTimeOver _ _ Nothing =
 
 getTimeOver :: MicroSeconds -> MicroSeconds
 getTimeOver moveTime =
-  moveTime * 35 / 100
+  moveTime * 30 / 100
 
 
 infixl 9 |-|

@@ -33,26 +33,27 @@ search
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?age :: Age)
   => SearchOptions -> IORef SearchResult -> Position -> IO ()
-search searchOpts@SearchOptions{targetDepth, infinite} resultRef pos = do
+search searchOpts@SearchOptions{..} resultRef pos = do
   startTime <- getSystemTime
   nodesRef <- newIORef 0
   let ?nodes = nodesRef
-  maybeTimeout moveTime
-    $ untilM (go startTime nodesRef) [1 .. targetDepth]
+  maybeTimeout timeToMove $ untilM (go startTime nodesRef) [1 .. targetDepth]
   when infinite $ forever $ threadDelay maxBound
   where
-    moveTime =
+    timeToMove =
       maybeFilter (const $ not infinite) $ getMoveTime searchOpts pos
 
-    go !startTime nodesRef !depth = do
-      result <- getNodeResult initialAlpha initialBeta depth 0 pos
+    go startTime nodesRef depth = do
+      result  <- getNodeResult initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime
-      nodes <- readIORef nodesRef
+      nodes   <- readIORef nodesRef
       printSearchInfo depth nodes (endTime |-| startTime) result
       let bestMove = result.bestMove <|> headMay (allMoves pos)
       unless (null bestMove)
          $ writeIORef resultRef result {bestMove = bestMove}
-      pure (isTimeOver endTime startTime moveTime
+      pure (isTimeOver endTime startTime timeToMove
+            || hasSingleMove pos
+            || any (nodes >=) maxNodes
             || getGameResult result.score `elem` [Victory, Defeat])
 
 
@@ -77,12 +78,9 @@ negamax !alpha !beta !depth !ply pos
    where
      zKey = getZobristKey pos
      extendedDepth =
-       if isKingInCheck pos || (ply < 40 && hasSingleMove)
+       if isKingInCheck pos || (ply < 40 && hasSingleMove pos)
         then depth + 1
         else depth
-     hasSingleMove = hasOne $ allMoves pos
-     hasOne [_] = True
-     hasOne _   = False
 
 
 cacheNodeResult
@@ -122,8 +120,10 @@ getNodeResult
 getNodeResult !alpha !beta !depth !ply pos
 
   | depth == 0
-  || depth <= 3 && not (isKingInCheck pos)
-              && evaluatePosition pos + futilityMargin <= alpha
+  || depth <= 3
+    && not (isKingInCheck pos)
+    && staticEval < 1000 && staticEval > -1000
+    && staticEval + futilityMargin <= alpha
   = emptySearchResult <$> quiesceSearch alpha beta 0 pos
 
   | otherwise = do
@@ -133,14 +133,15 @@ getNodeResult !alpha !beta !depth !ply pos
       else traverseMoves =<< getSortedMoves depth ply pos
 
   where
+    staticEval      = evaluatePosition pos
     !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
-    traverseMoves (moves, isPVNode)
+    traverseMoves moves
       | null $ uncurry (<>) moves =
           let score | isKingInCheck pos = minScore
                     | otherwise         = 0
           in pure $! emptySearchResult score
       | otherwise = do
-          let movesSearch = getMovesScore beta depth ply moves isPVNode pos
+          let movesSearch = getMovesScore beta depth ply moves pos
           (!score, !searchResult) <-
             runStateT movesSearch (emptySearchResult alpha)
           let
@@ -152,9 +153,9 @@ getNodeResult !alpha !beta !depth !ply pos
 getMovesScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
-  => Score -> Depth -> Ply -> ([Move], [Move]) -> Bool -> Position
+  => Score -> Depth -> Ply -> ([Move], [Move]) -> Position
   -> SearchM (Maybe Score)
-getMovesScore !beta !depth !ply (mainMoves, reducedMoves) isPVNode pos = do
+getMovesScore !beta !depth !ply (mainMoves, reducedMoves) pos = do
   mainSearchScore <- mainMovesSearch
   maybe reducedMovesSearch (pure . Just) mainSearchScore
 
@@ -162,7 +163,7 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) isPVNode pos = do
     mainMovesSearch       = movesSearch False mainMoves
     reducedMovesSearch    = movesSearch True  reducedMoves
     movesSearch isReduced =
-      findTraverseIndex (getMoveScore beta depth ply isReduced isPVNode pos)
+      findTraverseIndex (getMoveScore beta depth ply isReduced pos)
 
 
 -- Features:
@@ -172,11 +173,9 @@ getMovesScore !beta !depth !ply (mainMoves, reducedMoves) isPVNode pos = do
 getMoveScore
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
-  => Score -> Depth -> Ply -> Bool -> Bool -> Position -> Int -> Move
-  -> SearchM (Maybe Score)
-getMoveScore !beta !depth !ply !isReduced !isPVNode pos !mvIdx !mv = do
-  SearchResult {bestMove} <- get
-  if isJust bestMove && isPVNode
+  => Score -> Depth -> Ply -> Bool -> Position -> Int -> Move -> SearchM (Maybe Score)
+getMoveScore !beta !depth !ply !isReduced pos !mvIdx !mv = do
+  if isReduced || mvIdx > 0
     then nullWindowSearch
     else fullSearch
   where
@@ -188,7 +187,7 @@ getMoveScore !beta !depth !ply !isReduced !isPVNode pos !mvIdx !mv = do
 
     nullWindowSearch = do
      st@SearchResult {score = alpha} <- get
-     !score <- fst <$> getNegamaxScore alpha (alpha + 1)
+     SearchResult {score} <- getScore alpha (alpha + 1)
      put st
      if score > alpha
        then fullSearch
@@ -196,16 +195,13 @@ getMoveScore !beta !depth !ply !isReduced !isPVNode pos !mvIdx !mv = do
 
     fullSearch = do
       SearchResult {score = alpha} <- get
-      (!score, !enemyMv)           <- getNegamaxScore alpha beta
-      let !nodeType                = getNodeType alpha beta score
-      !newScore                    <-
-        advanceState beta score ply nodeType mv enemyMv pos
-      pure newScore
+      SearchResult{..} <- getScore alpha beta
+      let nodeType    = getNodeType alpha beta score
+      newScore <- advanceState beta score ply nodeType mv bestMove pos
+      pure $! newScore
 
-    getNegamaxScore !alpha' !beta' = liftIO do
-      SearchResult {..} <- negamax (-beta') (-alpha') (lmrDepth - 1)
-                                 (ply + 1) (makeMove mv pos)
-      pure (negate $! score, bestMove)
+    getScore !alpha' !beta' = liftIO
+      $ getNegamaxScore alpha' beta' lmrDepth ply (makeMove mv pos)
 
 
 getNullMoveScore
@@ -216,15 +212,25 @@ getNullMoveScore !beta !depth !ply pos
 
   | depth > r && not (isKingInCheck pos)
               && not (isEndgame pos) = do
-    SearchResult {..} <- negamax (-beta) (-alpha) (depth - r - 1)
-                               (ply + 1) (makeNullMove pos)
-    pure $! Just $! negate score
+    SearchResult {..} <- getNegamaxScore alpha beta reducedDepth ply
+                                       (makeNullMove pos)
+    pure $ Just score
 
   | otherwise = pure Nothing
 
   where
-    r = 2
-    alpha = beta - 1
+    reducedDepth = depth - r
+    alpha        = beta - 1
+    r            = 2
+
+
+getNegamaxScore
+  :: (?killersTable :: KillersTable, ?tTable :: TTable,
+     ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
+  => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
+getNegamaxScore !alpha !beta !depth !ply !pos = do
+  result <- negamax (-beta) (-alpha) (depth - 1) (ply + 1) pos
+  pure $ result {score = - result.score}
 
 
 advanceState :: (?killersTable :: KillersTable)

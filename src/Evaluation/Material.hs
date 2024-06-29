@@ -31,15 +31,15 @@ evaluatePlayerMaterial
   :: (?phase :: Phase) => Position -> Board -> Color -> MaterialBreakdown
 evaluatePlayerMaterial Position {..} !board = \case
     White -> MaterialBreakdown
-          (boardScore queenScore whiteQueenSquareTable   (board & queens))
-          (boardScore rookScore whiteRookSquareTable     (board & rooks))
+          (boardMaterialScore queenScore                 (board & queens))
+          (boardMaterialScore rookScore                  (board & rooks))
           (boardScore bishopScore whiteBishopSquareTable (board & bishops))
           (boardScore knightScore whiteKnightSquareTable (board & knights))
           (boardScore pawnScore whitePawnSquareTable     (board & pawns))
           (ScorePair 0 (whiteKingSquareTable !!% lsb     (board & kings)))
     Black -> MaterialBreakdown
-          (boardScore queenScore blackQueenSquareTable   (board & queens))
-          (boardScore rookScore blackRookSquareTable     (board & rooks))
+          (boardMaterialScore queenScore                 (board & queens))
+          (boardMaterialScore rookScore                  (board & rooks))
           (boardScore bishopScore blackBishopSquareTable (board & bishops))
           (boardScore knightScore blackKnightSquareTable (board & knights))
           (boardScore pawnScore blackPawnSquareTable     (board & pawns))
@@ -54,6 +54,14 @@ boardScore !pieceTypeScore !pieceSquareTable !board =
     pieceToScores !n = ScorePair pieceTypeScore (pieceSquareTable !! n)
 
 
+{-# INLINE  boardMaterialScore #-}
+boardMaterialScore :: Score -> Board -> ScorePair
+boardMaterialScore !pieceTypeScore !board =
+  ScorePair materialScore 0
+  where
+    materialScore = pieceTypeScore * fromIntegral (popCount board)
+
+
 {-# INLINE  evaluateCapturedPiece #-}
 evaluateCapturedPiece :: (?phase :: Phase) => Move -> Position -> Score
 evaluateCapturedPiece Move {..} pos =
@@ -61,6 +69,7 @@ evaluateCapturedPiece Move {..} pos =
   + maybe 0 evaluatePiece (maybeCapturedPieceAt end pos)
 
 
+{-# INLINE  evaluatePromotion #-}
 evaluatePromotion :: (?phase :: Phase) => Promotion -> Score
 evaluatePromotion = \case
   KnightProm -> knightScore
@@ -70,6 +79,7 @@ evaluatePromotion = \case
   NoProm     -> 0
 
 
+{-# INLINE  evaluatePiece #-}
 evaluatePiece :: (?phase :: Phase) => Piece -> Score
 evaluatePiece = \case
   Pawn   -> pawnScore

@@ -1,4 +1,4 @@
-module Evaluation.Evaluation (evaluatePosition, evaluatePositionBreakdown, evaluateExchange, evaluateExchangeOnSquare)
+module Evaluation.Evaluation (evaluatePosition, evaluatePositionBreakdown, evaluateExchange)
 where
 
 import           AppPrelude
@@ -16,6 +16,11 @@ import           MoveGen.PieceCaptures
 import           MoveGen.PositionQueries
 import           Utils.Board
 
+
+-- TODO Material trades (Pieces vs pawns)
+-- TODO Improved King safety
+-- TODO Fiancetto bonus
+-- TODO Bad bishop color penalty
 
 evaluatePosition :: Position -> Score
 evaluatePosition =
@@ -36,9 +41,8 @@ evaluatePositionBreakdown pos =
     ?phase = pos.phase
 
 
-evaluatePlayerBreakdown
-  ::  (?phase :: Phase) => ScoresBatch -> ScoresBatch -> Position
-  -> PlayerScoreBreakdown
+evaluatePlayerBreakdown :: (?phase :: Phase)
+  => ScoresBatch -> ScoresBatch -> Position -> PlayerScoreBreakdown
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
     material      = evaluatePlayerMaterial pos pos.player pos.color
@@ -51,10 +55,12 @@ evaluatePositionBonuses
   :: (?phase :: Phase) => ScoresBatch -> Position -> BonusBreakdown
 evaluatePositionBonuses ScoresBatch {mobility} pos =
   BonusBreakdown {
-    mobility       = mobility
-  , bishopPair     = evaluateBishopPair pos
-  , knightOutposts = evaluateKnightOutposts pos
-  , passedPawns    = evaluatePassedPawns pos
+    mobility          = mobility
+  , passedPawns       = evaluatePassedPawns pos
+  , bishopPair        = evaluateBishopPair pos
+  , knightOutposts    = evaluateKnightOutposts pos
+  , rooksOnOpenFile    = evaluateRooksOnOpenFiles pos
+  , rooksOnSeventhRank = evaluateRookOnSeventhRank pos
   }
 
 
@@ -76,7 +82,7 @@ evaluateBishopPair Position {player, bishops} =
 
 evaluateKnightOutposts :: (?phase :: Phase) => Position -> Score
 evaluateKnightOutposts Position {..} =
-    knightOutpostBonus
+  knightOutpostBonus
   * fromIntegral (foldlBoard 0 (+) mapFn
     (knights&player & defended & ranks & knightOupostFiles))
   where
@@ -85,6 +91,31 @@ evaluateKnightOutposts Position {..} =
     (!ranks, !attackersVec) = case color of
       White -> (whiteKnightOutpostRanks , whiteKnightOutpostAttackersVec)
       Black -> (blackKnightOutpostRanks , blackKnightOutpostAttackersVec)
+
+
+evaluateRooksOnOpenFiles :: (?phase::Phase) => Position -> Score
+evaluateRooksOnOpenFiles Position {..} =
+  rookOnSemiOpenFileBonus
+  * foldlBoard 0 (+) mapFn (player & rooks)
+  where
+    ((<!), lastPawn) = case color of
+      White -> ((<), msb)
+      Black -> ((>), lsb)
+    mapFn !n
+      | pawnsInFile       == 0 || lastPawn pawnsInFile <! n       = 2
+      | playerPawnsInFile == 0 || lastPawn playerPawnsInFile <! n = 1
+      | otherwise                                               = 0
+      where
+        pawnsInFile       = pawns  & rankMovesVec !! n
+        playerPawnsInFile = player & pawnsInFile
+
+
+evaluateRookOnSeventhRank :: Position -> Score
+evaluateRookOnSeventhRank Position {..} =
+  rooksOnSeventhRankBonus
+  * max 0
+  (fromIntegral (popCount (player & rooks & rank_7))
+  * fromIntegral (popCount (enemy & pawns & rank_7) - 2))
 
 
 evaluatePassedPawns :: (?phase :: Phase) => Position -> Score
@@ -102,7 +133,7 @@ evaluatePassedPawns pos@Position {..} =
     isFreePasser rank n =
       rank == 7
       && testSquare noPieces (nextRank n)
-      && evaluateExchange (Move Pawn QueenProm n $ nextRank n) pos >= 0
+      && evaluateExchange (Move Pawn QueenProm n $ nextRank n) pos > 0
     (!getRank, !nextRank, !blockersVec) = case color of
       White -> (toRank           , (+ 8)     , whitePassedPawnBlockersVec)
       Black -> (\n -> 7 - toRank n, \n -> n - 8, blackPassedPawnBlockersVec)
@@ -131,7 +162,6 @@ evaluateIsolatedPawns pawns =
 getScoresBatch :: (?phase :: Phase) => Position -> ScoresBatch
 getScoresBatch pos
   | isKingInCheck pos = emptyScoresBatch
-
 getScoresBatch Position {..} = ScoresBatch {..}
   where
     mobility        =
@@ -151,61 +181,67 @@ getScoresBatch Position {..} = ScoresBatch {..}
 
     (knightsMobility, byKnightThreats, knightsCount) =
       foldBoardScores knightMobilityTable
-        ((.\ pawnDefended) . knightAttacks)
+        knightAttacks
+        pawnDefended
         (unpinned&knights)
 
     (bishopsMobility, byBishopThreats, bishopsCount) =
       foldBoardScores bishopMobilityTable
-        ((.\ pawnDefended) . bishopMoves allPieces pinnedPieces king)
+        (bishopMoves allPieces pinnedPieces king)
+        pawnDefended
         (player&bishops)
 
     (rooksMobility, byRookThreats, rooksCount)       =
       foldBoardScores rookMobilityTable
-        ((.\ pawnDefended) . rookMoves allPieces pinnedPieces king)
+        (rookMoves allPieces pinnedPieces king)
+        (pawnDefended .| minorDefended)
         (player&rooks)
 
     (queensMobility, byQueenThreats, queensCount)    =
       foldBoardScores queenMobilityTable
-        ((.\ pawnDefended) . queenMoves allPieces pinnedPieces king)
+        (queenMoves allPieces pinnedPieces king)
+        (pawnDefended .| minorDefended .| rookDefended)
         (player&queens)
 
 
-    foldBoardScores !mobilityTable !f !board =
-      foldlBoard (0, 0, 0) foldFn f board
+    foldBoardScores !mobilityTable !movesFn !defended !board =
+      foldlBoard (0, 0, 0) foldFn movesFn board
       where
         foldFn (!x, !y, !z) !attackArea =
-          (x + mobilityTable !!% popCount (attackArea .\ player),
+          (x + mobilityTable
+           !!% popCount (attackArea .\ (player .| defended)),
            y + threatenedSquares,
            z + toCondition threatenedSquares)
           where
             !threatenedSquares = popCount (enemyKingArea & attackArea)
 
-    !king          = player & kings
-    !unpinned      = player .\ pinnedPieces
-    !allPieces     = player .| enemy
-    !enemyKingArea = kingAttacks (lsb (enemy&kings))
-    !pawnDefended  = pawnAttacks (reverseColor color) (enemy&pawns)
+    !king           = player & kings
+    !unpinned       = player .\ pinnedPieces
+    !allPieces      = player .| enemy
+
+    !enemyKingArea  =
+      kingAttacks (lsb (enemy&kings))
+    !pawnDefended   =
+      pawnAttacks (reverseColor color) (enemy&pawns)
+    !minorDefended =
+         foldBoardAttacks knightAttacks (enemy&knights)
+      .| foldBoardAttacks (bishopAttacks allPieces) (enemy&bishops)
+    !rookDefended =
+       foldBoardAttacks (rookAttacks allPieces) (enemy&rooks)
 
 
 evaluateExchange :: Move -> Position -> Score
-evaluateExchange initialMv =
-  go initialMv
+evaluateExchange initialMv initialPos =
+  let ?phase = initialPos.phase
+  in go initialMv initialPos
   where
     !square = initialMv.end
     go !mv !pos =
       let newPos = makeMove mv pos
-      in let ?phase = pos.phase
       in evaluateCapturedPiece mv pos
       - case headMay $ staticExchangeCaptures square newPos of
         Just newMv -> max 0 $! go newMv newPos
         Nothing    -> 0
-
-
-evaluateExchangeOnSquare :: Square -> Position -> Score
-evaluateExchangeOnSquare !square !pos =
-  case headMay $ staticExchangeCaptures square pos of
-    Just mv -> max 0 $! evaluateExchange mv pos
-    Nothing -> 0
 
 
 data ScoresBatch = ScoresBatch {

@@ -28,10 +28,12 @@ data MaterialBreakdown = MaterialBreakdown
   }
 
 data BonusBreakdown = BonusBreakdown
-  { mobility       :: Score
-  , bishopPair     :: Score
-  , knightOutposts :: Score
-  , passedPawns    :: Score
+  { mobility           :: Score
+  , passedPawns        :: Score
+  , bishopPair         :: Score
+  , knightOutposts     :: Score
+  , rooksOnOpenFile    :: Score
+  , rooksOnSeventhRank :: Score
   }
 
 data PenaltyBreakdown = PenaltyBreakdown
@@ -68,8 +70,9 @@ instance EvalScore MaterialBreakdown where
 
 instance EvalScore BonusBreakdown where
   evalScore BonusBreakdown {..} =
-      mobility       + bishopPair
-    + knightOutposts + passedPawns
+      mobility       + passedPawns
+    + bishopPair     + knightOutposts
+    + rooksOnOpenFile + rooksOnSeventhRank
 
 
 instance EvalScore PenaltyBreakdown where
@@ -114,12 +117,14 @@ instance Show MaterialBreakdown where
 
 instance Show BonusBreakdown where
   show breakdown@BonusBreakdown {..} = unlines
-    ["Mobility:        " <> show mobility,
-     "Bishop Pair:     " <> show bishopPair,
-     "Knight Outposts: " <> show knightOutposts,
-     "Passed Pawns:    " <> show passedPawns,
+    ["Mobility:              " <> show mobility,
+     "Passed Pawns:          " <> show passedPawns,
+     "Bishop Pair:           " <> show bishopPair,
+     "Knight Outposts:       " <> show knightOutposts,
+     "Rooks On Open Files:   " <> show rooksOnOpenFile,
+     "Rooks On Seventh Rank: " <> show rooksOnSeventhRank,
      totalScoreLine,
-     "Bonus Total: "     <> show (evalScore breakdown),
+     "Bonus Total: "           <> show (evalScore breakdown),
      totalScoreLine]
 
 

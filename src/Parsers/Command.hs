@@ -38,8 +38,7 @@ parseCommand = runParser command
       <|>                           (Search <$> searchOptions))
 
   searchOption =
-        setInfinite       <$   stringToken "infinite"
-    <|> setPonder         <$   stringToken "ponder"
+        setInfinite       <$  token (oneOf @Text ["infinite", "ponder"])
     <|> setSearchMoves    <$> (stringToken "searchmoves" *> unknownMoves)
     <|> setTargetDepth    <$> (stringToken "depth"       *> depth)
     <|> setWhiteTime      <$> (stringToken "wtime"       *> unsignedInt)
@@ -47,9 +46,9 @@ parseCommand = runParser command
     <|> setWhiteIncrement <$> (stringToken "winc"        *> unsignedInt)
     <|> setBlackIncrement <$> (stringToken "binc"        *> unsignedInt)
     <|> setMovesUntil     <$> (stringToken "movestogo"   *> unsignedInt)
-    <|> setNodes          <$> (stringToken "nodes"       *> unsignedInt)
     <|> setFindMate       <$> (stringToken "mate"        *> unsignedInt)
     <|> setMoveTime       <$> (stringToken "movetime"    *> unsignedInt)
+    <|> setMaxNodes       <$> (stringToken "nodes"       *> unsignedBigInt)
 
   positionSpec = PositionSpec
     <$> initialPositionSpec
@@ -87,20 +86,20 @@ parseCommand = runParser command
         stringToken "true"  $> True
     <|> stringToken "false" $> False
 
-  token        = withTransform maybeBetweenSpacing
-  stringToken  = token . string
-  depth        = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
+  token          = withTransform maybeBetweenSpacing
+  stringToken    = token . string
+  depth          = fromIntegral <$> satisfy (inRange 1 255) unsignedInt
+  unsignedBigInt = fromIntegral <$> unsignedInt
 
 
+  setTargetDepth x opts    = opts { targetDepth        = x }
   setSearchMoves x opts    = opts { searchMoves        = x }
   setInfinite opts         = opts { infinite           = True }
-  setPonder opts           = opts { infinite           = True }
-  setTargetDepth x opts    = opts { targetDepth        = x }
   setMoveTime x opts       = opts { moveTime           = Just x }
   setWhiteTime x opts      = opts { whiteTime          = Just x }
   setWhiteIncrement x opts = opts { whiteIncrement     = Just x }
   setBlackTime x opts      = opts { blackTime          = Just x }
   setBlackIncrement x opts = opts { blackIncrement     = Just x }
   setMovesUntil x opts     = opts { movesUntilNextTime = Just x }
-  setNodes x opts          = opts { nodes              = Just x }
   setFindMate x opts       = opts { findMate           = Just x }
+  setMaxNodes x opts       = opts { maxNodes           = Just x }

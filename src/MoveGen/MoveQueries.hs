@@ -34,8 +34,6 @@ isWinningCapture mv pos =
   isCapture mv pos
     && member mv.promotion bestPromotions
     && evaluateExchange mv pos >= 0
-  where
-    ?phase = getPhase pos
 
 
 isPromotionPush :: Move -> Bool

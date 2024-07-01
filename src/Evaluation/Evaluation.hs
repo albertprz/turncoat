@@ -18,9 +18,9 @@ import           Utils.Board
 
 
 -- TODO Material trades (Pieces vs pawns)
--- TODO Improved King safety
 -- TODO Fiancetto bonus
 -- TODO Bad bishop color penalty
+-- TODO Improved King safety
 
 evaluatePosition :: Position -> Score
 evaluatePosition =
@@ -55,10 +55,10 @@ evaluatePositionBonuses
   :: (?phase :: Phase) => ScoresBatch -> Position -> BonusBreakdown
 evaluatePositionBonuses ScoresBatch {mobility} pos =
   BonusBreakdown {
-    mobility          = mobility
-  , passedPawns       = evaluatePassedPawns pos
-  , bishopPair        = evaluateBishopPair pos
-  , knightOutposts    = evaluateKnightOutposts pos
+    mobility           = mobility
+  , passedPawns        = evaluatePassedPawns pos
+  , bishopPair         = evaluateBishopPair pos
+  , knightOutposts     = evaluateKnightOutposts pos
   , rooksOnOpenFile    = evaluateRooksOnOpenFiles pos
   , rooksOnSeventhRank = evaluateRookOnSeventhRank pos
   }
@@ -96,26 +96,35 @@ evaluateKnightOutposts Position {..} =
 evaluateRooksOnOpenFiles :: (?phase::Phase) => Position -> Score
 evaluateRooksOnOpenFiles Position {..} =
   rookOnSemiOpenFileBonus
-  * foldlBoard 0 (+) mapFn (player & rooks)
+  * (eval file_A + eval file_B + eval file_C + eval file_D
+   + eval file_E + eval file_F + eval file_G + eval file_H)
   where
-    ((<!), lastPawn) = case color of
+    eval fileBoard
+      | playerRooksInFile == 0                                          = 0
+      | pawnsInFile       == 0 || lastPieceSquare pawnsInFile       <! n = 2
+      | playerPawnsInFile == 0 || lastPieceSquare playerPawnsInFile <! n = 1
+      | otherwise                                                      = 0
+      where
+        playerRooksInFile = player & rooks & fileBoard
+        playerPawnsInFile = player & pawnsInFile
+        pawnsInFile       = pawns  & fileBoard
+        n                 = lastPieceSquare playerRooksInFile
+
+    (!(<!), !lastPieceSquare) = case color of
       White -> ((<), msb)
       Black -> ((>), lsb)
-    mapFn !n
-      | pawnsInFile       == 0 || lastPawn pawnsInFile <! n       = 2
-      | playerPawnsInFile == 0 || lastPawn playerPawnsInFile <! n = 1
-      | otherwise                                               = 0
-      where
-        pawnsInFile       = pawns  & rankMovesVec !! n
-        playerPawnsInFile = player & pawnsInFile
 
 
 evaluateRookOnSeventhRank :: Position -> Score
 evaluateRookOnSeventhRank Position {..} =
-  rooksOnSeventhRankBonus
+  rookOnSeventhRankBonus
   * max 0
-  (fromIntegral (popCount (player & rooks & rank_7))
-  * fromIntegral (popCount (enemy & pawns & rank_7) - 2))
+     (fromIntegral (popCount (player & rooks & seventhRank))
+    * fromIntegral (popCount (enemy  & pawns & seventhRank) - 2))
+  where
+    seventhRank = case color of
+      White -> rank_7
+      Black -> rank_2
 
 
 evaluatePassedPawns :: (?phase :: Phase) => Position -> Score
@@ -123,20 +132,24 @@ evaluatePassedPawns pos@Position {..} =
   eval file_A + eval file_B + eval file_C + eval file_D
   + eval file_E + eval file_F + eval file_G + eval file_H
   where
-    eval board = mapFn $ msb (player & pawns & board)
-    mapFn n
-      | n == 64 || blockersVec !! n & enemy&pawns /= 0 = 0
+    eval fileBoard
+      | pawnsInFile == 0 || blockersVec !! n & enemy&pawns /= 0 = 0
       | otherwise =
         let rank = getRank n
         in passedPawnTable !!% rank
            + if isFreePasser rank n then freePasserBonus else 0
+      where
+        pawnsInFile = player & pawns & fileBoard
+        n           = lastPawnSquare pawnsInFile
     isFreePasser rank n =
       rank == 7
       && testSquare noPieces (nextRank n)
       && evaluateExchange (Move Pawn QueenProm n $ nextRank n) pos > 0
-    (!getRank, !nextRank, !blockersVec) = case color of
-      White -> (toRank           , (+ 8)     , whitePassedPawnBlockersVec)
-      Black -> (\n -> 7 - toRank n, \n -> n - 8, blackPassedPawnBlockersVec)
+    (!getRank, !nextRank, !lastPawnSquare, !blockersVec) = case color of
+      White ->
+        (toRank           , (+ 8)     , msb, whitePassedPawnBlockersVec)
+      Black ->
+        (\n -> 7 - toRank n, \n -> n - 8, lsb, blackPassedPawnBlockersVec)
     !noPieces = (~) (player .| enemy)
 
 

@@ -29,13 +29,13 @@ queenScore = taperScore $ ScorePair 1000 1050
 
 -- Bonuses
 bishopPairBonus :: (?phase :: Phase) => Score
-bishopPairBonus = taperScore $ ScorePair 50 100
+bishopPairBonus = taperScore $ ScorePair 30 60
 
 knightOutpostBonus :: (?phase :: Phase) => Score
-knightOutpostBonus = taperScore $ ScorePair 50 0
+knightOutpostBonus = taperScore $ ScorePair 25 0
 
 rookOnSemiOpenFileBonus :: (?phase :: Phase) => Score
-rookOnSemiOpenFileBonus = taperScore $ ScorePair 20 0
+rookOnSemiOpenFileBonus = taperScore $ ScorePair 15 0
 
 rookOnSeventhRankBonus :: Score
 rookOnSeventhRankBonus = 10

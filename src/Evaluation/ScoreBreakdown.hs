@@ -70,8 +70,8 @@ instance EvalScore MaterialBreakdown where
 
 instance EvalScore BonusBreakdown where
   evalScore BonusBreakdown {..} =
-      mobility       + passedPawns
-    + bishopPair     + knightOutposts
+      mobility        + passedPawns
+    + bishopPair      + knightOutposts
     + rooksOnOpenFile + rooksOnSeventhRank
 
 

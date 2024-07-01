@@ -63,7 +63,7 @@ newPosition :: Position -> Position
 newPosition = setInitialValues . makeNullMove . makeNullMove
   where
   setInitialValues pos = pos {
-    phase         = getPhase pos
+    phase = getPhase pos
   }
 
 

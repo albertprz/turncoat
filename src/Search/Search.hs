@@ -47,13 +47,14 @@ search searchOpts@SearchOptions{..} resultRef pos = do
       result  <- getNodeResult initialAlpha initialBeta depth 0 pos
       endTime <- getSystemTime
       nodes   <- readIORef nodesRef
-      printSearchInfo depth nodes (endTime |-| startTime) result
       let bestMove = result.bestMove <|> headMay (allMoves pos)
-      unless (null bestMove)
-         $ writeIORef resultRef result {bestMove = bestMove}
+          result' = result {bestMove = bestMove}
+      printSearchInfo depth nodes (endTime |-| startTime) result'
+      unless (null bestMove) $ writeIORef resultRef result'
       pure (isTimeOver endTime startTime timeToMove
             || hasSingleMove pos
             || any (nodes >=) maxNodes
+            || isNothing result.bestMove
             || getGameResult result.score `elem` [Victory, Defeat])
 
 
@@ -65,22 +66,17 @@ negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
-negamax !alpha !beta !depth !ply pos
-
-  | pos.halfMoveClock == 50 || isRepeatedPosition zKey pos
-  = pure $! emptySearchResult 0
-
-  | otherwise = do
-    ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
-    case ttResult of
-      Just (!score, !bestMove) -> pure $! SearchResult score bestMove Nothing
-      Nothing -> cacheNodeResult alpha beta extendedDepth ply zKey pos
-   where
-     zKey = getZobristKey pos
-     extendedDepth =
-       if isKingInCheck pos || (ply < 40 && hasSingleMove pos)
-        then depth + 1
-        else depth
+negamax !alpha !beta !depth !ply pos = do
+  ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
+  case ttResult of
+    Just (!score, !bestMove) -> pure $! SearchResult score bestMove Nothing
+    Nothing -> cacheNodeResult alpha beta extendedDepth ply zKey pos
+  where
+    zKey = getZobristKey pos
+    extendedDepth =
+      if isKingInCheck pos || (ply < 40 && hasSingleMove pos)
+      then depth + 1
+      else depth
 
 
 cacheNodeResult
@@ -119,12 +115,16 @@ getNodeResult
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 getNodeResult !alpha !beta !depth !ply pos
 
+  | isDefeat pos = pure $! emptySearchResult minScore
+
+  | isDraw   pos = pure $! emptySearchResult 0
+
   | depth == 0
   || depth <= 3
     && not (isKingInCheck pos)
     && staticEval < 1000 && staticEval > -1000
-    && staticEval + futilityMargin <= alpha
-  = emptySearchResult <$> quiesceSearch alpha beta 0 pos
+    && staticEval + futilityMargin <= alpha =
+    emptySearchResult <$> quiesceSearch alpha beta 0 pos
 
   | otherwise = do
     nullMoveScore <- getNullMoveScore beta depth ply pos
@@ -135,19 +135,14 @@ getNodeResult !alpha !beta !depth !ply pos
   where
     staticEval      = evaluatePosition pos
     !futilityMargin = futilityMargins !! (fromIntegral depth - 1)
-    traverseMoves moves
-      | null $ uncurry (<>) moves =
-          let score | isKingInCheck pos = minScore
-                    | otherwise         = 0
-          in pure $! emptySearchResult score
-      | otherwise = do
-          let movesSearch = getMovesScore beta depth ply moves pos
-          (!score, !searchResult) <-
-            runStateT movesSearch (emptySearchResult alpha)
-          let
-            !newAlpha = searchResult.score
-            !newScore = fromMaybe newAlpha score
-          pure $! searchResult {score = newScore}
+    traverseMoves moves = do
+      let movesSearch = getMovesScore beta depth ply moves pos
+      (!score, !searchResult) <-
+        runStateT movesSearch (emptySearchResult alpha)
+      let
+        !newAlpha = searchResult.score
+        !newScore = fromMaybe newAlpha score
+      pure $! searchResult {score = newScore}
 
 
 getMovesScore
@@ -180,10 +175,10 @@ getMoveScore !beta !depth !ply !isReduced pos !mvIdx !mv = do
     else fullSearch
   where
     !lmrDepth
-      | isReduced && not (isCheckMove mv pos || isCapture mv pos)
-        = getLmrDepth mvIdx depth
-      | otherwise
-        = depth
+      | isReduced && not (isCheckMove mv pos || isCapture mv pos) =
+        getLmrDepth mvIdx depth
+      | otherwise =
+        depth
 
     nullWindowSearch = do
      st@SearchResult {score = alpha} <- get

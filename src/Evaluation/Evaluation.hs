@@ -177,13 +177,13 @@ getScoresBatch pos
   | isKingInCheck pos = emptyScoresBatch
 getScoresBatch Position {..} = ScoresBatch {..}
   where
-    mobility        =
-        knightsMobility + bishopsMobility + rooksMobility + queensMobility
+    mobility =
+      knightsMobility + bishopsMobility + rooksMobility + queensMobility
 
-    kingThreats     =
+    kingThreats =
       (kingThreatPiecesTable !! piecesCount) * kingThreatScore / 100
 
-    piecesCount     =
+    piecesCount =
       knightsCount + bishopsCount + rooksCount + queensCount
 
     kingThreatScore =
@@ -204,13 +204,13 @@ getScoresBatch Position {..} = ScoresBatch {..}
         pawnDefended
         (player&bishops)
 
-    (rooksMobility, byRookThreats, rooksCount)       =
+    (rooksMobility, byRookThreats, rooksCount) =
       foldBoardScores rookMobilityTable
         (rookMoves allPieces pinnedPieces king)
         (pawnDefended .| minorDefended)
         (player&rooks)
 
-    (queensMobility, byQueenThreats, queensCount)    =
+    (queensMobility, byQueenThreats, queensCount) =
       foldBoardScores queenMobilityTable
         (queenMoves allPieces pinnedPieces king)
         (pawnDefended .| minorDefended .| rookDefended)

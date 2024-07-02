@@ -18,7 +18,7 @@ getLmrDepth mvIdx depth =
   where
     lmrDepth = ceiling (lmrFactor * (fromIntegral depth / 2)
                 + (1 - lmrFactor) * (fromIntegral depth - 1))
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 20)
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 80)
 
 
 initialAlpha :: Score

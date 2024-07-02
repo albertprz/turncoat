@@ -2,7 +2,6 @@ module MoveGen.MoveQueries (isQuietMove, isLegalQuietMove, isWinningCapture, isC
 
 import           AppPrelude
 
-import           Data.Composition
 import           Evaluation.Evaluation
 import           Models.Move
 import           Models.Piece
@@ -42,7 +41,7 @@ isPromotionPush Move{..} =
 
 
 isQuietMove :: Move -> Position -> Bool
-isQuietMove = not .: isCapture
+isQuietMove mv pos = not (isCheckMove mv pos || isCapture mv pos)
 
 
 isLegalQuietMove :: Move -> Position -> Bool

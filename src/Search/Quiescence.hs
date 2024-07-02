@@ -22,10 +22,6 @@ quiesceSearch !alpha !beta !ply !pos
 
   | standPat >= beta = pure beta
 
-  | isDefeat pos    = pure minScore
-
-  | isDraw   pos    = pure 0
-
   | otherwise       = do
       modifyIORef' ?nodes (+ 1)
       (score, finalAlpha) <- runStateT scoreState newAlpha

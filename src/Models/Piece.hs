@@ -30,7 +30,7 @@ data CastlingRights = KingSide | QueenSide
 
 
 bestPromotions :: Set Promotion
-bestPromotions = Set.fromList [NoProm, QueenProm, KnightProm]
+bestPromotions = Set.fromList [NoProm, QueenProm]
 
 
 {-# COMPLETE Pawn, Knight, Bishop, Rook, Queen, King #-}

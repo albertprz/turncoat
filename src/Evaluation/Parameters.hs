@@ -14,25 +14,25 @@ import qualified Data.Vector.Storable      as Vector
 pawnScore :: Score
 pawnScore = 100
 
-knightScore :: (?phase :: Phase) => Score
-knightScore = taperScore $ ScorePair 350 320
+bishopScore :: Score
+bishopScore = 350
 
-bishopScore :: (?phase :: Phase) => Score
-bishopScore = taperScore $ ScorePair 350 320
+knightScore :: Score
+knightScore = 350
 
 rookScore :: (?phase :: Phase) => Score
-rookScore = taperScore $ ScorePair 520 570
+rookScore = taperScore $ ScorePair 500 550
 
 queenScore :: (?phase :: Phase) => Score
-queenScore = taperScore $ ScorePair 1000 1050
+queenScore = taperScore $ ScorePair 1000 1080
 
 
 -- Bonuses
 bishopPairBonus :: (?phase :: Phase) => Score
-bishopPairBonus = taperScore $ ScorePair 30 60
+bishopPairBonus = taperScore $ ScorePair 25 100
 
 knightOutpostBonus :: (?phase :: Phase) => Score
-knightOutpostBonus = taperScore $ ScorePair 25 0
+knightOutpostBonus = taperScore $ ScorePair 30 0
 
 rookOnSemiOpenFileBonus :: (?phase :: Phase) => Score
 rookOnSemiOpenFileBonus = taperScore $ ScorePair 15 0
@@ -41,12 +41,12 @@ rookOnSeventhRankBonus :: Score
 rookOnSeventhRankBonus = 10
 
 freePasserBonus :: (?phase :: Phase) => Score
-freePasserBonus = taperScore $ ScorePair 0 100
+freePasserBonus = taperScore $ ScorePair 0 200
 
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
-  [(0, 0), (0, 0), (10, 20), (20, 40),
-   (30, 60), (40, 80), (50, 100)]
+  [(0, 0), (0, 0), (10, 30), (20, 60),
+   (30, 90), (40, 120), (50, 150)]
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
@@ -85,7 +85,7 @@ threatByQueenPenalty :: Score
 threatByQueenPenalty = 120
 
 isolatedPawnPenalty :: (?phase :: Phase) => Score
-isolatedPawnPenalty = taperScore $ ScorePair 25 50
+isolatedPawnPenalty = taperScore $ ScorePair 15 30
 
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
@@ -97,9 +97,9 @@ kingThreatPiecesTable = Vector.fromList
 blackPawnSquareTable :: Vector Score
 blackPawnSquareTable = Vector.fromList
   [0,  0,  0,  0,  0,  0,  0,  0,
-   0, 20, 20, 30, 30, 20, 0, 0,
-   0, 10, 10, 20, 20, 10, 0, 10,
-   0,  0, 5, 15, 15, 5, 0,  0,
+  10, 10, 20, 30, 30, 20, 10, 10,
+  10, 10, 10, 20, 20, 10, 10, 10,
+   5,  5, 5, 15, 15, 5, 5,  5,
    0,  0,  0, 10, 10,  0,  0,  0,
   -5, -5,-10,  0,  0,-10, -5,  -5,
    10, 10, 10,-20,-20, 10, 10, 10,

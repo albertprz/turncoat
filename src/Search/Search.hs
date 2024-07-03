@@ -48,7 +48,7 @@ search searchOpts@SearchOptions{..} resultRef pos = do
       endTime <- getSystemTime
       nodes   <- readIORef nodesRef
       let bestMove = result.bestMove <|> headMay (allMoves pos)
-          result' = result {bestMove = bestMove}
+          result'  = result {bestMove = bestMove}
       printSearchInfo depth nodes (endTime |-| startTime) result'
       unless (null bestMove) $ writeIORef resultRef result'
       pure (isTimeOver endTime startTime timeToMove
@@ -66,7 +66,13 @@ negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
-negamax !alpha !beta !depth !ply pos = do
+negamax !alpha !beta !depth !ply pos
+
+  | isDefeat pos = pure $! emptySearchResult minScore
+
+  | isDraw   pos = pure $! emptySearchResult 0
+
+  | otherwise = do
   ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
   case ttResult of
     Just (!score, !bestMove) -> pure $! SearchResult score bestMove Nothing
@@ -114,10 +120,6 @@ getNodeResult
      ?opts :: EngineOptions, ?nodes :: IORef Word64, ?age :: Age)
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 getNodeResult !alpha !beta !depth !ply pos
-
-  | isDefeat pos = pure $! emptySearchResult minScore
-
-  | isDraw   pos = pure $! emptySearchResult 0
 
   | depth == 0
   || depth <= 3
@@ -193,8 +195,8 @@ getMoveScore !beta !depth !ply !isReduced pos !mvIdx !mv = do
       SearchResult {score = alpha} <- get
       SearchResult{..} <- getScore alpha beta
       let nodeType    = getNodeType alpha beta score
-      newScore <- advanceState beta score ply nodeType mv bestMove pos
-      pure $! newScore
+      !newScore <- advanceState beta score ply nodeType mv bestMove pos
+      pure newScore
 
     getScore !alpha' !beta' = liftIO
       $ getNegamaxScore alpha' beta' lmrDepth ply (makeMove mv pos)

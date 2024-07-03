@@ -33,7 +33,7 @@ infixl 8 &
 (&) :: Board -> Board -> Board
 (&) !x !y = (Bits..&.) x y
 
-infixl 8 .\
+infixl 7 .\
 (.\) :: Board -> Board -> Board
 (.\) !x !y = x & (~) y
 

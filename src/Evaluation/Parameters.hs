@@ -15,10 +15,10 @@ pawnScore :: Score
 pawnScore = 100
 
 bishopScore :: Score
-bishopScore = 350
+bishopScore = 340
 
 knightScore :: Score
-knightScore = 350
+knightScore = 340
 
 rookScore :: (?phase :: Phase) => Score
 rookScore = taperScore $ ScorePair 500 550
@@ -35,18 +35,18 @@ knightOutpostBonus :: (?phase :: Phase) => Score
 knightOutpostBonus = taperScore $ ScorePair 30 0
 
 rookOnSemiOpenFileBonus :: (?phase :: Phase) => Score
-rookOnSemiOpenFileBonus = taperScore $ ScorePair 15 0
+rookOnSemiOpenFileBonus = taperScore $ ScorePair 20 10
 
 rookOnSeventhRankBonus :: Score
 rookOnSeventhRankBonus = 10
 
-freePasserBonus :: (?phase :: Phase) => Score
-freePasserBonus = taperScore $ ScorePair 0 200
+freePasserBonus :: Score
+freePasserBonus = 100
 
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
-  [(0, 0), (0, 0), (10, 30), (20, 60),
-   (30, 90), (40, 120), (50, 150)]
+  [(0, 0), (0, 0), (10, 20), (20, 40),
+   (30, 60), (40, 80), (50, 100)]
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
@@ -76,16 +76,16 @@ queenMobilityTable = Vector.fromList $ map (uncurry ScorePair)
 
 -- Penalties
 threatByMinorPenalty :: Score
-threatByMinorPenalty = 30
+threatByMinorPenalty = 20
 
 threatByRookPenalty :: Score
-threatByRookPenalty = 60
+threatByRookPenalty = 40
 
 threatByQueenPenalty :: Score
-threatByQueenPenalty = 120
+threatByQueenPenalty = 80
 
 isolatedPawnPenalty :: (?phase :: Phase) => Score
-isolatedPawnPenalty = taperScore $ ScorePair 15 30
+isolatedPawnPenalty = taperScore $ ScorePair 25 50
 
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList

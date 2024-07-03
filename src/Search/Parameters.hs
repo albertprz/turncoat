@@ -9,7 +9,7 @@ import           Models.Score
 
 futilityMargins :: Vector Score
 futilityMargins = Vector.fromList
-  [300, 600, 1000]
+  [150, 300, 600]
 
 
 getLmrDepth :: Int -> Depth -> Depth
@@ -18,7 +18,7 @@ getLmrDepth mvIdx depth =
   where
     lmrDepth = ceiling (lmrFactor * (fromIntegral depth / 2)
                 + (1 - lmrFactor) * (fromIntegral depth - 1))
-    lmrFactor = min @Double 1 (fromIntegral mvIdx / 80)
+    lmrFactor = min @Double 1 (fromIntegral mvIdx / 40)
 
 
 initialAlpha :: Score

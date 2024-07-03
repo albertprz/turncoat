@@ -18,8 +18,6 @@ import           Utils.Board
 
 
 -- TODO Material trades (Pieces vs pawns)
--- TODO Fiancetto bonus
--- TODO Bad bishop color penalty
 -- TODO Improved King safety
 
 evaluatePosition :: Position -> Score
@@ -93,7 +91,7 @@ evaluateKnightOutposts Position {..} =
       Black -> (blackKnightOutpostRanks , blackKnightOutpostAttackersVec)
 
 
-evaluateRooksOnOpenFiles :: (?phase::Phase) => Position -> Score
+evaluateRooksOnOpenFiles :: (?phase :: Phase) => Position -> Score
 evaluateRooksOnOpenFiles Position {..} =
   rookOnSemiOpenFileBonus
   * (eval file_A + eval file_B + eval file_C + eval file_D
@@ -200,13 +198,14 @@ getScoresBatch Position {..} = ScoresBatch {..}
 
     (bishopsMobility, byBishopThreats, bishopsCount) =
       foldBoardScores bishopMobilityTable
-        (bishopMoves allPieces pinnedPieces king)
+        (bishopMoves (allPieces .\ player & queens) pinnedPieces king)
         pawnDefended
         (player&bishops)
 
     (rooksMobility, byRookThreats, rooksCount) =
       foldBoardScores rookMobilityTable
-        (rookMoves allPieces pinnedPieces king)
+        (rookMoves (allPieces .\ player & (queens .| rooks))
+         pinnedPieces king)
         (pawnDefended .| minorDefended)
         (player&rooks)
 
@@ -221,8 +220,7 @@ getScoresBatch Position {..} = ScoresBatch {..}
       foldlBoard (0, 0, 0) foldFn movesFn board
       where
         foldFn (!x, !y, !z) !attackArea =
-          (x + mobilityTable
-           !!% popCount (attackArea .\ (player .| defended)),
+          (x + mobilityTable !!% popCount (attackArea .\ defended),
            y + threatenedSquares,
            z + toCondition threatenedSquares)
           where

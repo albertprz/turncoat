@@ -30,7 +30,7 @@ quiesceSearch !alpha !beta !ply !pos
     scoreState = findTraverseIndex (getMoveScore beta ply pos) moves
     moves
       | isKingInCheck pos = allMoves pos
-      | ply <= 3           = getWinningCapturesAndChecks pos
+      | ply <= 1           = getWinningCapturesAndChecks pos
       | otherwise         = getWinningCaptures pos
     !newAlpha  = max alpha standPat
     !standPat  = evaluatePosition pos

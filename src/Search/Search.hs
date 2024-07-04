@@ -54,7 +54,7 @@ search searchOpts@SearchOptions{..} resultRef pos = do
       pure (isTimeOver endTime startTime timeToMove
             || not infinite && hasSingleMove pos
             || any (nodes >=) maxNodes
-            || isNothing result.bestMove
+            || isDraw pos
             || getGameResult result.score `elem` [Victory, Defeat])
 
 
@@ -68,9 +68,9 @@ negamax
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 negamax !alpha !beta !depth !ply pos
 
-  | isDefeat pos = pure $! emptySearchResult minScore
+  | isDefeat pos         = pure $! emptySearchResult minScore
 
-  | isDraw   pos = pure $! emptySearchResult 0
+  | ply > 0 && isDraw pos = pure $! emptySearchResult 0
 
   | otherwise = do
   ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey

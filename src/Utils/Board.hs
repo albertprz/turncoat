@@ -1,6 +1,6 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  popCount, popCountToBoard, lsb, msb, toBoard, toCondition, toReverseCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSliding, longCastleSliding, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, whitePassedPawnBlockersVec, blackPassedPawnBlockersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
+module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  popCount, popCountToBoard, lsb, msb, toBoard, toCondition, getSquareDistance, toReverseCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSliding, longCastleSliding, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, whitePassedPawnBlockersVec, blackPassedPawnBlockersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
 
 import           AppPrelude           hiding (foldl', map)
 
@@ -140,6 +140,18 @@ passedPawnBlockers above n = filesBoard & ranksBoard
     compareFn | above     = (<)
               | otherwise = (>)
 
+
+squareDistance :: Square -> Square -> Int
+squareDistance n1 n2 = max fileDistance rankDistance
+  where
+    fileDistance = abs (file1 - file2)
+    rankDistance = abs (rank1 - rank2)
+    file1        = toFile n1
+    file2        = toFile n2
+    rank1        = toRank n1
+    rank2        = toRank n2
+
+
 fileMove :: Square -> Board
 fileMove n = ranks !! toRank n
 
@@ -172,6 +184,10 @@ getNextFile n
   | n == 7 = 0
   | otherwise = getFile (n + 1)
 
+getSquareDistance :: Square -> Square -> Int
+getSquareDistance n1 n2 =
+  squareDistanceVec !! (n1 * 64 + n2)
+
 
 getDiag :: Diag -> Board
 getDiag = diagHelper (7 -)
@@ -185,8 +201,8 @@ diagHelper f n = foldl1 (.|) xs
   xs = fromList do
     x <- toList sideSquares
     let y = f (n - x) `rem` 8
-    guard $! inRange 0 7 (n - x)
-    pure $! toBoard (y + 8 * x)
+    guard $ inRange 0 7 (n - x)
+    pure $ toBoard (y + 8 * x)
 
 
 -- Move Functions
@@ -299,6 +315,13 @@ whitePassedPawnBlockersVec =
 blackPassedPawnBlockersVec :: Vector Board
 blackPassedPawnBlockersVec =
   map (passedPawnBlockers False) squares
+
+squareDistanceVec :: Vector Int
+squareDistanceVec = fromList do
+  n1 <- toList squares
+  n2 <- toList squares
+  pure $ squareDistance n1 n2
+
 
 {-# NOINLINE pieceRngVec #-}
 pieceRngVec :: Vector Board

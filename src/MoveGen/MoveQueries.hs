@@ -25,7 +25,8 @@ isCheckMove mv pos =
 isCapture :: Move -> Position -> Bool
 isCapture Move {..} Position {..} =
   promotion /= NoProm
-    || testSquare (enemy .| enPassant) end
+    || testSquare enemy end
+    || piece == Pawn && testSquare enPassant end
 
 
 isWinningCapture :: Move -> Position -> Bool
@@ -41,7 +42,8 @@ isPromotionPush Move{..} =
 
 
 isQuietMove :: Move -> Position -> Bool
-isQuietMove mv pos = not (isCheckMove mv pos || isCapture mv pos)
+isQuietMove mv pos =
+  not (isCheckMove mv pos || isCapture mv pos)
 
 
 isLegalQuietMove :: Move -> Position -> Bool

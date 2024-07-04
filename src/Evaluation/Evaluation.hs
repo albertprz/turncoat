@@ -36,10 +36,11 @@ evaluatePositionBreakdown pos =
       (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
       (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
   where
-    ?phase = pos.phase
+    ?phase       = pos.phase
+    ?colorToMove = pos.color
 
 
-evaluatePlayerBreakdown :: (?phase :: Phase)
+evaluatePlayerBreakdown :: (?phase :: Phase, ?colorToMove :: Color)
   => ScoresBatch -> ScoresBatch -> Position -> PlayerScoreBreakdown
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
@@ -49,8 +50,8 @@ evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   }
 
 
-evaluatePositionBonuses
-  :: (?phase :: Phase) => ScoresBatch -> Position -> BonusBreakdown
+evaluatePositionBonuses :: (?phase :: Phase, ?colorToMove :: Color)
+  => ScoresBatch -> Position -> BonusBreakdown
 evaluatePositionBonuses ScoresBatch {mobility} pos =
   BonusBreakdown {
     mobility           = mobility
@@ -58,7 +59,6 @@ evaluatePositionBonuses ScoresBatch {mobility} pos =
   , bishopPair         = evaluateBishopPair pos
   , knightOutposts     = evaluateKnightOutposts pos
   , rooksOnOpenFile    = evaluateRooksOnOpenFiles pos
-  , rooksOnSeventhRank = evaluateRookOnSeventhRank pos
   }
 
 
@@ -113,41 +113,51 @@ evaluateRooksOnOpenFiles Position {..} =
       Black -> ((>), lsb)
 
 
-evaluateRookOnSeventhRank :: Position -> Score
-evaluateRookOnSeventhRank Position {..} =
-  rookOnSeventhRankBonus
-  * max 0
-     (fromIntegral (popCount (player & rooks & seventhRank))
-    * fromIntegral (popCount (enemy  & pawns & seventhRank) - 2))
-  where
-    seventhRank = case color of
-      White -> rank_7
-      Black -> rank_2
-
-
-evaluatePassedPawns :: (?phase :: Phase) => Position -> Score
+evaluatePassedPawns ::
+  (?phase :: Phase, ?colorToMove :: Color) => Position -> Score
 evaluatePassedPawns pos@Position {..} =
   eval file_A + eval file_B + eval file_C + eval file_D
   + eval file_E + eval file_F + eval file_G + eval file_H
   where
     eval fileBoard
       | pawnsInFile == 0 || blockersVec !! n & enemy&pawns /= 0 = 0
-      | otherwise =
-        let rank = getRank n
-        in passedPawnTable !!% rank
-           + if isFreePasser rank n then freePasserBonus else 0
+      | isUnstoppablePawn n = unstoppablePawn
+      | isFreePasser rank n = freePassedPawnTable !!% rank
+      | otherwise           = passedPawnTable     !!% rank
       where
+        rank        = normalizeRank $ toRank n
         pawnsInFile = player & pawns & fileBoard
         n           = lastPawnSquare pawnsInFile
+
     isFreePasser rank n =
-      rank == 7
-      && testSquare noPieces (nextRank n)
-      && evaluateExchange (Move Pawn QueenProm n $ nextRank n) pos > 0
-    (!getRank, !nextRank, !lastPawnSquare, !blockersVec) = case color of
-      White ->
-        (toRank           , (+ 8)     , msb, whitePassedPawnBlockersVec)
-      Black ->
-        (\n -> 7 - toRank n, \n -> n - 8, lsb, blackPassedPawnBlockersVec)
+      testSquare noPieces (nextRank n)
+      && evaluateExchange (Move Pawn promotion n $ nextRank n) pos >= 0
+      where
+        promotion | rank == 7 = QueenProm
+                  | otherwise = NoProm
+
+    isUnstoppablePawn pawnSquare =
+        enemy & (knights .| bishops .| rooks .| queens) == 0
+      && kingDistance > pawnDistance
+      where
+        pawnDistance = getSquareDistance pawnSquare promotionSquare
+        kingDistance =
+          getSquareDistance kingSquare promotionSquare - kingDistanceOffset
+
+        promotionSquare = 8 * promotionRank + pawnFile
+        pawnFile        = toFile pawnSquare
+        kingSquare      = lsb (enemy & kings)
+        kingDistanceOffset
+          | color /= ?colorToMove = 1
+          | otherwise            = 0
+
+    (!normalizeRank, !nextRank, !lastPawnSquare, !blockersVec,
+     !promotionRank) =
+      case color of
+        White ->
+          (id   , (+ 8)     , msb, whitePassedPawnBlockersVec, 7)
+        Black ->
+          ((7 -), \n -> n - 8, lsb, blackPassedPawnBlockersVec, 0)
     !noPieces = (~) (player .| enemy)
 
 
@@ -204,7 +214,7 @@ getScoresBatch Position {..} = ScoresBatch {..}
 
     (rooksMobility, byRookThreats, rooksCount) =
       foldBoardScores rookMobilityTable
-        (rookMoves (allPieces .\ player & (queens .| rooks))
+        (rookMoves (allPieces .\ player & queens)
          pinnedPieces king)
         (pawnDefended .| minorDefended)
         (player&rooks)
@@ -220,7 +230,8 @@ getScoresBatch Position {..} = ScoresBatch {..}
       foldlBoard (0, 0, 0) foldFn movesFn board
       where
         foldFn (!x, !y, !z) !attackArea =
-          (x + mobilityTable !!% popCount (attackArea .\ defended),
+          (x + mobilityTable
+           !!% popCount (attackArea .\ (player .| defended)),
            y + threatenedSquares,
            z + toCondition threatenedSquares)
           where

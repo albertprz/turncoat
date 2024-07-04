@@ -2,16 +2,15 @@ module Models.Position where
 
 
 import           AppPrelude
-import           Models.Move          (foldlBoard)
+import           Models.Move        (foldlBoard)
 import           Models.Piece
 import           Models.Score
 import           Utils.Board
 
-import           Bookhound.Utils.List (hasMultiple)
-import           Data.Bitraversable   (bisequence)
-import           Data.List.Split      (chunksOf)
-import           Data.Maybe           (fromJust)
-import           Test.QuickCheck      (Arbitrary (..))
+import           Data.Bitraversable (bisequence)
+import           Data.List.Split    (chunksOf)
+import           Data.Maybe         (fromJust)
+import           Test.QuickCheck    (Arbitrary (..))
 
 
 data Position = Position {
@@ -150,7 +149,7 @@ isPieceAt piece n Position {..} =
 {-# INLINE  isRepeatedPosition #-}
 isRepeatedPosition :: ZKey -> Position -> Bool
 isRepeatedPosition zKey Position {..} =
-  hasMultiple $ filter (== zKey) previousPositions
+  zKey `elem` previousPositions
 
 
 {-# INLINE  getPhase #-}

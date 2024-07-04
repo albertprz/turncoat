@@ -58,7 +58,7 @@ isStalemate pos = null (allMoves pos) && not (isKingInCheck pos)
 
 isDrawByHalfMoves :: Position -> Bool
 isDrawByHalfMoves Position {halfMoveClock} =
-  halfMoveClock == 50
+  halfMoveClock >= 100
 
 
 isDrawByRepetition :: Position -> Bool
@@ -75,16 +75,24 @@ isDrawByMaterial Position {..} =
   || allPieces == majorPieces &&
     forBoth queenVsRooks
 
+  || allPieces == queens &&
+    (popCount (player & queens) == 1
+    && popCount (enemy & queens) == 1)
+
   || allPieces == rooks &&
     (popCount (player & rooks) == 1
     && popCount (enemy & rooks) == 1)
+
+  || allPieces == queens .| minorPieces &&
+    (forBoth queenVsBishops
+    || forBoth queenVsKnights)
 
   || allPieces == rooks .| minorPieces &&
     (forBoth rooksVsRookAndMinor
     || forBoth rooksVsRookBishopAndKnight
     || forBoth rookVsMinor
     || forBoth rookAndMinorVsRook
-    || forBoth bishopAndKnightVsRook)
+    || forBoth rookVsBishopAndKnight)
 
   || allPieces == minorPieces &&
 
@@ -126,7 +134,7 @@ isDrawByMaterial Position {..} =
       && popCount (enemyBoard & rooks)  == 1
       && enemyBoard & minorPieces       == 0
 
-    bishopAndKnightVsRook !board !enemyBoard =
+    rookVsBishopAndKnight !board !enemyBoard =
       board & rooks                == 0
       && popCount (board & bishops) == 1
       && popCount (board & knights) == 1
@@ -152,6 +160,18 @@ isDrawByMaterial Position {..} =
       && popCount (enemyBoard & rooks)   == 1
       && popCount (enemyBoard & knights) == 1
       && popCount (enemyBoard & rooks)   == 1
+
+    queenVsKnights !board !enemyBoard =
+      board & minorPieces == 0
+      && popCount (board & queens) == 1
+      && enemyBoard & (queens .| bishops) == 0
+      && popCount (enemyBoard & knights) == 2
+
+    queenVsBishops !board !enemyBoard =
+      board & minorPieces == 0
+      && popCount (board & queens) == 1
+      && enemyBoard & (queens .| knights) == 0
+      && popCount (enemyBoard & bishops) == 2
 
 
     !playerMinorPiecesCount = popCount (player & minorPieces)

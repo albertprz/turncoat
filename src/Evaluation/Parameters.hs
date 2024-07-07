@@ -15,16 +15,16 @@ pawnScore :: Score
 pawnScore = 100
 
 bishopScore :: Score
-bishopScore = 340
+bishopScore = 350
 
 knightScore :: Score
-knightScore = 340
+knightScore = 350
 
 rookScore :: (?phase :: Phase) => Score
-rookScore = taperScore $ ScorePair 520 550
+rookScore = taperScore $ ScorePair 500 550
 
 queenScore :: (?phase :: Phase) => Score
-queenScore = taperScore $ ScorePair 1040 1080
+queenScore = taperScore $ ScorePair 1000 1080
 
 
 -- Bonuses
@@ -35,10 +35,16 @@ knightOutpostBonus :: (?phase :: Phase) => Score
 knightOutpostBonus = taperScore $ ScorePair 50 0
 
 rookOnSemiOpenFileBonus :: (?phase :: Phase) => Score
-rookOnSemiOpenFileBonus = taperScore $ ScorePair 20 0
+rookOnSemiOpenFileBonus = taperScore $ ScorePair 15 0
+
+pawnShield1RankBonus :: (?phase :: Phase) => Score
+pawnShield1RankBonus = taperScore $ ScorePair 20 0
+
+pawnShield2RankBonus :: (?phase :: Phase) => Score
+pawnShield2RankBonus = taperScore $ ScorePair 10 0
 
 unstoppablePawn :: Score
-unstoppablePawn = 750
+unstoppablePawn = 700
 
 passedPawnTable :: Vector ScorePair
 passedPawnTable = Vector.fromList $ map (uncurry ScorePair)
@@ -52,14 +58,14 @@ freePassedPawnTable = Vector.fromList $ map (ScorePair 0)
 
 knightMobilityTable :: Vector ScorePair
 knightMobilityTable = Vector.fromList $ map (uncurry ScorePair)
-  [(-15, -30), (-5, -10), (-1, -2), (2, 4), (6, 12),
-   (9, 18), (11, 22), (13, 26), (15, 30)]
+  [(-25, -50), (-10, -20), (-2, -4), (4, 8), (9, 18),
+   (14, 28), (18, 36), (22, 44), (25, 50)]
 
 bishopMobilityTable :: Vector ScorePair
 bishopMobilityTable = Vector.fromList $ map (uncurry ScorePair)
-  [(-25, -50), (-11, -22), (-6, -12), (-1, -2),
-   (3, 6), (6, 12), (9, 18), (12, 24), (14, 28),
-   (17, 34), (19, 38), (21, 42), (23, 46), (25, 50)]
+  [(-25, -75), (-11, -33), (-6, -18), (-1, -3),
+   (3, 9), (6, 18), (9, 27), (12, 36), (14, 42),
+   (17, 51), (19, 57), (21, 63), (23, 69), (25, 75)]
 
 rookMobilityTable :: Vector ScorePair
 rookMobilityTable = Vector.fromList $ map (uncurry ScorePair)
@@ -89,45 +95,47 @@ threatByQueenPenalty = 120
 isolatedPawnPenalty :: (?phase :: Phase) => Score
 isolatedPawnPenalty = taperScore $ ScorePair 25 50
 
+doubledPawnPenalty :: (?phase :: Phase) => Score
+doubledPawnPenalty = taperScore $ ScorePair 25 50
+
+
+minorPieceThreat :: Score
+minorPieceThreat = 50
+
+rookThreat :: Score
+rookThreat = 60
+
+queenThreat :: Score
+queenThreat = 80
+
+
 kingThreatPiecesTable :: Vector Score
 kingThreatPiecesTable = Vector.fromList
-  [0, 0, 0, 50, 75, 88, 94, 97, 99, 100,
+  [0, 0, 30, 50, 75, 88, 94, 97, 99, 100,
    100, 100, 100, 100, 100, 100, 100]
 
 
--- Piece Square Tables
-blackPawnSquareTable :: Vector Score
-blackPawnSquareTable = Vector.fromList
-  [0,  0,  0,  0,  0,  0,  0,  0,
-  10, 10, 20, 30, 30, 20, 10, 10,
-  10, 10, 10, 20, 20, 10, 10, 10,
-   5,  5, 5, 15, 15, 5, 5,  5,
-   0,  0,  0, 10, 10,  0,  0,  0,
-  -10, -10,-10,  0,  0,-10, -10,  -10,
-   10, 10, 10,-20,-20, 10, 10, 10,
-   0,  0,  0,  0,  0,  0,  0,  0]
-
-blackKnightSquareTable :: Vector Score
-blackKnightSquareTable = Vector.fromList
-  [-50,-40,-30,-30,-30,-30,-40,-50,
-   -40,-20,  0,  0,  0,  0,-20,-40,
-   -30,  0, 10, 15, 15, 10,  0,-30,
-   -30,  5, 15, 20, 20, 15,  5,-30,
-   -30,  0, 15, 20, 20, 15,  0,-30,
-   -30,  5, 10, 15, 15, 10,  5,-30,
-   -40,-20,  0,  5,  5,  0,-20,-40,
-   -50,-40,-30,-30,-30,-30,-40,-50]
-
-blackBishopSquareTable :: Vector Score
-blackBishopSquareTable = Vector.fromList
+blackKnightSquareTable :: Vector ScorePair
+blackKnightSquareTable = Vector.fromList $ map (`ScorePair` 0)
   [-20,-10,-10,-10,-10,-10,-10,-20,
-   -10,  10,  0,  0,  0,  0,  10,-10,
-   -10,  10,  10, 10, 10,  10, 10,-10,
-   -10,  10,  10, 10, 10,  10, 10,-10,
-   -10,  10, 10, 10, 10,  10,  10,-10,
-   -10, 10, 10, 10, 10, 10, 10,-10,
-   -10, 10,  0,  0,  0,  0, 10,-10,
+   -10,-5,  0,  0,  0,  0, -5,-10,
+   -10,  0, 10, 20, 20, 10,  0,-10,
+   -10,  0, 20, 20, 20, 20,  0,-10,
+   -10,  0, 20, 20, 20, 20,  0,-10,
+   -10,  0, 10, 20, 20, 10,  0, -10,
+   -10,-5,  0,  0,  0,  0, -5,-10,
    -20,-10,-10,-10,-10,-10,-10,-20]
+
+blackBishopSquareTable :: Vector ScorePair
+blackBishopSquareTable = Vector.fromList $ map (`ScorePair` 0)
+  [-10,-10,-10,-10,-10,-10,-10,-10,
+   -10,  0,  0,  0,  0,  0,  0,-10,
+   -10,  0,  5, 10, 10,  5,  0,-10,
+   -10,  0,  5, 10, 10,  5,  0,-10,
+   -10,  0, 5, 10, 10, 5,  0,-10,
+   -10,  5, 10, 10, 10, 10,  5,-10,
+   -10,  5,  5,  5,  5,  5, 5,-10,
+   -10,-10,-10,-10,-10,-10,-10,-10]
 
 blackKingMidgameSquareTable :: Vector Score
 blackKingMidgameSquareTable = Vector.fromList
@@ -137,8 +145,8 @@ blackKingMidgameSquareTable = Vector.fromList
    -30,-40,-40,-50,-50,-40,-40,-30,
    -20,-30,-30,-40,-40,-30,-30,-20,
    -10,-20,-20,-30,-30,-20,-20,-10,
-     0, 0,-10,-20,-20,-10,  0, 0,
-    20, 30, 0,  0,  0, 0, 30, 20]
+     10, 10, 0, -10, -10, 0,  10, 10,
+    20, 20, 20,  0,  0, 0, 20, 20]
 
 blackKingEndgameSquareTable :: Vector Score
 blackKingEndgameSquareTable = Vector.fromList
@@ -151,28 +159,19 @@ blackKingEndgameSquareTable = Vector.fromList
    -30,-20, -10, 10, 10, -10,-20,-30,
    -50,-30,-30,-20,-20,-30,-30,-50]
 
-
 blackKingSquareTable :: Vector ScorePair
 blackKingSquareTable =
   Vector.zipWith ScorePair blackKingMidgameSquareTable
                            blackKingEndgameSquareTable
 
-whitePawnSquareTable :: Vector Score
-whitePawnSquareTable =
-  reverseSquareTable blackPawnSquareTable
+whiteKnightSquareTable :: Vector ScorePair
+whiteKnightSquareTable = reverseSquareTable blackKnightSquareTable
 
-whiteKnightSquareTable :: Vector Score
-whiteKnightSquareTable =
-  reverseSquareTable blackKnightSquareTable
-
-whiteBishopSquareTable :: Vector Score
-whiteBishopSquareTable =
-  reverseSquareTable blackBishopSquareTable
+whiteBishopSquareTable :: Vector ScorePair
+whiteBishopSquareTable = reverseSquareTable blackBishopSquareTable
 
 whiteKingSquareTable :: Vector ScorePair
-whiteKingSquareTable =
-  reverseSquareTable blackKingSquareTable
-
+whiteKingSquareTable = reverseSquareTable blackKingSquareTable
 
 infixl 9 !!%
 (!!%) :: (?phase::Phase) => Vector ScorePair -> Int -> Score

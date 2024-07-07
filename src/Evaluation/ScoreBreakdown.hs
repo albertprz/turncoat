@@ -33,11 +33,14 @@ data BonusBreakdown = BonusBreakdown
   , bishopPair      :: Score
   , knightOutposts  :: Score
   , rooksOnOpenFile :: Score
+  , kingPawnShield  :: Score
   }
 
 data PenaltyBreakdown = PenaltyBreakdown
-  { kingThreats   :: Score
+  { threats       :: Score
+  , kingThreats   :: Score
   , isolatedPawns :: Score
+  , doubledPawns  :: Score
   }
 
 data ScorePair = ScorePair Score Score
@@ -71,12 +74,13 @@ instance EvalScore BonusBreakdown where
   evalScore BonusBreakdown {..} =
       mobility        + passedPawns
     + bishopPair      + knightOutposts
-    + rooksOnOpenFile
+    + rooksOnOpenFile + kingPawnShield
 
 
 instance EvalScore PenaltyBreakdown where
   evalScore PenaltyBreakdown {..} =
-    kingThreats + isolatedPawns
+      threats       + kingThreats
+    + isolatedPawns + doubledPawns
 
 instance EvalScore ScorePair where
   evalScore (ScorePair x y) = x + y
@@ -121,15 +125,18 @@ instance Show BonusBreakdown where
      "Bishop Pair:         " <> show bishopPair,
      "Knight Outposts:     " <> show knightOutposts,
      "Rooks On Open Files: " <> show rooksOnOpenFile,
+     "King Pawn Shield:    " <> show kingPawnShield,
      totalScoreLine,
-     "Bonus Total: "           <> show (evalScore breakdown),
+     "Bonus Total: "         <> show (evalScore breakdown),
      totalScoreLine]
 
 
 instance Show PenaltyBreakdown where
   show breakdown@PenaltyBreakdown {..} = unlines
-    ["King Threats:   " <> show kingThreats,
+    ["Threats:        " <> show threats,
+     "King Threats:   " <> show kingThreats,
      "Isolated pawns: " <> show isolatedPawns,
+     "Doubled pawns:  " <> show doubledPawns,
      totalScoreLine,
      "Penalty Total: "  <> show (evalScore breakdown),
      totalScoreLine]

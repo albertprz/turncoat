@@ -114,10 +114,11 @@ kingCastlingMoves allPieces attacked castling rooks king n =
       * ((castling & king) >> 2))
   where
     shortCastlingCond =
-     toReverseCondition (shortCastleSliding & collisions .| inCheck)
+     toReverseCondition (shortCastleSlidingFiles & collisions .| inCheck)
     longCastlingCond =
-     toReverseCondition (longCastleSliding & collisions .| inCheck
-              .| allPieces & kingRank & file_B)
+     toReverseCondition (longCastleSlidingFiles  & collisions
+            .| inCheck
+            .| allPieces & kingRank & file_B)
     collisions = kingRank & (attacked .| allPieces)
     kingRank = fileMovesVec !! n
     inCheck = king & attacked

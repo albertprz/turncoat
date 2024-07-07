@@ -1,6 +1,6 @@
 {- HLINT ignore "Use camelCase" -}
 
-module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  popCount, popCountToBoard, lsb, msb, toBoard, toCondition, getSquareDistance, toReverseCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSliding, longCastleSliding, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, whitePassedPawnBlockersVec, blackPassedPawnBlockersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
+module Utils.Board (Board, Square, (>>), (<<), (&), (.\), (.|), (^), (~),  popCount, popCountToBoard, lsb, msb, toBoard, toCondition, getSquareDistance, toReverseCondition, testSquare, toFile, toRank, knightMovesVec, kingMovesVec, fileMovesVec, rankMovesVec, diagMovesVec, antiDiagMovesVec, northEastMovesVec, northWestMovesVec, southEastMovesVec, southWestMovesVec, northMovesVec, westMovesVec, southMovesVec, eastMovesVec, shortCastleSlidingFiles, longCastleSlidingFiles, shortCastleFiles, longCastleFiles, whiteKnightOutpostRanks, blackKnightOutpostRanks, knightOupostFiles, castlingRngVec, enPassantRngVec, sideToMoveRng, pieceRngVec, whiteKnightOutpostAttackersVec, blackKnightOutpostAttackersVec, whitePassedPawnBlockersVec, blackPassedPawnBlockersVec, squares, rank_1, rank_2, rank_3, rank_4, rank_5, rank_6, rank_7, rank_8, file_A, file_B, file_C, file_D, file_E, file_F, file_G, file_H)  where
 
 import           AppPrelude           hiding (foldl', map)
 
@@ -365,11 +365,15 @@ diagonals = fromList [0 .. 14]
 
 
 -- Useful boards
-shortCastleSliding :: Board
-shortCastleSliding = file_F .| file_G
+shortCastleSlidingFiles :: Board
+shortCastleSlidingFiles = file_F .| file_G
 
-longCastleSliding :: Board
-longCastleSliding = file_C .| file_D
+longCastleSlidingFiles :: Board
+longCastleSlidingFiles = file_C .| file_D
+
+longCastleFiles = file_A .| file_B .| file_C
+
+shortCastleFiles = file_F .| file_G .| file_H
 
 whiteKnightOutpostRanks :: Board
 whiteKnightOutpostRanks = rank_5 .| rank_6 .| rank_7

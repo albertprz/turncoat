@@ -43,8 +43,8 @@ getSortedMoves !depth !ply pos = do
       <> filter (`notElem` ttMove) killerMoves
 
     worstMoves =
-      filter (`notElem` (ttMove <> killerMoves)) quietMoves
-      <> filter (`notElem` ttMove)               losingCaptures
+         filter (`notElem` (ttMove <> killerMoves)) quietMoves
+      <> filter (`notElem` ttMove)                  losingCaptures
 
   pure if depth >= 3 && not (isKingInCheck pos)
     then (bestMoves, worstMoves)

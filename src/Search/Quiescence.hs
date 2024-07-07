@@ -56,8 +56,7 @@ advanceState !beta !score !nodeType =
 
 getWinningCaptures :: Position -> [Move]
 getWinningCaptures pos =
-  filter (`isWinningCapture` pos)
-    $ allCaptures pos
+  filter (`isWinningCapture` pos) (allCaptures pos)
 
 
 getWinningCapturesAndChecks :: Position -> [Move]

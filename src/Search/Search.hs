@@ -70,7 +70,7 @@ negamax !alpha !beta !depth !ply pos
 
   | isDefeat pos         = pure $! emptySearchResult minScore
 
-  | ply > 0 && isDraw pos = pure $! emptySearchResult 0
+  | isDraw pos && ply > 0 = pure $! emptySearchResult 0
 
   | otherwise = do
   ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey
@@ -80,7 +80,7 @@ negamax !alpha !beta !depth !ply pos
   where
     zKey = getZobristKey pos
     extendedDepth =
-      if isKingInCheck pos || (hasSingleMove pos && ply < 40)
+      if isKingInCheck pos || (hasSingleMove pos && ply < 60)
       then depth + 1
       else depth
 

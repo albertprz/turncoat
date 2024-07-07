@@ -18,7 +18,7 @@ import           Utils.Board
 
 
 -- TODO Material trades (Pieces vs pawns)
--- TODO Improved King safety
+-- TODO Improved King safety (Pawn shield)
 
 evaluatePosition :: Position -> Score
 evaluatePosition =
@@ -45,30 +45,34 @@ evaluatePlayerBreakdown :: (?phase :: Phase, ?colorToMove :: Color)
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
     material      = evaluatePlayerMaterial pos pos.player pos.color
-  , bonusScores   = evaluatePositionBonuses   scoresBatch      pos
-  , penaltyScores = evaluatePositionPenalties enemyScoresBatch pos
+  , bonusScores   = evaluatePositionBonuses scoresBatch pos
+  , penaltyScores =
+      evaluatePositionPenalties scoresBatch enemyScoresBatch pos
   }
 
 
 evaluatePositionBonuses :: (?phase :: Phase, ?colorToMove :: Color)
   => ScoresBatch -> Position -> BonusBreakdown
-evaluatePositionBonuses ScoresBatch {mobility} pos =
+evaluatePositionBonuses ScoresBatch {..} pos =
   BonusBreakdown {
     mobility           = mobility
-  , passedPawns        = evaluatePassedPawns pos
-  , bishopPair         = evaluateBishopPair pos
-  , knightOutposts     = evaluateKnightOutposts pos
+  , passedPawns        = evaluatePassedPawns      pos
+  , bishopPair         = evaluateBishopPair       pos
+  , knightOutposts     = evaluateKnightOutposts   pos
   , rooksOnOpenFile    = evaluateRooksOnOpenFiles pos
+  , kingPawnShield     = evaluateKingPawnShield   pos
   }
 
 
+evaluatePositionPenalties :: (?phase :: Phase)
+  => ScoresBatch -> ScoresBatch -> Position -> PenaltyBreakdown
 evaluatePositionPenalties
-  :: (?phase :: Phase) => ScoresBatch -> Position -> PenaltyBreakdown
-evaluatePositionPenalties
-  ScoresBatch {kingThreats} Position {player, pawns} =
+  ScoresBatch {threats} ScoresBatch {kingThreats} Position {player, pawns} =
   PenaltyBreakdown {
-    kingThreats   = kingThreats
+    threats       = threats
+  , kingThreats   = kingThreats
   , isolatedPawns = evaluateIsolatedPawns (player & pawns)
+  , doubledPawns  = evaluateDoubledPawns  (player & pawns)
   }
 
 
@@ -161,12 +165,31 @@ evaluatePassedPawns pos@Position {..} =
     !noPieces = (~) (player .| enemy)
 
 
+evaluateKingPawnShield :: (?phase :: Phase) => Position -> Score
+evaluateKingPawnShield Position {..} =
+  maybe 0 go
+    $ find ((`testSquare` kingSquare) . (kingRank &))
+      [shortCastleFiles, longCastleFiles]
+  where
+    go board =
+        pawnShield1RankBonus
+        * popCountToScore (pawnShield1Rank & board & player & pawns)
+      + pawnShield2RankBonus
+        * popCountToScore (pawnShield2Rank & board & player & pawns)
+    (kingRank, pawnShield1Rank, pawnShield2Rank) = case color of
+      White -> (rank_1, rank_2, rank_3)
+      Black -> (rank_8, rank_7, rank_6)
+    kingSquare = lsb (player & kings)
+
+
 evaluateIsolatedPawns :: (?phase :: Phase) => Board -> Score
 evaluateIsolatedPawns pawns =
   isolatedPawnPenalty * fromIntegral isolatedPawnsCount
   where
     isolatedPawnsCount =
-      popCountToBoard (file_B & pawns)
+      popCountToBoard (file_A & pawns)
+        * toReverseCondition (pawns & file_B)
+      + popCountToBoard (file_B & pawns)
         * toReverseCondition (pawns & (file_A .| file_C))
       + popCountToBoard (file_C & pawns)
         * toReverseCondition (pawns & (file_B .| file_D))
@@ -178,6 +201,24 @@ evaluateIsolatedPawns pawns =
         * toReverseCondition (pawns & (file_E .| file_G))
       + popCountToBoard (file_G & pawns)
         * toReverseCondition (pawns & (file_F .| file_H))
+      + popCountToBoard (file_H & pawns)
+        * toReverseCondition (pawns & file_G)
+
+
+evaluateDoubledPawns :: (?phase :: Phase) => Board -> Score
+evaluateDoubledPawns pawns =
+  doubledPawnPenalty * fromIntegral doubledPawnsCount
+  where
+    doubledPawnsCount =
+        max 1 (popCount (file_A & pawns))
+      + max 1 (popCount (file_B & pawns))
+      + max 1 (popCount (file_C & pawns))
+      + max 1 (popCount (file_D & pawns))
+      + max 1 (popCount (file_E & pawns))
+      + max 1 (popCount (file_F & pawns))
+      + max 1 (popCount (file_G & pawns))
+      + max 1 (popCount (file_H & pawns))
+      - 8
 
 
 getScoresBatch :: (?phase :: Phase) => Position -> ScoresBatch
@@ -193,6 +234,14 @@ getScoresBatch Position {..} = ScoresBatch {..}
 
     piecesCount =
       knightsCount + bishopsCount + rooksCount + queensCount
+
+    threats =
+      queenThreat
+        * popCountToScore (player & queens & (minorDefended .| pawnDefended))
+      + rookThreat
+        * popCountToScore (player & rooks & pawnDefended)
+      + minorPieceThreat
+        * popCountToScore (player & (knights .| bishops) & pawnDefended)
 
     kingThreatScore =
         threatByMinorPenalty * fromIntegral
@@ -267,12 +316,19 @@ evaluateExchange initialMv initialPos =
 
 
 data ScoresBatch = ScoresBatch {
-  mobility    :: Score,
-  kingThreats :: Score
+    mobility    :: Score
+  , threats     :: Score
+  , kingThreats :: Score
+
 }
 
 emptyScoresBatch :: ScoresBatch
 emptyScoresBatch = ScoresBatch {
     mobility    = 0
+  , threats     = 0
   , kingThreats = 0
 }
+
+
+popCountToScore :: Board -> Score
+popCountToScore = fromIntegral . popCount

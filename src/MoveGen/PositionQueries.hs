@@ -6,6 +6,8 @@ import           Models.Position
 import           Search.Perft
 import           Utils.Board
 
+-- TODO Winning / losing pawnless endgames
+
 
 isEndgame :: Position -> Bool
 isEndgame Position {..} =

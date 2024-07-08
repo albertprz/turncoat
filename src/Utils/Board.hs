@@ -371,9 +371,12 @@ shortCastleSlidingFiles = file_F .| file_G
 longCastleSlidingFiles :: Board
 longCastleSlidingFiles = file_C .| file_D
 
-longCastleFiles = file_A .| file_B .| file_C
 
+shortCastleFiles :: Board
 shortCastleFiles = file_F .| file_G .| file_H
+
+longCastleFiles :: Board
+longCastleFiles = file_A .| file_B .| file_C
 
 whiteKnightOutpostRanks :: Board
 whiteKnightOutpostRanks = rank_5 .| rank_6 .| rank_7

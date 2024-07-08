@@ -41,7 +41,7 @@ getMoveScore :: (?nodes :: IORef Word64)
 getMoveScore !beta !ply !pos _ mv =
   do !alpha <- get
      !score <- liftIO (negate <$> quiesceSearch (-beta) (-alpha) (ply + 1)
-                                  (makeMove mv pos))
+                                               (makeMove mv pos))
      let !nodeType = getNodeType alpha beta score
      advanceState beta score nodeType
 
@@ -54,6 +54,7 @@ advanceState !beta !score !nodeType =
     All -> pure Nothing
 
 
+-- TODO Sort by MVV - LVA
 getWinningCaptures :: Position -> [Move]
 getWinningCaptures pos =
   filter (`isWinningCapture` pos) (allCaptures pos)

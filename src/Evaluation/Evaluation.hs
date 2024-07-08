@@ -18,7 +18,6 @@ import           Utils.Board
 
 
 -- TODO Material trades (Pieces vs pawns)
--- TODO Improved King safety (Pawn shield)
 
 evaluatePosition :: Position -> Score
 evaluatePosition =
@@ -125,13 +124,20 @@ evaluatePassedPawns pos@Position {..} =
   where
     eval fileBoard
       | pawnsInFile == 0 || blockersVec !! n & enemy&pawns /= 0 = 0
-      | isUnstoppablePawn n = unstoppablePawn
-      | isFreePasser rank n = freePassedPawnTable !!% rank
-      | otherwise           = passedPawnTable     !!% rank
+      | otherwise = passerScore + escortedPasserScore
       where
-        rank        = normalizeRank $ toRank n
-        pawnsInFile = player & pawns & fileBoard
-        n           = lastPawnSquare pawnsInFile
+        passerScore
+          | isUnstoppablePawn n = unstoppablePawnBonus
+          | isFreePasser rank n = freePassedPawnTable !!% rank
+          | otherwise           = passedPawnTable     !!% rank
+        escortedPasserScore = kingEscortedPassedPawnBonus *
+           fromIntegral (getSquareDistance n enemyKingSquare
+                       - getSquareDistance n kingSquare)
+        rank            = normalizeRank $ toRank n
+        pawnsInFile     = player & pawns & fileBoard
+        n               = lastPawnSquare pawnsInFile
+        kingSquare      = lsb (player & kings)
+        enemyKingSquare = lsb (enemy & kings)
 
     isFreePasser rank n =
       testSquare noPieces (nextRank n)
@@ -182,14 +188,12 @@ evaluateKingPawnShield Position {..} =
     kingSquare = lsb (player & kings)
 
 
-evaluateIsolatedPawns :: (?phase :: Phase) => Board -> Score
+evaluateIsolatedPawns :: Board -> Score
 evaluateIsolatedPawns pawns =
   isolatedPawnPenalty * fromIntegral isolatedPawnsCount
   where
     isolatedPawnsCount =
-      popCountToBoard (file_A & pawns)
-        * toReverseCondition (pawns & file_B)
-      + popCountToBoard (file_B & pawns)
+        popCountToBoard (file_B & pawns)
         * toReverseCondition (pawns & (file_A .| file_C))
       + popCountToBoard (file_C & pawns)
         * toReverseCondition (pawns & (file_B .| file_D))
@@ -201,11 +205,9 @@ evaluateIsolatedPawns pawns =
         * toReverseCondition (pawns & (file_E .| file_G))
       + popCountToBoard (file_G & pawns)
         * toReverseCondition (pawns & (file_F .| file_H))
-      + popCountToBoard (file_H & pawns)
-        * toReverseCondition (pawns & file_G)
 
 
-evaluateDoubledPawns :: (?phase :: Phase) => Board -> Score
+evaluateDoubledPawns :: Board -> Score
 evaluateDoubledPawns pawns =
   doubledPawnPenalty * fromIntegral doubledPawnsCount
   where

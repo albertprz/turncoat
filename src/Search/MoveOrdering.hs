@@ -50,7 +50,7 @@ getSortedMoves !depth !ply pos = do
     then (bestMoves, worstMoves)
     else (bestMoves <> worstMoves, [])
   where
-    quietMoves = getSortedQuietMoves depth pos
+    quietMoves                        = getSortedQuietMoves depth pos
     (winningCaptures, losingCaptures) = getSortedCaptures pos
 
 

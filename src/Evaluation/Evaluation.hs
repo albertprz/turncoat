@@ -1,4 +1,4 @@
-module Evaluation.Evaluation (evaluatePosition, evaluatePositionBreakdown, evaluateExchange)
+module Evaluation.Evaluation (evaluatePosition, evaluatePositionBreakdown, evaluateExchange, evaluateMvvLva)
 where
 
 import           AppPrelude
@@ -17,7 +17,6 @@ import           MoveGen.PositionQueries
 import           Utils.Board
 
 
--- TODO Material trades (Pieces vs pawns)
 
 evaluatePosition :: Position -> Score
 evaluatePosition =
@@ -30,10 +29,17 @@ evaluatePositionBreakdown pos =
     !enemyPos         = makeNullMove pos
     !scoresBatch      = getScoresBatch pos
     !enemyScoresBatch = getScoresBatch enemyPos
+    !playerBreakdown =
+      evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos
+    !enemyBreakdown  =
+      evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos
+    !materialScore   =
+         evalScore playerBreakdown.materialBreakdown
+       - evalScore enemyBreakdown.materialBreakdown
+    !materialTradesScore =
+      evaluateMaterialTrades materialScore pos
   in
-    ScoreBreakdown
-      (evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos)
-      (evaluatePlayerBreakdown enemyScoresBatch scoresBatch enemyPos)
+    ScoreBreakdown {..}
   where
     ?phase       = pos.phase
     ?colorToMove = pos.color
@@ -43,9 +49,9 @@ evaluatePlayerBreakdown :: (?phase :: Phase, ?colorToMove :: Color)
   => ScoresBatch -> ScoresBatch -> Position -> PlayerScoreBreakdown
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
-    material      = evaluatePlayerMaterial pos pos.player pos.color
-  , bonusScores   = evaluatePositionBonuses scoresBatch pos
-  , penaltyScores =
+    materialBreakdown = evaluatePlayerMaterial pos pos.player pos.color
+  , bonusBreakdown    = evaluatePositionBonuses scoresBatch pos
+  , penaltyBreakdown  =
       evaluatePositionPenalties scoresBatch enemyScoresBatch pos
   }
 
@@ -63,8 +69,8 @@ evaluatePositionBonuses ScoresBatch {..} pos =
   }
 
 
-evaluatePositionPenalties :: (?phase :: Phase)
-  => ScoresBatch -> ScoresBatch -> Position -> PenaltyBreakdown
+evaluatePositionPenalties ::
+  ScoresBatch -> ScoresBatch -> Position -> PenaltyBreakdown
 evaluatePositionPenalties
   ScoresBatch {threats} ScoresBatch {kingThreats} Position {player, pawns} =
   PenaltyBreakdown {
@@ -223,6 +229,24 @@ evaluateDoubledPawns pawns =
       - 8
 
 
+evaluateMaterialTrades :: Score -> Position -> Score
+evaluateMaterialTrades materialScore Position {..} =
+    convert (losingPenalty - winningPenalty)
+  where
+    losingPenalty =
+      pieceTradesPenalty * losingMissingPieces * absoluteMaterialScore / 700
+    winningPenalty =
+      pawnTradesPenalty  * winningMissingPawns * absoluteMaterialScore / 800
+    losingMissingPieces = max 0
+      (7 - popCountToScore (losingBoard & (knights .| bishops .| rooks .| queens)))
+    winningMissingPawns =
+      8 - popCountToScore (winningBoard & pawns)
+    absoluteMaterialScore = abs materialScore
+    (winningBoard, losingBoard, convert)
+      | materialScore > 0 = (player, enemy , id)
+      | otherwise         = (enemy , player, negate)
+
+
 getScoresBatch :: (?phase :: Phase) => Position -> ScoresBatch
 getScoresBatch pos
   | isKingInCheck pos = emptyScoresBatch
@@ -315,6 +339,23 @@ evaluateExchange initialMv initialPos =
       - case headMay $ staticExchangeCaptures square newPos of
         Just newMv -> max 0 $! go newMv newPos
         Nothing    -> 0
+
+
+{-# INLINE evaluateMvvLva #-}
+evaluateMvvLva :: Move -> Position -> Word8
+evaluateMvvLva Move {..} pos =
+  promotionValue + maybe 0 exchangeValue (maybeCapturedPieceAt end pos)
+  where
+    exchangeValue capturedPiece =
+      10 * (getPieceValue capturedPiece + 1)
+      - getPieceValue piece
+    promotionValue = 10 * (promotionPieceValue + 1)
+    promotionPieceValue = case promotion of
+      QueenProm  -> getPieceValue Queen
+      KnightProm -> getPieceValue Knight
+      BishopProm -> getPieceValue Bishop
+      RookProm   -> getPieceValue Rook
+      NoProm     -> 0
 
 
 data ScoresBatch = ScoresBatch {

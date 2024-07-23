@@ -54,11 +54,10 @@ getSortedMoves !depth !ply pos = do
     (winningCaptures, losingCaptures) = getSortedCaptures pos
 
 
-getKillers :: (?killersTable :: KillersTable)
-  => Ply -> Position -> IO [Move]
+getKillers
+  :: (?killersTable :: KillersTable) => Ply -> Position -> IO [Move]
 getKillers !ply pos =
-   filter (`isLegalQuietMove` pos)
-   <$> KillersTable.lookupMoves ply
+   filter (`isLegalQuietMove` pos) <$> KillersTable.lookupMoves ply
 
 
 getSortedCaptures :: Position -> ([Move], [Move])

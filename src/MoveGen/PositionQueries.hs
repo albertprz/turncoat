@@ -1,12 +1,10 @@
-module MoveGen.PositionQueries (isDefeat, isNotWinnable, isDraw, isEndgame, isKingInCheck, hasSingleMove) where
+module MoveGen.PositionQueries (isDefeat, isNotWinnable, isDraw, isEndgame, isKingInCheck, hasSingleMove, isWonEndgame) where
 
 import           AppPrelude
 
 import           Models.Position
 import           Search.Perft
 import           Utils.Board
-
--- TODO Winning / losing pawnless endgames
 
 
 isEndgame :: Position -> Bool
@@ -45,7 +43,7 @@ isNotWinnable Position {..} =
 isDraw :: Position -> Bool
 isDraw pos =
     isDrawByHalfMoves pos
-  || isDrawByMaterial pos
+  || isPawnlessEndgame pos && isDrawByMaterial pos
   || isStalemate pos
   || isDrawByRepetition pos
 
@@ -182,3 +180,17 @@ isDrawByMaterial Position {..} =
     !minorPieces            = knights .| bishops
     !majorPieces            = rooks   .| queens
     forBoth fn = fn player enemy || fn enemy player
+
+
+isWonEndgame :: Position -> Bool
+isWonEndgame Position {..} = enemy == enemy & kings
+  && (player & majorPieces /= 0
+     || popCount (player & minorPieces) >= 2 && bishops /= 0)
+  where
+  !minorPieces      = knights .| bishops
+  !majorPieces      = rooks   .| queens
+
+
+isPawnlessEndgame :: Position -> Bool
+isPawnlessEndgame Position {..} =
+  pawns == 0

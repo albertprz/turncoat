@@ -68,6 +68,8 @@ negamax
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 negamax !alpha !beta !depth !ply pos
 
+  | isWonEndgame pos     = pure $! emptySearchResult (maxScore - 500)
+
   | isDefeat pos         = pure $! emptySearchResult minScore
 
   | isDraw pos && ply > 0 = pure $! emptySearchResult 0
@@ -80,7 +82,7 @@ negamax !alpha !beta !depth !ply pos
   where
     zKey = getZobristKey pos
     extendedDepth =
-      if isKingInCheck pos || (hasSingleMove pos && ply < 60)
+      if isKingInCheck pos || (hasSingleMove pos && ply < 30)
       then depth + 1
       else depth
 

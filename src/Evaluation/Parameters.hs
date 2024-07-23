@@ -17,11 +17,11 @@ pawnScore = 100
 bishopScore :: Score
 bishopScore = 340
 
-knightScore :: Score
-knightScore = 340
+knightScore :: (?phase :: Phase) => Score
+knightScore = taperScore $ ScorePair 340 320
 
 rookScore :: (?phase :: Phase) => Score
-rookScore = taperScore $ ScorePair 520 550
+rookScore = taperScore $ ScorePair 500 550
 
 queenScore :: (?phase :: Phase) => Score
 queenScore = taperScore $ ScorePair 1000 1050
@@ -35,7 +35,7 @@ knightOutpostBonus :: (?phase :: Phase) => Score
 knightOutpostBonus = taperScore $ ScorePair 50 0
 
 rookOnSemiOpenFileBonus :: (?phase :: Phase) => Score
-rookOnSemiOpenFileBonus = taperScore $ ScorePair 15 0
+rookOnSemiOpenFileBonus = taperScore $ ScorePair 10 0
 
 pawnShield1RankBonus :: (?phase :: Phase) => Score
 pawnShield1RankBonus = taperScore $ ScorePair 20 0
@@ -101,15 +101,21 @@ isolatedPawnPenalty = 25
 doubledPawnPenalty :: Score
 doubledPawnPenalty = 20
 
-
 minorPieceThreat :: Score
 minorPieceThreat = 30
 
 rookThreat :: Score
-rookThreat = 40
+rookThreat = 50
 
 queenThreat :: Score
-queenThreat = 50
+queenThreat = 80
+
+pieceTradesPenalty :: Score
+pieceTradesPenalty = 15
+
+pawnTradesPenalty :: Score
+pawnTradesPenalty = 30
+
 
 
 kingThreatPiecesTable :: Vector Score

@@ -8,14 +8,15 @@ import           Models.Score
 
 
 data ScoreBreakdown = ScoreBreakdown
-  { playerScores :: PlayerScoreBreakdown
-  , enemyScores  :: PlayerScoreBreakdown
+  { playerBreakdown     :: PlayerScoreBreakdown
+  , enemyBreakdown      :: PlayerScoreBreakdown
+  , materialTradesScore :: Score
   }
 
 data PlayerScoreBreakdown = PlayerScoreBreakdown
-  { material      :: MaterialBreakdown
-  , bonusScores   :: BonusBreakdown
-  , penaltyScores :: PenaltyBreakdown
+  { materialBreakdown :: MaterialBreakdown
+  , bonusBreakdown    :: BonusBreakdown
+  , penaltyBreakdown  :: PenaltyBreakdown
   }
 
 data MaterialBreakdown = MaterialBreakdown
@@ -54,14 +55,14 @@ class EvalScore a where
 
 instance EvalScore ScoreBreakdown where
   evalScore ScoreBreakdown {..} =
-    evalScore playerScores - evalScore enemyScores
+    evalScore playerBreakdown - evalScore enemyBreakdown
 
 
 instance EvalScore PlayerScoreBreakdown where
   evalScore PlayerScoreBreakdown {..} =
-      evalScore material
-    + evalScore bonusScores
-    - evalScore penaltyScores
+      evalScore materialBreakdown
+    + evalScore bonusBreakdown
+    - evalScore penaltyBreakdown
 
 instance EvalScore MaterialBreakdown where
   evalScore MaterialBreakdown {..} =
@@ -88,8 +89,8 @@ instance EvalScore ScorePair where
 
 instance Show ScoreBreakdown where
   show breakdown@ScoreBreakdown {..} = unlines
-    ["Player: " <> indentBreak (show playerScores),
-     "Enemy:  " <> indentBreak (show enemyScores),
+    ["Player: " <> indentBreak (show playerBreakdown),
+     "Enemy:  " <> indentBreak (show enemyBreakdown),
      totalScoreLine,
      "Total: "  <> show (evalScore breakdown),
      totalScoreLine]
@@ -98,9 +99,9 @@ instance Show ScoreBreakdown where
 
 instance Show PlayerScoreBreakdown where
   show breakdown@PlayerScoreBreakdown {..} = unlines
-    ["Material:       " <> indentBreak (show material),
-     "Bonus Scores:   " <> indentBreak (show bonusScores),
-     "Penalty Scores: " <> indentBreak (show penaltyScores),
+    ["Material:       " <> indentBreak (show materialBreakdown),
+     "Bonus Scores:   " <> indentBreak (show bonusBreakdown),
+     "Penalty Scores: " <> indentBreak (show penaltyBreakdown),
      totalScoreLine,
      "Player Total: "   <> show (evalScore breakdown),
      totalScoreLine]

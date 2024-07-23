@@ -56,6 +56,9 @@ pattern White = Color 0
 pattern Black = Color 1
 
 
+getPieceValue :: Piece -> Word8
+getPieceValue (Piece n) = n
+
 reverseColor :: Color -> Color
 reverseColor (Color color) =
   Color (1 - color)

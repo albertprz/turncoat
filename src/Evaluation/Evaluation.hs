@@ -49,8 +49,10 @@ evaluatePlayerBreakdown :: (?phase :: Phase, ?colorToMove :: Color)
   => ScoresBatch -> ScoresBatch -> Position -> PlayerScoreBreakdown
 evaluatePlayerBreakdown scoresBatch enemyScoresBatch pos =
   PlayerScoreBreakdown {
-    materialBreakdown = evaluatePlayerMaterial pos pos.player pos.color
-  , bonusBreakdown    = evaluatePositionBonuses scoresBatch pos
+    materialBreakdown =
+      evaluatePlayerMaterial pos pos.player pos.color
+  , bonusBreakdown    =
+      evaluatePositionBonuses scoresBatch pos
   , penaltyBreakdown  =
       evaluatePositionPenalties scoresBatch enemyScoresBatch pos
   }
@@ -60,24 +62,25 @@ evaluatePositionBonuses :: (?phase :: Phase, ?colorToMove :: Color)
   => ScoresBatch -> Position -> BonusBreakdown
 evaluatePositionBonuses ScoresBatch {..} pos =
   BonusBreakdown {
-    mobility           = mobility
-  , passedPawns        = evaluatePassedPawns      pos
-  , bishopPair         = evaluateBishopPair       pos
-  , knightOutposts     = evaluateKnightOutposts   pos
-  , rooksOnOpenFile    = evaluateRooksOnOpenFiles pos
-  , kingPawnShield     = evaluateKingPawnShield   pos
+    mobility        = mobility
+  , passedPawns     = evaluatePassedPawns      pos
+  , bishopPair      = evaluateBishopPair       pos
+  , knightOutposts  = evaluateKnightOutposts   pos
+  , rooksOnOpenFile = evaluateRooksOnOpenFiles pos
+  , kingPawnShield  = evaluateKingPawnShield   pos
+  , castlingRights  = evaluateCastlingRights   pos
   }
 
 
-evaluatePositionPenalties ::
-  ScoresBatch -> ScoresBatch -> Position -> PenaltyBreakdown
+evaluatePositionPenalties
+  :: ScoresBatch -> ScoresBatch -> Position -> PenaltyBreakdown
 evaluatePositionPenalties
   ScoresBatch {threats} ScoresBatch {kingThreats} Position {player, pawns} =
   PenaltyBreakdown {
-    threats       = threats
-  , kingThreats   = kingThreats
-  , isolatedPawns = evaluateIsolatedPawns (player & pawns)
-  , doubledPawns  = evaluateDoubledPawns  (player & pawns)
+    threats        = threats
+  , kingThreats    = kingThreats
+  , isolatedPawns  = evaluateIsolatedPawns (player & pawns)
+  , doubledPawns   = evaluateDoubledPawns  (player & pawns)
   }
 
 
@@ -192,6 +195,12 @@ evaluateKingPawnShield Position {..} =
       White -> (rank_1, rank_2, rank_3)
       Black -> (rank_8, rank_7, rank_6)
     kingSquare = lsb (player & kings)
+
+
+evaluateCastlingRights :: Position -> Score
+evaluateCastlingRights Position{castling}
+  | castling /= 0 = castlingRightsBonus
+  | otherwise    = 0
 
 
 evaluateIsolatedPawns :: Board -> Score

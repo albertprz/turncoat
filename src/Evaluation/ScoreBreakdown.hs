@@ -2,9 +2,10 @@ module Evaluation.ScoreBreakdown where
 
 import           AppPrelude
 
+import           Models.Score
+
 import           Bookhound.Utils.Text
 import           Foreign.Storable.Generic
-import           Models.Score
 
 
 data ScoreBreakdown = ScoreBreakdown
@@ -35,6 +36,7 @@ data BonusBreakdown = BonusBreakdown
   , knightOutposts  :: Score
   , rooksOnOpenFile :: Score
   , kingPawnShield  :: Score
+  , castlingRights  :: Score
   }
 
 data PenaltyBreakdown = PenaltyBreakdown
@@ -76,6 +78,7 @@ instance EvalScore BonusBreakdown where
       mobility        + passedPawns
     + bishopPair      + knightOutposts
     + rooksOnOpenFile + kingPawnShield
+    + castlingRights
 
 
 instance EvalScore PenaltyBreakdown where
@@ -127,6 +130,7 @@ instance Show BonusBreakdown where
      "Knight Outposts:     " <> show knightOutposts,
      "Rooks On Open Files: " <> show rooksOnOpenFile,
      "King Pawn Shield:    " <> show kingPawnShield,
+     "Castling Rights:     " <> show castlingRights,
      totalScoreLine,
      "Bonus Total: "         <> show (evalScore breakdown),
      totalScoreLine]

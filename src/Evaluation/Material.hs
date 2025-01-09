@@ -15,36 +15,27 @@ evaluatePlayerMaterial
   :: (?phase :: Phase) => Position -> Board -> Color -> MaterialBreakdown
 evaluatePlayerMaterial Position {..} !board = \case
     White -> MaterialBreakdown
-          (boardMaterialScore queenScore                 (board & queens))
-          (boardMaterialScore rookScore                  (board & rooks))
-          (boardScore bishopScore whiteBishopSquareTable (board & bishops))
-          (boardScore knightScore whiteKnightSquareTable (board & knights))
-          (boardMaterialScore pawnScore                  (board & pawns))
-          (ScorePair 0 (whiteKingSquareTable !!% lsb     (board & kings)))
+          (boardScore queenScore                     (board & queens))
+          (boardScore rookScore                      (board & rooks))
+          (boardScore bishopScore                    (board & bishops))
+          (boardScore knightScore                    (board & knights))
+          (boardScore pawnScore                      (board & pawns))
+          (ScorePair 0 (whiteKingSquareTable !!% lsb (board & kings)))
     Black -> MaterialBreakdown
-          (boardMaterialScore queenScore                 (board & queens))
-          (boardMaterialScore rookScore                  (board & rooks))
-          (boardScore bishopScore blackBishopSquareTable (board & bishops))
-          (boardScore knightScore blackKnightSquareTable (board & knights))
-          (boardMaterialScore pawnScore                  (board & pawns))
-          (ScorePair 0 (blackKingSquareTable !!% lsb     (board & kings)))
-
-
-{-# INLINE  boardMaterialScore #-}
-boardMaterialScore :: Score -> Board -> ScorePair
-boardMaterialScore !pieceTypeScore !board =
-  ScorePair materialScore 0
-  where
-    materialScore = pieceTypeScore * fromIntegral (popCount board)
+          (boardScore queenScore                     (board & queens))
+          (boardScore rookScore                      (board & rooks))
+          (boardScore bishopScore                    (board & bishops))
+          (boardScore knightScore                    (board & knights))
+          (boardScore pawnScore                      (board & pawns))
+          (ScorePair 0 (blackKingSquareTable !!% lsb (board & kings)))
 
 
 {-# INLINE  boardScore #-}
-boardScore :: (?phase::Phase) => Score -> Vector ScorePair -> Word64 -> ScorePair
-boardScore !pieceTypeScore !squareTable !board =
-  ScorePair materialScore squareTableScore
+boardScore :: Score -> Board -> ScorePair
+boardScore !pieceTypeScore !board =
+  ScorePair materialScore 0
   where
-    squareTableScore = foldlBoard 0 (+) (squareTable !!%) board
-    materialScore    = pieceTypeScore * fromIntegral (popCount board)
+    materialScore = pieceTypeScore * fromIntegral (popCount board)
 
 
 {-# INLINE  evaluateCapturedPiece #-}

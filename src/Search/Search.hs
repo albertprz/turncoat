@@ -68,11 +68,14 @@ negamax
   => Score -> Score -> Depth -> Ply -> Position -> IO SearchResult
 negamax !alpha !beta !depth !ply pos
 
-  | isWonEndgame pos     = pure $! emptySearchResult (maxScore - 500)
+  | isDefeat pos =
+    pure $! emptySearchResult minScore
 
-  | isDefeat pos         = pure $! emptySearchResult minScore
+  | ply > 0 && isDraw pos =
+    pure $! emptySearchResult 0
 
-  | isDraw pos && ply > 0 = pure $! emptySearchResult 0
+  | ply > 0 && isWonEndgame pos =
+    pure $! emptySearchResult (maxScore - 1000)
 
   | otherwise = do
   ttResult <- liftIO $ TTable.lookupScore alpha beta extendedDepth zKey

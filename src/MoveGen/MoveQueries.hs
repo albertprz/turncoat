@@ -33,7 +33,7 @@ isWinningCapture :: Move -> Position -> Bool
 isWinningCapture mv pos =
   isCapture mv pos
     && member mv.promotion bestPromotions
-    && evaluateExchange mv pos > 0
+    && evaluateExchange mv pos >= 0
 
 
 isPromotionPush :: Move -> Bool

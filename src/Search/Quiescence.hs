@@ -10,10 +10,10 @@ import           MoveGen.MakeMove
 import           MoveGen.MoveQueries
 import           MoveGen.PieceCaptures
 import           MoveGen.PositionQueries
+import           MoveGen.PieceQuietMoves
 import           Search.Perft
 
 import           Control.Monad.State
-import           MoveGen.PieceQuietMoves
 
 
 quiesceSearch :: (?nodes :: IORef Word64)

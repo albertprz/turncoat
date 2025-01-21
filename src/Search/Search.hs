@@ -60,7 +60,7 @@ search searchOpts@SearchOptions{..} resultRef pos = do
 
 -- Features:
 -- - Transposition table score caching
--- - Search extensions (Check, Endgame, Single move)
+-- - Search extensions (Check, Single move)
 
 negamax
   :: (?killersTable :: KillersTable, ?tTable :: TTable,

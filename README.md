@@ -1,6 +1,8 @@
 # turncoat
 
-A minimalistic bitboard based UCI chess engine written in Haskell with a strong focus on a clear and modular implementation with adequate performance when compared with other open source chess engines. 
+A minimalistic bitboard based UCI chess engine written in Haskell with a strong focus on a clear and modular implementation with adequate performance when compared with other open source engines. 
+
+It relies heavily on GHC as well as strictness annotations in order to optimize a high level program that leverages laziness in key areas (such as staged move generation and ordering) producing an efficient binary that can compete in a field where lower level languages (C, C++, Rust) are usually employed.
 
 Turncoat has an official account on Lichess: https://lichess.org/@/TurncoatEngine
 
@@ -31,7 +33,7 @@ Turncoat has an official account on Lichess: https://lichess.org/@/TurncoatEngin
 
 ### Move Ordering
 
-- Staged Move Ordering (via lazy lists)
+- Staged Move Ordering 
 - Static Exchange Evaluation
 - Killer Moves
 - Static Evaluation Ordering (for quiet moves)
